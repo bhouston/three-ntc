@@ -39,6 +39,9 @@ function RootLayout() {
           <span className="font-semibold">three-ntc</span>
           <nav className="flex gap-4 text-sm text-muted-foreground">
             <Link to="/" activeProps={{ className: 'text-foreground' }}>
+              Home
+            </Link>
+            <Link to="/viewer" activeProps={{ className: 'text-foreground' }}>
               Viewer
             </Link>
             <Link to="/trainer" activeProps={{ className: 'text-foreground' }}>
