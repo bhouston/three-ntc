@@ -83,7 +83,7 @@ function ViewerPage() {
 
   return (
     <div className="grid flex-1 grid-cols-1 gap-4 p-4 md:grid-cols-[1fr_320px]">
-      <div className="relative min-h-[320px] overflow-hidden rounded-xl border border-border bg-black">
+      <div className="relative min-h-[320px] max-h-[100cqw] overflow-hidden rounded-xl border border-border bg-black [container-type:inline-size]">
         <NTCViewer material={loaded?.material ?? null} />
         {!loaded && !loading && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">

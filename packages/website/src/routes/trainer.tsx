@@ -710,7 +710,7 @@ function TrainerPage() {
         </Card>
       </div>
 
-      <div className="order-1 min-h-[320px] overflow-hidden border border-border bg-black lg:col-start-2 lg:row-start-1">
+      <div className="order-1 min-h-[320px] max-h-[80cqw] overflow-hidden border border-border bg-black [container-type:inline-size] lg:col-start-2 lg:row-start-1">
         <NTCViewer material={previewMaterial} teacherMaterial={teacherMaterial} shape={values.shape} />
       </div>
 
