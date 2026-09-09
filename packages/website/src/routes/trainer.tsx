@@ -40,6 +40,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { DEFAULT_LOD_BIAS } from '@/lib/ntc-examples';
 import { getSharedRenderer } from '@/lib/renderer';
+import { seoMeta } from '@/lib/seo';
 
 export interface TrainerSearch {
   src?: string;
@@ -51,7 +52,11 @@ export const Route = createFileRoute('/trainer')({
     src: typeof search.src === 'string' ? search.src : undefined,
   }),
   head: () => ({
-    meta: [{ title: 'Three-NTC Trainer' }],
+    meta: seoMeta({
+      title: 'Three-NTC Trainer',
+      description: 'Fit a MaterialX material into a neural texture compression model in the browser and export it as .ntc.',
+      path: '/trainer',
+    }),
   }),
 });
 

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Slider } from '@/components/ui/slider';
 import { DEFAULT_LOD_BIAS, EXAMPLE_FILES, type LoadedMaterial, parseNtc } from '@/lib/ntc-examples';
+import { seoMeta } from '@/lib/seo';
 
 export interface ViewerSearch {
   src?: string;
@@ -20,7 +21,11 @@ export const Route = createFileRoute('/viewer')({
     src: typeof search.src === 'string' ? search.src : undefined,
   }),
   head: () => ({
-    meta: [{ title: 'Three-NTC Viewer' }],
+    meta: seoMeta({
+      title: 'Three-NTC Viewer',
+      description: 'Load and inspect .ntc neural texture compression material files interactively in the browser.',
+      path: '/viewer',
+    }),
   }),
 });
 

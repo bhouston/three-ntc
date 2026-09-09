@@ -4,11 +4,17 @@ import { useEffect, useState } from 'react';
 import { NTCGridViewer, type NTCGridSlot } from '@/components/NTCGridViewer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EXAMPLE_FILES, loadNtcFromUrl } from '@/lib/ntc-examples';
+import { seoMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/')({
   component: HomePage,
   head: () => ({
-    meta: [{ title: 'Three-NTC: Neural Texture Compression for Three.JS' }],
+    meta: seoMeta({
+      title: 'Three-NTC: Neural Texture Compression for Three.js',
+      description:
+        "A three.js implementation of NVIDIA's Neural Texture Compression paper — materials as a tiny neural network instead of a stack of full-resolution textures.",
+      path: '/',
+    }),
   }),
 });
 

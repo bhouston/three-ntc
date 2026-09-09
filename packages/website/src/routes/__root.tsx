@@ -4,6 +4,7 @@ import { ThemeProvider } from 'next-themes';
 import { GoogleAnalytics } from 'tanstack-router-ga4';
 
 import { Toaster } from '@/components/ui/sonner';
+import { seoMeta } from '@/lib/seo';
 
 const GITHUB_URL = 'https://github.com/bhouston/three-ntc';
 const NPM_URL = 'https://www.npmjs.com/package/three-ntc';
@@ -24,8 +25,10 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'three-ntc demo' },
-      { name: 'description', content: 'Neural Texture Compression viewer and MaterialX trainer demo for three-ntc.' },
+      ...seoMeta({
+        title: 'Three-NTC: Neural Texture Compression for Three.js',
+        description: 'Neural Texture Compression viewer and MaterialX trainer demo for three-ntc.',
+      }),
     ],
     links: [{ rel: 'stylesheet', href: appCss }],
   }),
