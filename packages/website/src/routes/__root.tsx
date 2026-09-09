@@ -1,11 +1,13 @@
 import { createRootRoute, HeadContent, Link, Outlet, Scripts } from '@tanstack/react-router';
 import { GithubIcon, HeartIcon } from 'lucide-react';
 import { ThemeProvider } from 'next-themes';
+import { GoogleAnalytics } from 'tanstack-router-ga4';
 
 import { Toaster } from '@/components/ui/sonner';
 
 const GITHUB_URL = 'https://github.com/bhouston/three-ntc';
 const NPM_URL = 'https://www.npmjs.com/package/three-ntc';
+const GA_MEASUREMENT_ID = 'G-6FBDBR436E';
 
 function NpmIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -87,6 +89,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="bg-background text-foreground antialiased">
+        {import.meta.env.PROD ? <GoogleAnalytics measurementId={GA_MEASUREMENT_ID} /> : null}
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {children}
           <Toaster />

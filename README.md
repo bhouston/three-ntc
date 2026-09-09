@@ -8,6 +8,14 @@ Neural Texture Compression for three.js — encode PBR material texture sets int
 grid + MLP model that decodes on the GPU via TSL, and load the result as a standard three.js
 node material.
 
+![Eight NTC materials rendered live in the three-ntc grid viewer](docs/images/ntc-grid-viewer.png)
+
+An implementation of NVIDIA's 2023 [Neural Texture Compression](https://research.nvidia.com/labs/rtr/neural_texture_compression/)
+paper: instead of shipping a full albedo/normal/roughness/metalness texture stack per material,
+NTC jointly fits all of those channels into one small grid + MLP model. Every material pictured
+above — all its textures combined — is about 93KB, often smaller than a single texture from the
+original material, so scenes can carry far richer materials without blowing up download size.
+
 Try it live at **[three-ntc.ben3d.ca](https://three-ntc.ben3d.ca)**.
 
 ## Usage

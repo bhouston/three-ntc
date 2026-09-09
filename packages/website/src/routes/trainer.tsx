@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useForm, useStore } from '@tanstack/react-form';
 import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useGoogleAnalytics } from 'tanstack-router-ga4';
 import * as THREE from 'three';
 import { defineChart, lineY } from '@tanstack/charts';
 import { scaleLinear } from '@tanstack/charts/scales/linear';
@@ -148,10 +149,12 @@ function SelectFormField({
 }
 
 function TrainerPage() {
+  const ga = useGoogleAnalytics();
   const form = useForm({ defaultValues: DEFAULT_VALUES });
   const values = useStore(form.store, (state) => state.values);
 
   const [status, setStatus] = useState('Ready.');
+  const [mtlxDragOver, setMtlxDragOver] = useState(false);
   const [sourceName, setSourceName] = useState<string | null>(null);
   const [builtInKey, setBuiltInKey] = useState(DEFAULT_MATERIALX_KEY);
   const [hasSource, setHasSource] = useState(false);
@@ -291,10 +294,7 @@ function TrainerPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onMtlxFileSelected = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
+  const loadMtlxFile = useCallback(async (file: File) => {
     try {
       setStatus(`Loading ${file.name}...`);
       const loader = new MaterialXLoader();
@@ -310,6 +310,12 @@ function TrainerPage() {
       setStatus(errorMessage(err));
     }
   }, [setSourceMaterial]);
+
+  const onMtlxFileSelected = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (file) await loadMtlxFile(file);
+  }, [loadMtlxFile]);
 
   const train = useCallback(async () => {
     const material = materialXMaterialRef.current;
@@ -467,6 +473,7 @@ function TrainerPage() {
                 value={builtInKey}
                 onValueChange={(key) => {
                   setBuiltInKey(key);
+                  ga.event('trainer-default-materialx', { materialx_key: key });
                   void loadBuiltInMaterial(key);
                 }}
                 disabled={isTraining}
@@ -484,11 +491,30 @@ function TrainerPage() {
               </Select>
             </Field>
 
-            <div className="flex items-center gap-2">
+            <div
+              className={`flex items-center gap-2 rounded-lg border-2 border-dashed p-2 transition-colors ${
+                mtlxDragOver ? 'border-primary bg-accent' : 'border-transparent'
+              }`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setMtlxDragOver(true);
+              }}
+              onDragLeave={() => setMtlxDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setMtlxDragOver(false);
+                const file = e.dataTransfer.files[0];
+                if (!file) return;
+                ga.event('trainer-drop-materialx', { file_name: file.name });
+                void loadMtlxFile(file);
+              }}
+            >
               <Button type="button" variant="outline" size="sm" disabled={isTraining} onClick={() => mtlxInputRef.current?.click()}>
                 Open .mtlx
               </Button>
-              <span className="truncate text-sm text-muted-foreground">{sourceName ?? 'loading default'}</span>
+              <span className="truncate text-sm text-muted-foreground">
+                {sourceName ?? 'loading default'} — or drag & drop a .mtlx file here
+              </span>
             </div>
             <input ref={mtlxInputRef} type="file" accept=".mtlx,.zip,.mtlx.zip" hidden onChange={onMtlxFileSelected} />
 
@@ -661,7 +687,14 @@ function TrainerPage() {
         </Card>
 
         <div className="flex flex-wrap gap-2">
-          <Button type="button" disabled={isTraining || !hasSource} onClick={() => void train()}>
+          <Button
+            type="button"
+            disabled={isTraining || !hasSource}
+            onClick={() => {
+              ga.event('trainer-train', { materialx_key: builtInKey || sourceName || 'unknown' });
+              void train();
+            }}
+          >
             Train
           </Button>
           <Button type="button" variant="outline" disabled={!isTraining} onClick={stopTraining}>

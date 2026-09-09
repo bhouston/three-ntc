@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useGoogleAnalytics } from 'tanstack-router-ga4';
 
 import { NTCViewer } from '@/components/NTCViewer';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ export const Route = createFileRoute('/viewer')({
 });
 
 function ViewerPage() {
+  const ga = useGoogleAnalytics();
   const [loaded, setLoaded] = useState<LoadedMaterial | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -74,7 +76,9 @@ function ViewerPage() {
             <select
               defaultValue={EXAMPLE_FILES[0].value}
               onChange={(e) => {
-                if (e.target.value) void loadFromUrl(e.target.value);
+                if (!e.target.value) return;
+                ga.event('viewer-default-ntc', { ntc_file: e.target.value });
+                void loadFromUrl(e.target.value);
               }}
               className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
@@ -96,7 +100,9 @@ function ViewerPage() {
                 e.preventDefault();
                 setDragOver(false);
                 const file = e.dataTransfer.files[0];
-                if (file) void loadFromFile(file);
+                if (!file) return;
+                ga.event('viewer-drop-ntc', { file_name: file.name });
+                void loadFromFile(file);
               }}
               onClick={() => fileInputRef.current?.click()}
               className={`rounded-lg border-2 border-dashed p-6 text-center text-sm transition-colors ${

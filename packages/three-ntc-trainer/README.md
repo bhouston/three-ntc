@@ -10,6 +10,14 @@ GPU trainer that bakes a three.js material (MaterialX or plain baked textures) i
 jointly fit against the material's PBR channels — and exports it for the
 [`three-ntc`](https://www.npmjs.com/package/three-ntc) runtime to load.
 
+![Eight NTC materials rendered live in the three-ntc grid viewer](../../docs/images/ntc-grid-viewer.png)
+
+An implementation of NVIDIA's 2023 [Neural Texture Compression](https://research.nvidia.com/labs/rtr/neural_texture_compression/)
+paper: rather than baking separate albedo/normal/roughness/metalness textures, this trainer fits
+all of a material's channels jointly into one small grid + MLP model. Every material pictured
+above is about 93KB total — often smaller than a single texture from the original material — so
+scenes trained here ship far richer materials without the usual memory and download cost.
+
 Try the trainer live at **[three-ntc.ben3d.ca](https://three-ntc.ben3d.ca)**.
 
 ## Install

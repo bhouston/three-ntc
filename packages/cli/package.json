@@ -1,6 +1,6 @@
 {
   "name": "@three-ntc/cli",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Command-line trainer for three-ntc. Stub — not yet functional.",
   "type": "module",
   "bin": {
