@@ -1023,6 +1023,7 @@ export {
 	MAX_TOTAL_CHANNELS,
 	FRAME_VIEWS,
 	getChannel,
+	constantEqualsDefault,
 	decodeConstantValues,
 	layoutChannels,
 	buildChannelActivations,

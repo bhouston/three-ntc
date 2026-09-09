@@ -163,6 +163,7 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 	private _slices: Record<string, any>;
 	private _constantValues: Record<string, any>;
 	private _shadedColorNode: any;
+	private _lodBiasUniform: any;
 
 	/**
 	 * `channelClassification` is whatever `NTCSource.
@@ -259,8 +260,19 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 
 		// Auto-LOD (see computeAutoLodNode above) needs `coord` (pre-`fract()`,
 		// still continuous across a tile seam) - built unless the caller
-		// already supplied an explicit override.
-		const lodNode = options.lodNode || computeAutoLodNode( coord, cpuModel.maxLod, options.lodBias || 0 );
+		// already supplied an explicit override. `lodBias` is always wrapped in
+		// our own `uniform()` node (seeded from a plain-number `options.
+		// lodBias`, or from a node's current `.value` if one was passed) so
+		// `setLodBias` below can retune it live, with no material rebuild -
+		// exactly the upgrade path this option's own doc comment describes.
+		if ( ! options.lodNode ) {
+
+			const initialBias = typeof options.lodBias === 'number' ? options.lodBias : options.lodBias?.value ?? 0;
+			this._lodBiasUniform = uniform( initialBias );
+
+		}
+
+		const lodNode = options.lodNode || computeAutoLodNode( coord, cpuModel.maxLod, this._lodBiasUniform );
 
 		const outputs = evaluateNeuralTextureRaw( tiledUV, cpuModel, this.mipChainTexture, options.renderer || null, lodNode );
 		const slices = sliceChannels( outputs, activeChannels );
@@ -422,6 +434,21 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 		this.mipChainTexture.magFilter = this.interpolation ? THREE.LinearFilter : THREE.NearestFilter;
 		this.mipChainTexture.minFilter = this.interpolation ? THREE.LinearMipmapLinearFilter : THREE.NearestMipmapLinearFilter;
 		this.mipChainTexture.needsUpdate = true;
+
+	}
+
+	/**
+	 * Retunes the auto-LOD bias (see `computeAutoLodNode`'s doc comment) after
+	 * construction - just writes `.value` on the `uniform()` node the
+	 * constructor already built `lodNode` from, so (unlike `lodBias`'s
+	 * one-time-baked plain-number form) this takes effect on the very next
+	 * frame with no material/node-graph rebuild. A no-op when this material
+	 * was built with an explicit `options.lodNode` override, since there's no
+	 * bias uniform feeding into a caller-supplied LOD node.
+	 */
+	setLodBias( bias: number ): void {
+
+		if ( this._lodBiasUniform ) this._lodBiasUniform.value = bias;
 
 	}
 

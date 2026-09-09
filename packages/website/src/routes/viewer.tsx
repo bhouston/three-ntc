@@ -6,6 +6,8 @@ import { useGoogleAnalytics } from 'tanstack-router-ga4';
 import { NTCViewer } from '@/components/NTCViewer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Slider } from '@/components/ui/slider';
 import { EXAMPLE_FILES, type LoadedMaterial, parseNtc } from '@/lib/ntc-examples';
 
 export interface ViewerSearch {
@@ -29,12 +31,14 @@ function ViewerPage() {
   const [loaded, setLoaded] = useState<LoadedMaterial | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [lodBias, setLodBias] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async (text: string, sourceLabel: string) => {
     setLoading(true);
     try {
       const result = await parseNtc(text);
+      result.material?.setLodBias?.(lodBias);
       setLoaded(result);
     } catch (err) {
       console.error(err);
@@ -42,7 +46,7 @@ function ViewerPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [lodBias]);
 
   const loadFromUrl = useCallback(
     async (url: string) => {
@@ -147,6 +151,27 @@ function ViewerPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle>View</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Field>
+              <FieldLabel>LOD bias (force finer): {lodBias.toFixed(2)}</FieldLabel>
+              <Slider
+                min={-4}
+                max={16}
+                step={0.25}
+                value={[lodBias]}
+                onValueChange={([v]) => {
+                  setLodBias(v);
+                  loaded?.material?.setLodBias?.(v);
+                }}
+              />
+            </Field>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Material info</CardTitle>
           </CardHeader>
           <CardContent>
@@ -157,8 +182,45 @@ function ViewerPage() {
                   <dd>{loaded.name}</dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Active channels</dt>
-                  <dd>{loaded.channels.length > 0 ? loaded.channels.join(', ') : '—'}</dd>
+                  <dt className="text-muted-foreground">Latent grids</dt>
+                  <dd>
+                    {loaded.grids.length} (
+                    {loaded.grids.map((g) => `${g.width}×${g.height}×${g.channels} @ ${g.bits}-bit`).join(', ')})
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">MLP layers</dt>
+                  <dd>
+                    {loaded.mlpLayers.length} (
+                    {[loaded.mlpLayers[0]?.inputSize, ...loaded.mlpLayers.map((l) => l.outputSize)].join('→')})
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Channels</dt>
+                  <dd>
+                    <table className="mt-1 w-full text-left text-sm">
+                      <thead>
+                        <tr className="text-muted-foreground">
+                          <th className="pr-4 font-normal">Channel</th>
+                          <th className="font-normal">Source</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {loaded.activeChannels.map((key) => (
+                          <tr key={key}>
+                            <td className="pr-4">{key}</td>
+                            <td>MLP</td>
+                          </tr>
+                        ))}
+                        {loaded.constantChannels.map((key) => (
+                          <tr key={key}>
+                            <td className="pr-4">{key}</td>
+                            <td>Fixed</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </dd>
                 </div>
               </dl>
             ) : (

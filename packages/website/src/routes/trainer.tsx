@@ -6,7 +6,6 @@ import * as THREE from 'three';
 import { defineChart, lineY } from '@tanstack/charts';
 import { scaleLinear } from '@tanstack/charts/scales/linear';
 import { Chart } from '@tanstack/charts/react';
-import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import {
   bakeMaterialToTextures,
   classifyMaterialChannels,
@@ -35,13 +34,11 @@ import { buildChannelActivations, MAX_TOTAL_CHANNELS, NTCNodeMaterial } from 'th
 import { NTCViewer, type NTCViewerShape } from '@/components/NTCViewer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { getSharedRenderer } from '@/lib/renderer';
-import { cn } from '@/lib/utils';
 
 export interface TrainerSearch {
   src?: string;
@@ -155,28 +152,14 @@ function SelectFormField({
   );
 }
 
-// A FieldSet that can collapse its FieldGroup away, legend doubling as the
-// toggle button. Defaults open so existing behavior/layout doesn't change
-// until someone actually clicks a section shut.
-function CollapsibleSection({
-  title,
-  defaultOpen = true,
-  children,
-}: {
-  title: string;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-}) {
+// A plain titled fieldset - every settings group on this page uses this
+// same bordered-box shape, always expanded.
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <Collapsible defaultOpen={defaultOpen} className="rounded-lg border border-border p-4">
-      <CollapsibleTrigger className="group -ml-1 flex w-full items-center gap-1 px-1 text-sm font-medium text-foreground">
-        <ChevronDown className="size-4 shrink-0 transition-transform group-data-[state=closed]:-rotate-90" />
-        {title}
-      </CollapsibleTrigger>
-      <CollapsibleContent className="pt-4">
-        <FieldGroup>{children}</FieldGroup>
-      </CollapsibleContent>
-    </Collapsible>
+    <div className="rounded-lg border border-border p-4">
+      <h2 className="mb-4 text-sm font-medium text-foreground">{title}</h2>
+      <FieldGroup>{children}</FieldGroup>
+    </div>
   );
 }
 
@@ -188,7 +171,6 @@ function TrainerPage() {
   const values = useStore(form.store, (state) => state.values);
 
   const [status, setStatus] = useState('Ready.');
-  const [settingsOpen, setSettingsOpen] = useState(true);
   const [mtlxDragOver, setMtlxDragOver] = useState(false);
   const [sourceName, setSourceName] = useState<string | null>(null);
   const [builtInKey, setBuiltInKey] = useState(DEFAULT_MATERIALX_KEY);
@@ -258,12 +240,9 @@ function TrainerPage() {
     const previous = previewMaterialRef.current;
     const material = new NTCNodeMaterial(cpuModel, classification, {
       renderer,
-      // ponytail: lodBias is only baked in at construction time (a plain
-      // number, not a live TSL uniform) - the simplest option
-      // NTCNodeMaterial's constructor supports. Dragging the slider takes
-      // effect on the next train/rebuild rather than instantly; upgrade path
-      // is passing a shared `uniform(lodBias)` node here and writing its
-      // `.value` on slider change instead.
+      // lodBias is wrapped in a live uniform node by NTCNodeMaterial itself -
+      // this initial value only seeds it; further changes go through
+      // material.setLodBias() (see the lodBias slider below) with no rebuild.
       lodBias,
       interpolation: form.getFieldValue('interpolation'),
     });
@@ -480,39 +459,19 @@ function TrainerPage() {
   }, [form]);
 
   return (
-    <div className="relative flex flex-1 flex-col gap-4 p-4">
-      {/* Settings panel: normal-flow block on mobile (stacked above the
-          viewer); becomes an absolutely-positioned, collapsible overlay on
-          top of the viewer at lg+ - `left-0/top-0/bottom-0` line up with the
-          padding edge the container's own `p-4` already provides, so no
-          doubled-up inset math is needed. */}
-      <div
-        className={cn(
-          'flex flex-col gap-4 overflow-y-auto',
-          'lg:absolute lg:top-0 lg:bottom-0 lg:left-0 lg:z-10 lg:rounded-xl lg:border lg:border-border lg:bg-background/95 lg:p-4 lg:shadow-lg lg:backdrop-blur-sm',
-          settingsOpen ? 'lg:w-[380px]' : 'lg:w-auto',
-        )}
-      >
-        <div className="flex items-center justify-between gap-2">
-          <div className={cn(!settingsOpen && 'lg:hidden')}>
-            <h1 className="text-lg font-semibold">MaterialX Trainer</h1>
-            <p className="text-sm text-muted-foreground">
-              Fit a MaterialX material into a neural texture compression (.ntc) model, right in the browser.
-            </p>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="hidden shrink-0 lg:inline-flex lg:w-8 lg:px-0"
-            onClick={() => setSettingsOpen((open) => !open)}
-            aria-label={settingsOpen ? 'Collapse settings' : 'Expand settings'}
-          >
-            {settingsOpen ? <PanelLeftClose className="size-4" /> : <PanelLeftOpen className="size-4" />}
-          </Button>
+    // 2-column grid at lg+ (settings | main); settings spans both content
+    // rows there so it sits to the left of the viewer and above the loss
+    // graph at once. Single column on mobile, where the `order-*` classes
+    // below give the requested viewer -> settings -> details stacking.
+    <div className="grid flex-1 grid-cols-1 gap-4 p-4 lg:grid-cols-[380px_1fr] lg:grid-rows-[minmax(320px,1fr)_auto]">
+      <div className="order-2 flex flex-col gap-4 overflow-y-auto lg:order-none lg:col-start-1 lg:row-span-2 lg:row-start-1">
+        <div>
+          <h1 className="text-lg font-semibold">MaterialX Trainer</h1>
+          <p className="text-sm text-muted-foreground">
+            Fit a MaterialX material into a neural texture compression (.ntc) model, right in the browser.
+          </p>
         </div>
 
-        <div className={cn('flex flex-col gap-4', !settingsOpen && 'lg:hidden')}>
         <div className="flex flex-wrap gap-2">
           {isTraining ? (
             <Button type="button" variant="outline" onClick={stopTraining}>
@@ -535,7 +494,7 @@ function TrainerPage() {
           </Button>
         </div>
 
-        <CollapsibleSection title="Source">
+        <Section title="Source">
               <Field>
                 <FieldLabel>Built-in MaterialX</FieldLabel>
                 <Select
@@ -596,9 +555,9 @@ function TrainerPage() {
                   />
                 )}
               </form.Field>
-        </CollapsibleSection>
+        </Section>
 
-        <CollapsibleSection title="Network (grid + MLP)">
+        <Section title="Network (grid + MLP)">
               <Field>
                 <FieldLabel>Preset</FieldLabel>
                 <Select value={values.preset} onValueChange={applyPreset}>
@@ -636,9 +595,9 @@ function TrainerPage() {
               <form.Field name="hiddenActivation">
                 {(field) => <SelectFormField field={field} label="MLP hidden activation" options={MLP_ACTIVATION_OPTIONS} />}
               </form.Field>
-        </CollapsibleSection>
+        </Section>
 
-        <CollapsibleSection title="Training">
+        <Section title="Training">
               <form.Field name="batchSize">
                 {(field) => <SelectFormField field={field} label="Batch size" options={BATCH_SIZE_OPTIONS} parse={Number} />}
               </form.Field>
@@ -691,15 +650,15 @@ function TrainerPage() {
                   </SelectContent>
                 </Select>
               </Field>
-        </CollapsibleSection>
+        </Section>
 
-        <CollapsibleSection title="Object">
+        <Section title="Object">
               <form.Field name="shape">
                 {(field) => <SelectFormField field={field} label="Shape" options={SHAPE_OPTIONS} />}
               </form.Field>
-        </CollapsibleSection>
+        </Section>
 
-        <CollapsibleSection title="View">
+        <Section title="View">
               <form.Field name="interpolation">
                 {(field) => (
                   <Field orientation="horizontal">
@@ -725,12 +684,15 @@ function TrainerPage() {
                       max={16}
                       step={0.25}
                       value={[field.state.value]}
-                      onValueChange={([v]) => field.handleChange(v)}
+                      onValueChange={([v]) => {
+                        field.handleChange(v);
+                        previewMaterialRef.current?.setLodBias?.(v);
+                      }}
                     />
                   </Field>
                 )}
               </form.Field>
-        </CollapsibleSection>
+        </Section>
 
         <Card>
           <CardHeader>
@@ -740,15 +702,13 @@ function TrainerPage() {
             <p className="whitespace-pre-line text-sm text-muted-foreground">{status}</p>
           </CardContent>
         </Card>
-        </div>
       </div>
 
-      <div className="flex min-h-[320px] flex-1 flex-col gap-4">
-        <div className="relative min-h-[320px] flex-1 overflow-hidden rounded-xl border border-border bg-black">
-          <NTCViewer material={previewMaterial} teacherMaterial={teacherMaterial} shape={values.shape} />
-        </div>
+      <div className="order-1 min-h-[320px] overflow-hidden rounded-xl border border-border bg-black lg:col-start-2 lg:row-start-1">
+        <NTCViewer material={previewMaterial} teacherMaterial={teacherMaterial} shape={values.shape} />
+      </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[220px_1fr]">
+      <div className="order-3 grid grid-cols-1 gap-4 sm:grid-cols-[220px_1fr] lg:col-start-2 lg:row-start-2">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">Model size</CardTitle>
@@ -775,7 +735,6 @@ function TrainerPage() {
               )}
             </CardContent>
           </Card>
-        </div>
       </div>
     </div>
   );
