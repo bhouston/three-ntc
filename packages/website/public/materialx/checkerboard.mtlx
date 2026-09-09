@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<materialx version="1.39" colorspace="lin_rec709">
+  <nodegraph name="NG_checkerboard">
+    <texcoord name="uv0" type="vector2" />
+    <checkerboard name="checker" type="color3" nodedef="ND_checkerboard_color3">
+      <input name="color1" type="color3" value="0.0, 0.0, 0.0" />
+      <input name="color2" type="color3" value="1.0, 1.0, 1.0" />
+      <input name="uvtiling" type="vector2" value="4.0, 4.0" />
+      <input name="texcoord" type="vector2" nodename="uv0" />
+    </checkerboard>
+    <output name="out" type="color3" nodename="checker" />
+  </nodegraph>
+  <standard_surface name="SR_checkerboard" type="surfaceshader">
+    <input name="base_color" type="color3" nodegraph="NG_checkerboard" output="out" />
+    <input name="specular" type="float" value="0.9" />
+    <input name="specular_roughness" type="float" value="0.22" />
+    <input name="metalness" type="float" value="0.0" />
+    <input name="coat" type="float" value="0.0" />
+  </standard_surface>
+  <surfacematerial name="M_checkerboard" type="material">
+    <input name="surfaceshader" type="surfaceshader" nodename="SR_checkerboard" />
+  </surfacematerial>
+</materialx>

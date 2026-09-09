@@ -1,0 +1,12 @@
+node_modules
+dist
+.output
+.nitro
+.tanstack
+coverage
+*.tsbuildinfo
+.env
+.env.*
+.DS_Store
+.idea
+.vscode

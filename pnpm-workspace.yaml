@@ -1,0 +1,10 @@
+packages:
+  - packages/*
+
+allowBuilds:
+  esbuild: true
+
+link-workspace-packages: true
+
+minimumReleaseAgeExclude:
+  - three@0.186.0

@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<materialx version="1.39">
+  <gltf_pbr name="surface_shader1" type="surfaceshader">
+    <input name="base_color" type="color3" value="0.12, 0.72, 0.28" />
+    <input name="metallic" type="float" value="0.0" />
+    <input name="roughness" type="float" value="0.65" />
+    <input name="alpha" type="float" output="out" nodegraph="alpha_wave_graph" />
+    <input name="alpha_mode" type="integer" value="1" />
+    <input name="alpha_cutoff" type="float" value="0.5" />
+  </gltf_pbr>
+  <surfacematerial name="mat_neural_train_alpha_cutoff" type="material">
+    <input name="surfaceshader" type="surfaceshader" nodename="surface_shader1" />
+  </surfacematerial>
+  <nodegraph name="alpha_wave_graph">
+    <texcoord name="texcoord1" type="vector2" />
+    <separate2 name="uv_components" type="vector2">
+      <input name="in" type="vector2" nodename="texcoord1" />
+    </separate2>
+    <multiply name="u_phase" type="float">
+      <input name="in1" type="float" nodename="uv_components" output="outx" />
+      <input name="in2" type="float" value="25.132741" />
+    </multiply>
+    <multiply name="v_phase" type="float">
+      <input name="in1" type="float" nodename="uv_components" output="outy" />
+      <input name="in2" type="float" value="12.566371" />
+    </multiply>
+    <add name="phase" type="float">
+      <input name="in1" type="float" nodename="u_phase" />
+      <input name="in2" type="float" nodename="v_phase" />
+    </add>
+    <sin name="sin_wave" type="float">
+      <input name="in" type="float" nodename="phase" />
+    </sin>
+    <multiply name="scaled_wave" type="float">
+      <input name="in1" type="float" nodename="sin_wave" />
+      <input name="in2" type="float" value="0.5" />
+    </multiply>
+    <add name="alpha_out" type="float">
+      <input name="in1" type="float" nodename="scaled_wave" />
+      <input name="in2" type="float" value="0.5" />
+    </add>
+    <output name="out" type="float" nodename="alpha_out" />
+  </nodegraph>
+</materialx>

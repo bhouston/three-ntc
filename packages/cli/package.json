@@ -1,0 +1,22 @@
+{
+  "name": "@three-ntc/cli",
+  "version": "0.0.0",
+  "description": "Command-line trainer for three-ntc. Stub — not yet functional.",
+  "type": "module",
+  "bin": {
+    "three-ntc": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w --preserveWatchOutput --noEmitOnError",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "three-ntc-trainer": "workspace:*",
+    "yargs": "^18.1.0",
+    "yargs-file-commands": "^1.2.2"
+  }
+}

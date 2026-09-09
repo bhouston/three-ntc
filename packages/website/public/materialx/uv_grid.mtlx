@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<materialx version="1.39">
+  <surfacematerial name="mat_neural_train_uv_grid" type="material" nodedef="ND_surfacematerial">
+    <input name="surfaceshader" type="surfaceshader" nodename="surface_shader1" />
+  </surfacematerial>
+  <standard_surface name="surface_shader1" type="surfaceshader" nodedef="ND_standard_surface_surfaceshader">
+    <input name="base_color" type="color3" output="out" nodegraph="uv_rainbow_color" />
+    <input name="specular_roughness" type="float" value="1.0" />
+    <input name="metalness" type="float" value="0.0" />
+    <input name="coat" type="float" value="0.0" />
+  </standard_surface>
+  <nodegraph name="uv_rainbow_color">
+    <texcoord name="texcoord1" type="vector2" />
+    <separate2 name="uv_components" type="vector2">
+      <input name="in" type="vector2" nodename="texcoord1" />
+    </separate2>
+    <multiply name="u_phase" type="float">
+      <input name="in1" type="float" nodename="uv_components" output="outx" />
+      <input name="in2" type="float" value="25.132741" />
+    </multiply>
+    <multiply name="v_phase" type="float">
+      <input name="in1" type="float" nodename="uv_components" output="outy" />
+      <input name="in2" type="float" value="12.566371" />
+    </multiply>
+    <add name="base_phase" type="float">
+      <input name="in1" type="float" nodename="u_phase" />
+      <input name="in2" type="float" nodename="v_phase" />
+    </add>
+    <add name="g_phase" type="float">
+      <input name="in1" type="float" nodename="base_phase" />
+      <input name="in2" type="float" value="2.094395" />
+    </add>
+    <add name="b_phase" type="float">
+      <input name="in1" type="float" nodename="base_phase" />
+      <input name="in2" type="float" value="4.188790" />
+    </add>
+    <sin name="sin_r" type="float">
+      <input name="in" type="float" nodename="base_phase" />
+    </sin>
+    <sin name="sin_g" type="float">
+      <input name="in" type="float" nodename="g_phase" />
+    </sin>
+    <sin name="sin_b" type="float">
+      <input name="in" type="float" nodename="b_phase" />
+    </sin>
+    <multiply name="scaled_r" type="float">
+      <input name="in1" type="float" nodename="sin_r" />
+      <input name="in2" type="float" value="0.5" />
+    </multiply>
+    <multiply name="scaled_g" type="float">
+      <input name="in1" type="float" nodename="sin_g" />
+      <input name="in2" type="float" value="0.5" />
+    </multiply>
+    <multiply name="scaled_b" type="float">
+      <input name="in1" type="float" nodename="sin_b" />
+      <input name="in2" type="float" value="0.5" />
+    </multiply>
+    <add name="r_channel" type="float">
+      <input name="in1" type="float" nodename="scaled_r" />
+      <input name="in2" type="float" value="0.5" />
+    </add>
+    <add name="g_channel" type="float">
+      <input name="in1" type="float" nodename="scaled_g" />
+      <input name="in2" type="float" value="0.5" />
+    </add>
+    <add name="b_channel" type="float">
+      <input name="in1" type="float" nodename="scaled_b" />
+      <input name="in2" type="float" value="0.5" />
+    </add>
+    <combine3 name="rainbow_color" type="color3">
+      <input name="in1" type="float" nodename="r_channel" />
+      <input name="in2" type="float" nodename="g_channel" />
+      <input name="in3" type="float" nodename="b_channel" />
+    </combine3>
+    <output name="out" type="color3" nodename="rainbow_color" />
+  </nodegraph>
+</materialx>

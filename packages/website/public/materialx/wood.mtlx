@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<materialx version="1.39">
+  <surfacematerial name="mat_wood" type="material" nodedef="ND_surfacematerial">
+    <input name="surfaceshader" type="surfaceshader" nodename="surface_shader1" />
+  </surfacematerial>
+  <standard_surface name="surface_shader1" type="surfaceshader" nodedef="ND_standard_surface_surfaceshader">
+    <input name="base_color" type="color3" nodegraph="wood_graph" output="base_color_out" />
+    <input name="specular_roughness" type="float" nodegraph="wood_graph" output="roughness_out" />
+    <input name="normal" type="vector3" nodegraph="wood_graph" output="normal_out" />
+    <input name="metalness" type="float" value="0.2" />
+    <input name="specular" type="float" value="1.0" />
+  </standard_surface>
+  <nodegraph name="wood_graph">
+    <image name="diffuse_image" type="color3">
+      <input name="file" type="filename" value="../textures/hardwood2_diffuse.jpg" />
+      <input name="default" type="color3" value="0.6, 0.4, 0.2" />
+    </image>
+    <image name="roughness_image" type="float">
+      <input name="file" type="filename" value="../textures/hardwood2_roughness.jpg" />
+      <input name="default" type="float" value="0.8" />
+    </image>
+    <multiply name="roughness_scaled" type="float">
+      <input name="in1" type="float" nodename="roughness_image" />
+      <input name="in2" type="float" value="0.8" />
+    </multiply>
+    <image name="bump_image" type="float">
+      <input name="file" type="filename" value="../textures/hardwood2_bump.jpg" />
+      <input name="default" type="float" value="0.5" />
+    </image>
+    <bump name="bump_to_normal" type="vector3">
+      <input name="height" type="float" nodename="bump_image" />
+      <input name="scale" type="float" value="1.0" />
+    </bump>
+    <output name="base_color_out" type="color3" nodename="diffuse_image" />
+    <output name="roughness_out" type="float" nodename="roughness_scaled" />
+    <output name="normal_out" type="vector3" nodename="bump_to_normal" />
+  </nodegraph>
+</materialx>

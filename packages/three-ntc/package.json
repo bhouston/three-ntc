@@ -1,0 +1,26 @@
+{
+  "name": "three-ntc",
+  "version": "0.0.0",
+  "description": "Neural Texture Compression runtime for three.js — load .ntc files as a node material.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w --preserveWatchOutput --noEmitOnError",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "three": ">=0.180.0"
+  },
+  "devDependencies": {
+    "three": "^0.186.0"
+  }
+}
