@@ -153,14 +153,14 @@ function SelectFormField({
   );
 }
 
-// A plain titled fieldset - every settings group on this page uses this
-// same bordered-box shape, always expanded.
+// A collapsible settings group - no card/box, just a bold header you can
+// toggle. Native <details> gives us open/close state and a11y for free.
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-border p-4">
-      <h2 className="mb-4 text-sm font-medium text-foreground">{title}</h2>
-      <FieldGroup>{children}</FieldGroup>
-    </div>
+    <details className="py-3 first:pt-0" open>
+      <summary className="cursor-pointer text-sm font-bold text-foreground select-none">{title}</summary>
+      <FieldGroup className="mt-4">{children}</FieldGroup>
+    </details>
   );
 }
 
@@ -520,7 +520,7 @@ function TrainerPage() {
               </Field>
 
               <div
-                className={`flex items-center gap-2 rounded-lg border-2 border-dashed p-2 transition-colors ${
+                className={`flex items-center gap-2 border-2 border-dashed p-2 transition-colors ${
                   mtlxDragOver ? 'border-primary bg-accent' : 'border-transparent'
                 }`}
                 onDragOver={(e) => {
@@ -705,7 +705,7 @@ function TrainerPage() {
         </Card>
       </div>
 
-      <div className="order-1 min-h-[320px] overflow-hidden rounded-xl border border-border bg-black lg:col-start-2 lg:row-start-1">
+      <div className="order-1 min-h-[320px] overflow-hidden border border-border bg-black lg:col-start-2 lg:row-start-1">
         <NTCViewer material={previewMaterial} teacherMaterial={teacherMaterial} shape={values.shape} />
       </div>
 
