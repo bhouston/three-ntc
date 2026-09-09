@@ -46,7 +46,7 @@ export {
 	DEFAULT_MIPS_PER_LEVEL
 } from './NTCGridModel.js';
 
-export { createNTCGridPyramidModel, resolveNTCGridPyramidOptions } from './NTCGridPyramidModel.js';
+export { createNTCGridPyramidModel, resolveNTCGridPyramidOptions, computeDecoderInputSize } from './NTCGridPyramidModel.js';
 export type { NTCGridPyramidModel, NTCGridPyramidOptions } from './NTCGridPyramidModel.js';
 
 export { NTCGPUModel, computeTextureModelLayout } from './NTCGPUModel.js';

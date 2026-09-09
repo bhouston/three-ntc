@@ -13,12 +13,14 @@ const ROTATION_SPEED = (2 * Math.PI) / 30;
 // Vertical FOV at aspect 1:1 - the reference frame the mesh is sized to fit.
 const BASE_FOV_DEG = 45;
 
-// PerspectiveCamera.fov is a *vertical* angle, so on a tall/narrow viewport
-// (aspect < 1) the horizontal extent shrinks below BASE_FOV_DEG and crops the
-// mesh's sides. Widen the vertical FOV to compensate, keeping the horizontal
-// extent pinned to the aspect-1 baseline - like CSS `object-fit: contain`.
+// PerspectiveCamera.fov is a *vertical* angle, so the horizontal extent it
+// shows depends on aspect. Solve for the vertical FOV that keeps the
+// *horizontal* extent pinned to the aspect-1 baseline at every aspect ratio -
+// narrower on tall/narrow viewports (aspect < 1, prevents cropping the
+// mesh's sides) and narrower still on wide ones (aspect > 1, so the mesh
+// fills the width instead of shrinking into a wide frame). Content crops
+// top/bottom rather than left/right - `object-fit: cover` on width.
 function fitFovDeg(aspect: number): number {
-  if (aspect >= 1) return BASE_FOV_DEG;
   const halfWidth = Math.tan(THREE.MathUtils.degToRad(BASE_FOV_DEG) / 2);
   return THREE.MathUtils.radToDeg(2 * Math.atan(halfWidth / aspect));
 }

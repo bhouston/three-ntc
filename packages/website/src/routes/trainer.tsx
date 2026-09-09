@@ -9,6 +9,7 @@ import { Chart } from '@tanstack/charts/react';
 import {
   bakeMaterialToTextures,
   classifyMaterialChannels,
+  computeDecoderInputSize,
   computeGridLatentTexels,
   computeGridLevels,
   computeMLPFlops,
@@ -76,6 +77,7 @@ type FormValues = {
   baseResolution: number;
   hiddenSize: number;
   hiddenActivation: string;
+  positionalEncoding: boolean;
   batchSize: number;
   iterations: number;
   learningRate: number;
@@ -92,6 +94,7 @@ const DEFAULT_VALUES: FormValues = {
   baseResolution: 256,
   hiddenSize: 8,
   hiddenActivation: 'relu',
+  positionalEncoding: false,
   batchSize: 8192,
   iterations: 10000,
   learningRate: 0.01,
@@ -388,6 +391,7 @@ function TrainerPage() {
         baseResolution: Number(values.baseResolution),
         hiddenSizes: [Number(values.hiddenSize), Number(values.hiddenSize)],
         hiddenActivation: values.hiddenActivation,
+        positionalEncoding: values.positionalEncoding,
         outputChannels: channelClassification.totalChannels,
         channelActivations: buildChannelActivations(channelClassification.activeChannels) as string[],
         batchSize: Number(values.batchSize),
@@ -447,12 +451,12 @@ function TrainerPage() {
     const resolutions = computeGridLevels(Number(values.baseResolution), Number(values.levels));
     const latentTexels = computeGridLatentTexels(resolutions);
     const gridParams = latentTexels * channels;
-    const inputSize = channels + 1;
+    const inputSize = computeDecoderInputSize(channels, values.positionalEncoding);
     const mlpSpec = { inputSize, hiddenSize: Number(values.hiddenSize), hiddenLayers: 2, outputSize: outputChannels };
     const mlpParams = computeMLPParamCount(mlpSpec);
     const flops = computeMLPFlops(mlpSpec);
     return formatModelSizeSummary(computeModelFootprint({ gridParams, mlpParams, flops }));
-  }, [channelClassification, values.baseResolution, values.levels, values.hiddenSize]);
+  }, [channelClassification, values.baseResolution, values.levels, values.hiddenSize, values.positionalEncoding]);
 
   const applyPreset = useCallback((name: string) => {
     form.setFieldValue('preset', name);
@@ -600,6 +604,14 @@ function TrainerPage() {
               </form.Field>
               <form.Field name="hiddenActivation">
                 {(field) => <SelectFormField field={field} label="MLP hidden activation" options={MLP_ACTIVATION_OPTIONS} />}
+              </form.Field>
+              <form.Field name="positionalEncoding">
+                {(field) => (
+                  <Field orientation="horizontal">
+                    <FieldLabel htmlFor={field.name}>Positional encoding (NTC paper §4.3)</FieldLabel>
+                    <Switch id={field.name} checked={field.state.value} onCheckedChange={(checked) => field.handleChange(checked)} />
+                  </Field>
+                )}
               </form.Field>
         </Section>
 
