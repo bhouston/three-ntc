@@ -85,10 +85,12 @@ export function NTCViewer({
   material,
   teacherMaterial = null,
   shape = 'sphere',
+  cameraDistance = 3,
 }: {
   material: any;
   teacherMaterial?: any;
   shape?: NTCViewerShape;
+  cameraDistance?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const meshRef = useRef<any>(null);
@@ -104,7 +106,7 @@ export function NTCViewer({
     scene.background = new THREE.Color(0x1a1a1a);
 
     const camera = new THREE.PerspectiveCamera(BASE_FOV_DEG, 1, 0.1, 100);
-    camera.position.set(0, 0, 3);
+    camera.position.set(0, 0, cameraDistance);
 
     const renderer = new WebGPURenderer({ canvas, antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));

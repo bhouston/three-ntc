@@ -710,8 +710,8 @@ function TrainerPage() {
         </Card>
       </div>
 
-      <div className="order-1 min-h-[320px] max-h-[80cqw] overflow-hidden border border-border bg-black [container-type:inline-size] lg:col-start-2 lg:row-start-1">
-        <NTCViewer material={previewMaterial} teacherMaterial={teacherMaterial} shape={values.shape} />
+      <div className="order-1 min-h-[320px] max-h-[60cqw] overflow-hidden border border-border bg-black [container-type:inline-size] lg:col-start-2 lg:row-start-1">
+        <NTCViewer material={previewMaterial} teacherMaterial={teacherMaterial} shape={values.shape} cameraDistance={2.2} />
       </div>
 
       <div className="order-3 grid grid-cols-1 gap-4 sm:grid-cols-[220px_1fr] lg:col-start-2 lg:row-start-2">
