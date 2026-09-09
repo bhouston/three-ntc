@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { NTCLoader, NTCNodeMaterial } from 'three-ntc';
 
@@ -76,6 +76,11 @@ function ViewerPage() {
     [load],
   );
 
+  useEffect(() => {
+    void loadFromUrl(EXAMPLE_FILES[0].value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="grid flex-1 grid-cols-1 gap-4 p-4 md:grid-cols-[1fr_320px]">
       <div className="relative min-h-[320px] overflow-hidden rounded-xl border border-border bg-black">
@@ -94,15 +99,12 @@ function ViewerPage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <select
-              defaultValue=""
+              defaultValue={EXAMPLE_FILES[0].value}
               onChange={(e) => {
                 if (e.target.value) void loadFromUrl(e.target.value);
               }}
               className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value="" disabled>
-                Choose an example…
-              </option>
               {EXAMPLE_FILES.map((f) => (
                 <option key={f.value} value={f.value}>
                   {f.label}

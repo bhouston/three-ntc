@@ -56,7 +56,7 @@ const QUANTIZATION_OPTIONS: Array<{ value: 'none' | 'uint8'; label: string }> = 
   { value: 'uint8', label: '8-bit' },
 ];
 const SHAPE_OPTIONS: NTCViewerShape[] = ['torus', 'sphere', 'plane'];
-const DEFAULT_MATERIALX_KEY = 'checkerboard_normal';
+const DEFAULT_MATERIALX_KEY = 'brick';
 
 type FormValues = {
   bakeResolution: number;
