@@ -38,11 +38,8 @@ function RootLayout() {
     <div className="flex min-h-svh flex-col">
       <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-3">
         <div className="flex items-center gap-4">
-          <span className="font-semibold">three-ntc</span>
+          <Link to="/" className="font-semibold">three-ntc</Link>
           <nav className="flex gap-4 text-sm">
-            <Link to="/" className="text-primary underline underline-offset-4" activeProps={{ className: 'font-semibold' }}>
-              Home
-            </Link>
             <Link
               to="/viewer"
               className="text-primary underline underline-offset-4"
@@ -73,12 +70,12 @@ function RootLayout() {
       </div>
       <footer className="border-t border-border">
         <p className="flex items-center justify-center gap-1 px-4 py-3 text-sm text-muted-foreground">
-          Made by
+          Made with
+          <HeartIcon className="size-3.5 fill-current text-destructive" aria-hidden />
+          by
           <a href="https://ben3d.ca" className="text-primary underline underline-offset-4">
             Ben Houston
           </a>
-          with
-          <HeartIcon className="size-3.5 fill-current text-destructive" aria-hidden />
           <span className="sr-only">love</span>
           — sponsored by
           <a href="https://landofassets.com" className="text-primary underline underline-offset-4">

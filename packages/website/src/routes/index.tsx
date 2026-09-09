@@ -7,6 +7,9 @@ import { EXAMPLE_FILES, loadNtcFromUrl } from '@/lib/ntc-examples';
 
 export const Route = createFileRoute('/')({
   component: HomePage,
+  head: () => ({
+    meta: [{ title: 'Three-NTC: Neural Texture Compression for Three.JS' }],
+  }),
 });
 
 const NTC_PAPER_URL = 'https://research.nvidia.com/labs/rtr/neural_texture_compression/';

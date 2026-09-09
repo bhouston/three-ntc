@@ -16,6 +16,7 @@ import {
   computeMLPParamCount,
   computeModelFootprint,
   formatModelSizeSummary,
+  getMaterialXSampleUrl,
   GRID_BASE_RESOLUTION_OPTIONS,
   GRID_LEVELS_OPTIONS,
   getNTCProfile,
@@ -42,8 +43,18 @@ import { Switch } from '@/components/ui/switch';
 import { getSharedRenderer } from '@/lib/renderer';
 import { cn } from '@/lib/utils';
 
+export interface TrainerSearch {
+  src?: string;
+}
+
 export const Route = createFileRoute('/trainer')({
   component: TrainerPage,
+  validateSearch: (search: Record<string, unknown>): TrainerSearch => ({
+    src: typeof search.src === 'string' ? search.src : undefined,
+  }),
+  head: () => ({
+    meta: [{ title: 'Three-NTC Trainer' }],
+  }),
 });
 
 const BAKE_RESOLUTION_OPTIONS = [128, 256, 512, 1024, 2048, 4096];
@@ -171,6 +182,8 @@ function CollapsibleSection({
 
 function TrainerPage() {
   const ga = useGoogleAnalytics();
+  const navigate = Route.useNavigate();
+  const { src } = Route.useSearch();
   const form = useForm({ defaultValues: DEFAULT_VALUES });
   const values = useStore(form.store, (state) => state.values);
 
@@ -292,28 +305,46 @@ function TrainerPage() {
     );
   }, [disposeSourceTextures]);
 
-  const loadBuiltInMaterial = useCallback(async (key: string) => {
-    const sample = MATERIALX_SAMPLES.find((s) => s.key === key);
-    if (!sample) return;
+  // Loads a MaterialX document from a URL - relative (matches a built-in
+  // sample's own URL) or a full URL (external material shared via a link).
+  // No `setPath`: MaterialXLoader resolves each referenced texture against
+  // this URL's own directory, so both cases "just work" the same way.
+  const loadMaterialXUrl = useCallback(async (url: string) => {
     try {
-      setStatus(`Loading ${sample.file}...`);
-      const loader = new MaterialXLoader().setPath('/materialx/');
-      const asset: any = await loader.loadAsync(sample.file, { uvSpace: 'top-left', throwOnErrors: true });
+      setStatus(`Loading ${url}...`);
+      const loader = new MaterialXLoader();
+      const asset: any = await loader.loadAsync(url, { uvSpace: 'top-left', throwOnErrors: true });
       const materials = asset?.materials ?? asset;
       const material = Object.values(materials).find(isPhysicalNodeMaterial) ?? Object.values(materials)[0];
       if (!material) throw new Error('MaterialXLoader did not produce any materials.');
       if (asset.texturesReady) await asset.texturesReady;
-      setSourceMaterial(material, sample.file);
+      setSourceMaterial(material, url);
     } catch (err) {
       console.error(err);
       setStatus(errorMessage(err));
     }
   }, [setSourceMaterial]);
 
+  const loadBuiltInMaterial = useCallback(async (key: string) => {
+    const url = getMaterialXSampleUrl(key);
+    if (!url) return;
+    setBuiltInKey(key);
+    await loadMaterialXUrl(url);
+  }, [loadMaterialXUrl]);
+
+  // ?src= drives the loaded material - a relative URL matches a built-in
+  // sample by its own URL, a full URL loads external material shared via
+  // that link. Falls back to the default built-in sample when absent.
   useEffect(() => {
-    void loadBuiltInMaterial(DEFAULT_MATERIALX_KEY);
+    if (src) {
+      const sample = MATERIALX_SAMPLES.find((s) => getMaterialXSampleUrl(s.key) === src);
+      setBuiltInKey(sample?.key ?? '');
+      void loadMaterialXUrl(src);
+    } else {
+      void loadBuiltInMaterial(DEFAULT_MATERIALX_KEY);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [src]);
 
   const loadMtlxFile = useCallback(async (file: File) => {
     try {
@@ -325,12 +356,13 @@ function TrainerPage() {
       if (!material) throw new Error('MaterialXLoader did not produce any materials.');
       if (asset.texturesReady) await asset.texturesReady;
       setBuiltInKey('');
+      void navigate({ search: {} });
       setSourceMaterial(material, file.name);
     } catch (err) {
       console.error(err);
       setStatus(errorMessage(err));
     }
-  }, [setSourceMaterial]);
+  }, [setSourceMaterial, navigate]);
 
   const onMtlxFileSelected = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -509,9 +541,8 @@ function TrainerPage() {
                 <Select
                   value={builtInKey}
                   onValueChange={(key) => {
-                    setBuiltInKey(key);
                     ga.event('trainer-default-materialx', { materialx_key: key });
-                    void loadBuiltInMaterial(key);
+                    void navigate({ search: { src: getMaterialXSampleUrl(key) } });
                   }}
                   disabled={isTraining}
                 >

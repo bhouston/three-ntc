@@ -8,12 +8,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EXAMPLE_FILES, type LoadedMaterial, parseNtc } from '@/lib/ntc-examples';
 
+export interface ViewerSearch {
+  src?: string;
+}
+
 export const Route = createFileRoute('/viewer')({
   component: ViewerPage,
+  validateSearch: (search: Record<string, unknown>): ViewerSearch => ({
+    src: typeof search.src === 'string' ? search.src : undefined,
+  }),
+  head: () => ({
+    meta: [{ title: 'Three-NTC Viewer' }],
+  }),
 });
 
 function ViewerPage() {
   const ga = useGoogleAnalytics();
+  const navigate = Route.useNavigate();
+  const { src } = Route.useSearch();
   const [loaded, setLoaded] = useState<LoadedMaterial | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,14 +59,18 @@ function ViewerPage() {
   const loadFromFile = useCallback(
     async (file: File) => {
       await load(await file.text(), file.name);
+      void navigate({ search: {} });
     },
-    [load],
+    [load, navigate],
   );
 
+  // ?src= drives the loaded material - a relative URL matches an example by
+  // its `value`, a full URL loads external material shared via that link.
+  // Falls back to the first example when the param is absent.
   useEffect(() => {
-    void loadFromUrl(EXAMPLE_FILES[0].value);
+    void loadFromUrl(src ?? EXAMPLE_FILES[0].value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [src]);
 
   return (
     <div className="grid flex-1 grid-cols-1 gap-4 p-4 md:grid-cols-[1fr_320px]">
@@ -74,11 +90,11 @@ function ViewerPage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <select
-              defaultValue={EXAMPLE_FILES[0].value}
+              value={src ?? EXAMPLE_FILES[0].value}
               onChange={(e) => {
                 if (!e.target.value) return;
                 ga.event('viewer-default-ntc', { ntc_file: e.target.value });
-                void loadFromUrl(e.target.value);
+                void navigate({ search: { src: e.target.value } });
               }}
               className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
