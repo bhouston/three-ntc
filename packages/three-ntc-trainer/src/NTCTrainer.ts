@@ -59,6 +59,13 @@ const DEFAULT_OPTIONS = {
 	// default) or 'hgelu' (the NVIDIA neural texture compression paper's own
 	// cheap GELU approximation, Section 4.4).
 	hiddenActivation: 'relu',
+	// Optional (default off) - see NTCGridPyramidModel.js's
+	// `computeDecoderInputSize` doc comment: the NVIDIA neural texture
+	// compression paper's Section 4.3 decoder input (4 concatenated raw
+	// neighbor taps + 12 tiled positional-encoding scalars) instead of this
+	// addon's original plain bilinear tap. Larger/slower decoder input, may
+	// reconstruct sharper sub-grid-resolution detail.
+	positionalEncoding: false,
 	outputChannels: 3,
 	batchSize: 4096,
 	learningRate: 0.01,
@@ -87,6 +94,7 @@ interface NTCTrainerOptions {
 	mipsPerLevel?: number;
 	hiddenSizes?: number[];
 	hiddenActivation?: string;
+	positionalEncoding?: boolean;
 	outputChannels?: number;
 	batchSize?: number;
 	learningRate?: number;

@@ -49,19 +49,40 @@ function packHalfFloatRGBA( data: Float32Array | number[], channels = 4 ): Uint1
  * full float, since RGBA32F isn't filterable under WebGPU without an opt-in
  * feature), repeat-or-clamp wrap, linear filtering, no mipmaps.
  */
-function createHalfFloatLatentTexture( data: Float32Array | number[], width: number, height: number, { channels = 4, wrap = RepeatWrapping }: { channels?: number; wrap?: any } = {} ): any {
+function createHalfFloatLatentTexture( data: Float32Array | number[], width: number, height: number, { channels = 4, wrap = RepeatWrapping, filter = LinearFilter }: { channels?: number; wrap?: any; filter?: any } = {} ): any {
 
 	const packed = packHalfFloatRGBA( data, channels );
 	const texture = new DataTexture( packed, width, height, RGBAFormat, HalfFloatType );
 
 	texture.wrapS = wrap;
 	texture.wrapT = wrap;
-	texture.magFilter = LinearFilter;
-	texture.minFilter = LinearFilter;
+	texture.magFilter = filter;
+	texture.minFilter = filter;
 	texture.generateMipmaps = false;
 	texture.needsUpdate = true;
 
 	return texture;
+
+}
+
+/**
+ * Builds one raw, unfiltered (`NearestFilter`) `DataTexture` per stored
+ * grid level - used only by the `positionalEncoding` decoder path
+ * (NTCDecoderTSL.js), which needs exact individual texel values (its own
+ * "4-tap learned interpolation", NVIDIA paper Section 4.3.1) rather than a
+ * hardware-bilinear/trilinear blend. `NearestFilter` + `RepeatWrapping`
+ * means sampling at a texel center's UV returns that exact stored value,
+ * with wraparound handled by the sampler - matching NTCGPUComputeTSL.js's
+ * training kernel's own `wrapIndexTSL` addressing without needing to
+ * reproduce that index math here.
+ */
+function buildLevelTextures( cpuModel: NTCMipChainModel ): any[] {
+
+	return cpuModel.grids.map( ( grid ) => createHalfFloatLatentTexture( grid.data, grid.width, grid.height, {
+		channels: grid.channels,
+		wrap: RepeatWrapping,
+		filter: NearestFilter
+	} ) );
 
 }
 
@@ -280,4 +301,4 @@ function buildMipChainTexture( cpuModel: NTCMipChainModel, { interpolation = tru
 
 }
 
-export { packHalfFloatRGBA, createHalfFloatLatentTexture, buildMipChainLevels, buildMipChainTexture };
+export { packHalfFloatRGBA, createHalfFloatLatentTexture, buildLevelTextures, buildMipChainLevels, buildMipChainTexture };

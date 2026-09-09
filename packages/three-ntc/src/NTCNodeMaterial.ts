@@ -3,7 +3,7 @@ import * as THREE from 'three';
 // not the base 'three' entrypoint - see `three-shims.d.ts`.
 import { MeshPhysicalNodeMaterial } from 'three/webgpu';
 import { bitangentWorld, fract, log, max, min, step, tangentWorld, uniform, uv, vec2, vec3, vec4 } from 'three/tsl';
-import { buildMipChainTexture, evaluateNeuralTextureRaw, NTCCpuModel } from './NTCDecoderTSL.js';
+import { buildMipChainTexture, buildLevelTextures, evaluateNeuralTextureRaw, NTCCpuModel } from './NTCDecoderTSL.js';
 import { applyChannelActivation } from './NTCOutputActivations.js';
 import { CHANNELS, FRAME_VIEWS, getChannel, buildDebugViewColorNode, buildFrameViewColorNode, NTCChannel, NTCLayoutChannel } from './NTCFormat.js';
 import { constantToNode, reconstructFinalNormal } from './NTCOutputTypes.js';
@@ -157,6 +157,7 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 	channels: NTCChannel[];
 	interpolation: boolean;
 	mipChainTexture: any;
+	levelTextures: any[] | null;
 	uvTransform: any;
 
 	private _localUv: any;
@@ -233,7 +234,12 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 		// display-time sampler setting, so toggling it later (setInterpolation)
 		// never needs a reload/retrain.
 		this.interpolation = options.interpolation !== false;
-		this.mipChainTexture = buildMipChainTexture( cpuModel, { interpolation: this.interpolation } );
+		// `positionalEncoding` models (see NTCDecoderTSL.js's
+		// `evaluatePositionalEncodingFeatures`) fetch raw texels from one
+		// `DataTexture` per stored level instead of sampling the mip-chain
+		// texture - build only whichever this model actually needs.
+		this.mipChainTexture = cpuModel.positionalEncoding ? null : buildMipChainTexture( cpuModel, { interpolation: this.interpolation } );
+		this.levelTextures = cpuModel.positionalEncoding ? buildLevelTextures( cpuModel ) : null;
 
 		// Maps mesh/query UV into the local space this model's grids + MLP
 		// were actually fit against - `options.uvTransform` overrides
@@ -274,7 +280,7 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 
 		const lodNode = options.lodNode || computeAutoLodNode( coord, cpuModel.maxLod, this._lodBiasUniform );
 
-		const outputs = evaluateNeuralTextureRaw( tiledUV, cpuModel, this.mipChainTexture, options.renderer || null, lodNode );
+		const outputs = evaluateNeuralTextureRaw( tiledUV, cpuModel, this.mipChainTexture, options.renderer || null, lodNode, this.levelTextures );
 		const slices = sliceChannels( outputs, activeChannels );
 		this._slices = slices;
 		this._constantValues = constantValues;
@@ -430,6 +436,13 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 	 */
 	setInterpolation( enabled: boolean ): void {
 
+		// No-op for a `positionalEncoding` model: its `levelTextures` are
+		// always raw/`NearestFilter` (see NTCDecoderTSL.js's
+		// `evaluatePositionalEncodingFeatures` - it needs exact texel values,
+		// not a filtered blend), so there is no mip-chain texture here to
+		// retune.
+		if ( ! this.mipChainTexture ) return;
+
 		this.interpolation = Boolean( enabled );
 		this.mipChainTexture.magFilter = this.interpolation ? THREE.LinearFilter : THREE.NearestFilter;
 		this.mipChainTexture.minFilter = this.interpolation ? THREE.LinearMipmapLinearFilter : THREE.NearestMipmapLinearFilter;
@@ -454,7 +467,8 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 
 	dispose(): void {
 
-		this.mipChainTexture.dispose();
+		if ( this.mipChainTexture ) this.mipChainTexture.dispose();
+		if ( this.levelTextures ) for ( const texture of this.levelTextures ) texture.dispose();
 
 		super.dispose();
 

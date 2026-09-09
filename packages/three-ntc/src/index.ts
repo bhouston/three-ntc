@@ -32,6 +32,13 @@ export type { NTCActivation } from './NTCOutputActivations.js';
 export { selectFeatureLevel, selectFeatureLevelTSL } from './NTCMipBands.js';
 
 export {
+	computeTiledPositionalEncodingTSL,
+	triangleWaveTSL,
+	POSITIONAL_ENCODING_OCTAVES,
+	POSITIONAL_ENCODING_SIZE
+} from './NTCPositionalEncodingTSL.js';
+
+export {
 	base64FromBytes,
 	bytesFromBase64,
 	float32ToFloat16,

@@ -1,4 +1,5 @@
 import { Matrix3 } from 'three';
+import { POSITIONAL_ENCODING_SIZE } from 'three-ntc';
 import { createMLP, type MLP } from './NTCMLP.js';
 import { computeGridLevels, createLatentGrid, LATENT_INIT_SCALE, DEFAULT_MIPS_PER_LEVEL, MAX_GRID_RESOLUTION, type LatentGrid } from './NTCGridModel.js';
 
@@ -12,6 +13,7 @@ interface NTCGridPyramidOptions {
 	outputChannels?: number;
 	textureResolution?: number;
 	uvTransform?: any;
+	positionalEncoding?: boolean;
 	[key: string]: unknown;
 }
 
@@ -25,6 +27,32 @@ interface ResolvedNTCGridPyramidOptions {
 	outputChannels: number;
 	textureResolution: number | undefined;
 	uvTransform: any;
+	positionalEncoding: boolean;
+}
+
+/**
+ * The decoder's input width for one selected grid level's tap(s) plus the
+ * normalized LOD scalar - shared by the CPU model and the GPU training
+ * layout so they can never disagree (see resolveNTCGridPyramidOptions's own
+ * doc comment for why those two already share one options resolver).
+ *
+ * `positionalEncoding: false` (default): one bilinear-interpolated
+ * `channels`-wide tap - this addon's original, simpler decoder input.
+ *
+ * `positionalEncoding: true`: the NVIDIA neural texture compression paper's
+ * Section 4.3 decoder input, adapted to this addon's single-selected-level
+ * design (see NTCGridPyramidModel's module doc comment) - the 4 raw
+ * neighboring texel taps ("learned interpolation", `4 * channels` wide,
+ * concatenated rather than bilinearly blended) plus `POSITIONAL_ENCODING_
+ * SIZE` (12) tiled positional-encoding scalars (see
+ * NTCPositionalEncodingTSL.js) that supply the sub-texel phase information
+ * the learned interpolation needs to reconstruct detail sharper than the
+ * grid's own resolution.
+ */
+function computeDecoderInputSize( channels: number, positionalEncoding: boolean ): number {
+
+	return positionalEncoding ? channels * 4 + POSITIONAL_ENCODING_SIZE + 1 : channels + 1;
+
 }
 
 /**
@@ -79,7 +107,9 @@ function resolveNTCGridPyramidOptions( options: NTCGridPyramidOptions = {} ): Re
 		// meant to be queried through (see NTCNodeMaterial.js) - defaults to
 		// identity, carried on `cpuModel.uvTransform` all the way through
 		// export (NTCManifest.js) so a caller never has to re-supply it.
-		uvTransform: options.uvTransform || new Matrix3()
+		uvTransform: options.uvTransform || new Matrix3(),
+		// Optional (default off) - see computeDecoderInputSize's doc comment.
+		positionalEncoding: options.positionalEncoding === true
 
 	};
 
@@ -99,6 +129,7 @@ interface NTCGridPyramidModel {
 	maxLod: number;
 	uvTransform: any;
 	quantizationRange?: Array<[ number, number ]> | null;
+	positionalEncoding: boolean;
 }
 
 /**
@@ -118,7 +149,7 @@ interface NTCGridPyramidModel {
  */
 function createNTCGridPyramidModel( options: NTCGridPyramidOptions, random: () => number ): NTCGridPyramidModel {
 
-	const { channels, levels: requestedLevels, baseResolution, mipsPerLevel, hiddenSizes, hiddenActivation, outputChannels, textureResolution, uvTransform } = resolveNTCGridPyramidOptions( options );
+	const { channels, levels: requestedLevels, baseResolution, mipsPerLevel, hiddenSizes, hiddenActivation, outputChannels, textureResolution, uvTransform, positionalEncoding } = resolveNTCGridPyramidOptions( options );
 
 	const resolutions = computeGridLevels( baseResolution, requestedLevels, mipsPerLevel );
 	const levels = resolutions.length;
@@ -127,16 +158,17 @@ function createNTCGridPyramidModel( options: NTCGridPyramidOptions, random: () =
 	const resolvedTextureResolution = textureResolution || resolutions[ 0 ];
 	const maxLod = Math.ceil( Math.log2( Math.max( 1, resolvedTextureResolution ) ) );
 
-	const inputSize = channels + 1;
+	const inputSize = computeDecoderInputSize( channels, positionalEncoding );
 	const decoder = createMLP( inputSize, hiddenSizes, outputChannels, random, hiddenActivation, 'linear' );
 
-	return { channels, levels, mipsPerLevel, resolutions, grids, decoder, hiddenSizes, hiddenActivation, outputChannels, textureResolution: resolvedTextureResolution, maxLod, uvTransform };
+	return { channels, levels, mipsPerLevel, resolutions, grids, decoder, hiddenSizes, hiddenActivation, outputChannels, textureResolution: resolvedTextureResolution, maxLod, uvTransform, positionalEncoding };
 
 }
 
 export {
 	createNTCGridPyramidModel,
 	resolveNTCGridPyramidOptions,
+	computeDecoderInputSize,
 	createLatentGrid,
 	computeGridLevels,
 	LATENT_INIT_SCALE

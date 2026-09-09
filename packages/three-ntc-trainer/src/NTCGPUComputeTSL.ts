@@ -25,7 +25,7 @@ import {
 } from './NTCGPUKernelsTSL.js';
 import { applyChannelActivation, channelActivationDerivativeFromOutput } from 'three-ntc';
 import { QUANTIZATION_SCHEMES } from './NTCQuantization.js';
-import { selectFeatureLevelTSL } from 'three-ntc';
+import { selectFeatureLevelTSL, computeTiledPositionalEncodingTSL, POSITIONAL_ENCODING_SIZE } from 'three-ntc';
 import type { NTCGPUModel } from './NTCGPUModel.js';
 
 function hash1( seed: TSLNode ): TSLNode {
@@ -162,8 +162,16 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 		outputChannels,
 		channelActivations,
 		mipsPerLevel,
-		maxLod
+		maxLod,
+		positionalEncoding
 	} = layout;
+
+	// See NTCGridPyramidModel.js's `computeDecoderInputSize` doc comment - the
+	// width of the selected level's own tap(s), not counting the trailing LOD
+	// scalar: a plain `channels`-wide bilinear tap, or (positionalEncoding)
+	// `4 * channels` raw neighbor taps + `POSITIONAL_ENCODING_SIZE` (12) tiled
+	// positional-encoding scalars.
+	const featureWidth = positionalEncoding ? channels * 4 + POSITIONAL_ENCODING_SIZE : channels;
 
 	const gridSize = Math.max( 1, Math.ceil( Math.sqrt( batchSize ) ) );
 
@@ -194,21 +202,34 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 		}
 
-		// 1. Bilinear-sample every grid level (wrap addressing), but keep only
-		// the one matching `selectedLevel` - every other level's contribution
-		// is multiplied by an exact 0/1 selector (`weight`) rather than being
+		// 1. Sample every grid level (wrap addressing), but keep only the one
+		// matching `selectedLevel` - every other level's contribution is
+		// multiplied by an exact 0/1 selector (`weight`) rather than being
 		// omitted from the shader, since which level is selected is a
 		// per-invocation runtime value, not something known at kernel-build
 		// time (unlike `gridLevels.length` itself, which is why this loop is
 		// still unrolled in JS). Accumulated into a single shared,
-		// `channels`-wide `a0Vars` (not a per-level slot - see
+		// `featureWidth`-wide `a0Vars` (not a per-level slot - see
 		// NTCGridPyramidModel.js's doc comment on why the decoder input no
 		// longer scales with level count): since `weight` is 1 for exactly
 		// one `g` and 0 for every other, the sum equals that one level's
-		// value.
+		// value(s).
+		//
+		// Two modes (see `computeDecoderInputSize`'s doc comment):
+		// `positionalEncoding === false` (default) bilinearly blends the 4
+		// neighbor taps into one `channels`-wide value per level, matching
+		// this addon's original simpler input. `positionalEncoding === true`
+		// instead concatenates the 4 raw (unblended) taps - "learned
+		// interpolation", NVIDIA paper Section 4.3.1 - and appends 12 tiled
+		// positional-encoding scalars (Section 4.3.2) built from the
+		// selected level's own sub-texel offset, which is what lets the MLP
+		// recover the phase information a plain concatenation of unordered
+		// taps would otherwise lose.
 		const levelTaps: Array<{ off0: TSLNode; off1: TSLNode; off2: TSLNode; off3: TSLNode; w0: TSLNode; w1: TSLNode; w2: TSLNode; w3: TSLNode; weight: TSLNode }> = [];
 		const a0Vars: TSLNode[] = [];
-		for ( let c = 0; c < channels; c ++ ) a0Vars.push( float( 0.0 ).toVar() );
+		for ( let c = 0; c < featureWidth; c ++ ) a0Vars.push( float( 0.0 ).toVar() );
+		const selTx = positionalEncoding ? float( 0.0 ).toVar() : null;
+		const selTy = positionalEncoding ? float( 0.0 ).toVar() : null;
 
 		for ( let g = 0; g < gridLevels.length; g ++ ) {
 
@@ -243,40 +264,80 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 			levelTaps.push( { off0, off1, off2, off3, w0, w1, w2, w3, weight } );
 
-			for ( let c = 0; c < channels; c ++ ) {
+			if ( positionalEncoding ) {
 
-				const z_c = latentsStorage.element( off0.add( c ) ).mul( w0 )
-					.add( latentsStorage.element( off1.add( c ) ).mul( w1 ) )
-					.add( latentsStorage.element( off2.add( c ) ).mul( w2 ) )
-					.add( latentsStorage.element( off3.add( c ) ).mul( w3 ) );
+				const offs = [ off0, off1, off2, off3 ];
 
-				// QAT forward quantize (STE) - the backward scatter in step 5
-				// below still targets the *raw* latentsStorage taps untouched,
-				// exactly as it did before QAT: only this forward-read value
-				// changes.
-				const quantized_c = quantizeLatent !== null ?
-					quantizeLatent( z_c, quantizationRangeUniforms[ g ].min, quantizationRangeUniforms[ g ].max ) :
-					z_c;
+				for ( let t = 0; t < 4; t ++ ) {
 
-				a0Vars[ c ].addAssign( quantized_c.mul( weight ) );
+					for ( let c = 0; c < channels; c ++ ) {
+
+						const raw_c = latentsStorage.element( offs[ t ].add( c ) );
+						// QAT forward quantize (STE), same as the bilinear path
+						// below - see its comment.
+						const quantized_c = quantizeLatent !== null ?
+							quantizeLatent( raw_c, quantizationRangeUniforms[ g ].min, quantizationRangeUniforms[ g ].max ) :
+							raw_c;
+
+						a0Vars[ t * channels + c ].addAssign( quantized_c.mul( weight ) );
+
+					}
+
+				}
+
+				selTx!.addAssign( tx.mul( weight ) );
+				selTy!.addAssign( ty.mul( weight ) );
+
+			} else {
+
+				for ( let c = 0; c < channels; c ++ ) {
+
+					const z_c = latentsStorage.element( off0.add( c ) ).mul( w0 )
+						.add( latentsStorage.element( off1.add( c ) ).mul( w1 ) )
+						.add( latentsStorage.element( off2.add( c ) ).mul( w2 ) )
+						.add( latentsStorage.element( off3.add( c ) ).mul( w3 ) );
+
+					// QAT forward quantize (STE) - the backward scatter in step 5
+					// below still targets the *raw* latentsStorage taps untouched,
+					// exactly as it did before QAT: only this forward-read value
+					// changes.
+					const quantized_c = quantizeLatent !== null ?
+						quantizeLatent( z_c, quantizationRangeUniforms[ g ].min, quantizationRangeUniforms[ g ].max ) :
+						z_c;
+
+					a0Vars[ c ].addAssign( quantized_c.mul( weight ) );
+
+				}
 
 			}
 
 		}
 
-		for ( let c = 0; c < channels; c ++ ) {
+		// Tiled positional encoding (see NTCPositionalEncodingTSL.js) of the
+		// selected level's own sub-texel offset - computed once after the
+		// g-loop above resolves `selTx`/`selTy` to that one level's `(tx, ty)`
+		// (every other level contributed 0, same one-hot-`weight` trick as
+		// the taps themselves).
+		if ( positionalEncoding ) {
+
+			const pe = computeTiledPositionalEncodingTSL( selTx!, selTy! );
+			for ( let k = 0; k < pe.length; k ++ ) a0Vars[ channels * 4 + k ].assign( pe[ k ] );
+
+		}
+
+		for ( let c = 0; c < featureWidth; c ++ ) {
 
 			activationsStorage.element( actBase.add( int( a0Offset + c ) ) ).assign( a0Vars[ c ] );
 
 		}
 
 		// Append the normalized LOD value as the decoder's final input
-		// component (see NTCGridPyramidModel.js's `inputSize = channels + 1`)
+		// component (see NTCGridPyramidModel.js's `computeDecoderInputSize`)
 		// - necessary because the selected grid level alone doesn't say which
 		// of its several covered mips this sample targets; this is what lets
 		// the shared decoder disambiguate that, matching the paper's own
 		// decoder input layout (Section 4.4: "... and a LOD value").
-		activationsStorage.element( actBase.add( int( a0Offset + channels ) ) ).assign( lod.div( Math.max( 1, maxLod ) ) );
+		activationsStorage.element( actBase.add( int( a0Offset + featureWidth ) ) ).assign( lod.div( Math.max( 1, maxLod ) ) );
 
 		// 2. Forward MLP (hidden layers activated per layer.activation - 'relu'
 		// by default, or 'hgelu' - see NTCGridPyramidModel.js's
@@ -390,30 +451,57 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 		}
 
-		// 5. Scatter gradA0 back into the latent grids using the same bilinear
-		// taps/weights computed in the forward pass. The chain rule needs the
-		// same selection `weight` here too - forward computed `a0_c = weight_g
-		// * bilinear(...)`, and `weight_g` doesn't depend on the latents
-		// themselves, so `d(a0_c)/d(latent) = weight_g * d(bilinear)/d(latent)`
-		// - i.e. exactly `gradZ_c * weight_g` scattered through the same
-		// bilinear taps below. Since `weight_g` is 0 for every level but the
-		// one `selectedLevel` picked, only that level's latents actually
-		// receive gradient this sample - every other level's atomicAdd below
-		// contributes exactly 0.
+		// 5. Scatter gradA0 back into the latent grids using the same taps
+		// computed in the forward pass, gated by the same one-hot selection
+		// `weight` (see step 1's comment - only `selectedLevel`'s latents
+		// receive nonzero gradient this sample).
+		//
+		// `positionalEncoding === false` (bilinear): forward computed `a0_c =
+		// weight_g * bilinear(...)`, so `d(a0_c)/d(latent) = weight_g *
+		// d(bilinear)/d(latent)` - `gradZ_c * weight_g` scattered through the
+		// same bilinear taps/weights.
+		//
+		// `positionalEncoding === true` (raw 4-tap concat): forward computed
+		// each of the 4*channels a0 slots as `weight_g * rawTap` directly (no
+		// blending), so each slot's gradient scatters 1:1 to its own single
+		// latent texel, weighted only by `weight_g` - no `w0..w3` split. The
+		// 12 positional-encoding slots need no scatter at all: they're a pure
+		// function of `uv` (via `selTx`/`selTy`), not of any trainable
+		// latent, so gradA0 there simply isn't read here.
 		const gradA0Base = actBase.add( int( gradA0Offset ) );
 
 		for ( let g = 0; g < gridLevels.length; g ++ ) {
 
 			const taps = levelTaps[ g ];
 
-			for ( let c = 0; c < channels; c ++ ) {
+			if ( positionalEncoding ) {
 
-				const gradZ_c = activationsStorage.element( gradA0Base.add( c ) ).mul( taps.weight );
+				const offs = [ taps.off0, taps.off1, taps.off2, taps.off3 ];
 
-				atomicAdd( gradLatentsAtomic.element( taps.off0.add( c ) ), int( gradZ_c.mul( taps.w0 ).mul( float( FIXED_POINT_SCALE ) ) ) );
-				atomicAdd( gradLatentsAtomic.element( taps.off1.add( c ) ), int( gradZ_c.mul( taps.w1 ).mul( float( FIXED_POINT_SCALE ) ) ) );
-				atomicAdd( gradLatentsAtomic.element( taps.off2.add( c ) ), int( gradZ_c.mul( taps.w2 ).mul( float( FIXED_POINT_SCALE ) ) ) );
-				atomicAdd( gradLatentsAtomic.element( taps.off3.add( c ) ), int( gradZ_c.mul( taps.w3 ).mul( float( FIXED_POINT_SCALE ) ) ) );
+				for ( let t = 0; t < 4; t ++ ) {
+
+					for ( let c = 0; c < channels; c ++ ) {
+
+						const gradTap_c = activationsStorage.element( gradA0Base.add( t * channels + c ) ).mul( taps.weight );
+
+						atomicAdd( gradLatentsAtomic.element( offs[ t ].add( c ) ), int( gradTap_c.mul( float( FIXED_POINT_SCALE ) ) ) );
+
+					}
+
+				}
+
+			} else {
+
+				for ( let c = 0; c < channels; c ++ ) {
+
+					const gradZ_c = activationsStorage.element( gradA0Base.add( c ) ).mul( taps.weight );
+
+					atomicAdd( gradLatentsAtomic.element( taps.off0.add( c ) ), int( gradZ_c.mul( taps.w0 ).mul( float( FIXED_POINT_SCALE ) ) ) );
+					atomicAdd( gradLatentsAtomic.element( taps.off1.add( c ) ), int( gradZ_c.mul( taps.w1 ).mul( float( FIXED_POINT_SCALE ) ) ) );
+					atomicAdd( gradLatentsAtomic.element( taps.off2.add( c ) ), int( gradZ_c.mul( taps.w2 ).mul( float( FIXED_POINT_SCALE ) ) ) );
+					atomicAdd( gradLatentsAtomic.element( taps.off3.add( c ) ), int( gradZ_c.mul( taps.w3 ).mul( float( FIXED_POINT_SCALE ) ) ) );
+
+				}
 
 			}
 

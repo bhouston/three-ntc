@@ -3,7 +3,7 @@ import { storage, uniform } from 'three/tsl';
 import { FIXED_POINT_SCALE } from './NTCGPUTrainingConstants.js';
 import { createAdamParameterBuffers, disposeAdamParameterBuffers, type AdamParameterBuffers, type TSLNode } from './NTCGPUKernelsTSL.js';
 import { computeGridLevels } from './NTCGridModel.js';
-import { resolveNTCGridPyramidOptions, type NTCGridPyramidOptions } from './NTCGridPyramidModel.js';
+import { resolveNTCGridPyramidOptions, computeDecoderInputSize, type NTCGridPyramidOptions } from './NTCGridPyramidModel.js';
 import { resolveQuantizationConfig, type ResolvedNTCQuantizationConfig, type NTCQuantizationOptions } from './NTCQuantization.js';
 
 interface GridLevelLayout {
@@ -42,6 +42,7 @@ interface NTCTextureModelLayout {
 	textureResolution: number;
 	maxLod: number;
 	inputSize: number;
+	positionalEncoding: boolean;
 	gridLevels: GridLevelLayout[];
 	totalLatents: number;
 	mlpLayers: MLPLayerLayout[];
@@ -73,7 +74,7 @@ interface NTCGPUModelOptions extends NTCGridPyramidOptions {
  */
 function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextureModelLayout {
 
-	const { channels, levels: requestedLevels, baseResolution, mipsPerLevel, hiddenSizes, hiddenActivation, outputChannels, textureResolution } = resolveNTCGridPyramidOptions( options );
+	const { channels, levels: requestedLevels, baseResolution, mipsPerLevel, hiddenSizes, hiddenActivation, outputChannels, textureResolution, positionalEncoding } = resolveNTCGridPyramidOptions( options );
 	// One entry per output channel naming its output nonlinearity (see
 	// ./NTCOutputActivations.js); undefined/omitted entries (the
 	// default, `options.channelActivations` unset) mean plain linear, i.e.
@@ -103,12 +104,14 @@ function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextu
 
 	const totalLatents = latentOffset;
 
-	// MLP weight layout: input = one grid level's `channels`-wide feature
-	// vector (the level selected by this sample's LOD, see
-	// NTCGPUComputeTSL.js step 1) plus the normalized LOD itself - fixed
-	// width regardless of how many mip levels the pyramid has (see
-	// NTCGridPyramidModel.js's doc comment).
-	const inputSize = channels + 1;
+	// MLP weight layout: input = one grid level's tap(s) (the level selected
+	// by this sample's LOD, see NTCGPUComputeTSL.js step 1) plus the
+	// normalized LOD itself - fixed width regardless of how many mip levels
+	// the pyramid has (see NTCGridPyramidModel.js's `computeDecoderInputSize`
+	// doc comment for the two widths: plain bilinear tap, or - when
+	// `positionalEncoding` is on - 4 concatenated raw taps + positional
+	// encoding).
+	const inputSize = computeDecoderInputSize( channels, positionalEncoding );
 	const sizes = [ inputSize, ...hiddenSizes, outputChannels ];
 	const mlpLayers: MLPLayerLayout[] = [];
 	let weightOffset = 0;
@@ -189,6 +192,7 @@ function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextu
 		textureResolution: resolvedTextureResolution,
 		maxLod,
 		inputSize,
+		positionalEncoding,
 		gridLevels,
 		totalLatents,
 		mlpLayers,

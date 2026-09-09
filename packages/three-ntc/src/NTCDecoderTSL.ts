@@ -7,9 +7,11 @@ import {
 	createMat4Storage,
 	createVec4Storage
 } from './NTCMLPTSL.js';
-import { buildMipChainTexture, NTCGrid } from './NTCHalfFloatTexture.js';
+import { buildMipChainTexture, buildLevelTextures, NTCGrid } from './NTCHalfFloatTexture.js';
+import { selectFeatureLevelTSL } from './NTCMipBands.js';
+import { computeTiledPositionalEncodingTSL } from './NTCPositionalEncodingTSL.js';
 import { MLPLayer } from './NTCBinaryCodec.js';
-import { float, textureLevel } from 'three/tsl';
+import { float, floor, int, textureLevel, vec2 } from 'three/tsl';
 
 /**
  * A fully decoded `.ntc` CPU model - what `NTCLoader.parse()` produces and
@@ -25,6 +27,90 @@ export interface NTCCpuModel {
 	outputChannels: number;
 	wrap: string;
 	uvTransform: any;
+	// Optional (default false/absent) - see NTCGridPyramidModel.js (trainer)
+	// `computeDecoderInputSize` doc comment and `evaluateNeuralTextureRaw`
+	// below.
+	positionalEncoding?: boolean;
+}
+
+/**
+ * Builds the `positionalEncoding` decoder input (NVIDIA neural texture
+ * compression paper Section 4.3, adapted to this addon's single-selected-
+ * level design - see NTCGridPyramidModel.js's `computeDecoderInputSize` doc
+ * comment): 4 raw neighbor taps ("learned interpolation") concatenated from
+ * whichever single stored grid level `lodNode` selects, plus 12 tiled
+ * positional-encoding scalars built from that same level's own sub-texel
+ * offset - mirrors NTCGPUComputeTSL.js's training kernel's forward pass
+ * exactly (same level-selection, same tap coordinates, same encoding), which
+ * is required since the decoder MLP was fit against that exact input
+ * distribution.
+ *
+ * Deliberately hard-selects one level (`selectFeatureLevelTSL`, matching
+ * training bit-for-bit) rather than reusing `buildMipChainTexture`'s smooth
+ * hardware-trilinear blend *between* levels (see this file's default,
+ * non-`positionalEncoding` path, and NTCHalfFloatTexture.js's doc comment
+ * on why that blend exists there): a raw 4-tap fetch has no filtered
+ * "in-between" representation to blend, so a fractional LOD straddling two
+ * stored levels' bands snaps discontinuously here instead of cross-fading -
+ * a real (if less-visible-in-practice, since `mipsPerLevel` already spreads
+ * one stored level across more than one physical mip) simplification versus
+ * the default path.
+ */
+function evaluatePositionalEncodingFeatures( uvNode: any, cpuModel: NTCCpuModel, levelTextures: any[], lodNode: any ): any[] {
+
+	const channels = cpuModel.channels;
+	const grids = cpuModel.grids;
+	const selectedLevel = selectFeatureLevelTSL( lodNode, grids.length, cpuModel.mipsPerLevel );
+
+	const taps: any[] = [];
+	for ( let t = 0; t < 4 * channels; t ++ ) taps.push( float( 0 ).toVar() );
+	const selTx = float( 0 ).toVar();
+	const selTy = float( 0 ).toVar();
+
+	for ( let g = 0; g < grids.length; g ++ ) {
+
+		const grid = grids[ g ];
+		const width = grid.width;
+		const height = grid.height;
+
+		const x = uvNode.x.mul( width ).sub( 0.5 );
+		const y = uvNode.y.mul( height ).sub( 0.5 );
+		const x0 = floor( x );
+		const y0 = floor( y );
+		const tx = x.sub( x0 );
+		const ty = y.sub( y0 );
+
+		const weight = selectedLevel.equal( int( g ) ).select( float( 1 ), float( 0 ) );
+
+		// Texel-center UVs of the 4 neighboring texels - RepeatWrapping on
+		// `levelTextures[g]` (see buildLevelTextures) handles wraparound at
+		// the edges for free, matching NTCGPUComputeTSL.js's `wrapIndexTSL`
+		// without reproducing its manual index math here.
+		const corners = [
+			[ x0.add( 0.5 ).div( width ), y0.add( 0.5 ).div( height ) ],
+			[ x0.add( 1.5 ).div( width ), y0.add( 0.5 ).div( height ) ],
+			[ x0.add( 0.5 ).div( width ), y0.add( 1.5 ).div( height ) ],
+			[ x0.add( 1.5 ).div( width ), y0.add( 1.5 ).div( height ) ]
+		];
+
+		for ( let t = 0; t < 4; t ++ ) {
+
+			const sample = textureLevel( levelTextures[ g ], vec2( corners[ t ][ 0 ], corners[ t ][ 1 ] ), 0 );
+			const comps = [ sample.x, sample.y, sample.z, sample.w ];
+
+			for ( let c = 0; c < channels; c ++ ) taps[ t * channels + c ].addAssign( comps[ c ].mul( weight ) );
+
+		}
+
+		selTx.addAssign( tx.mul( weight ) );
+		selTy.addAssign( ty.mul( weight ) );
+
+	}
+
+	const pe = computeTiledPositionalEncodingTSL( selTx, selTy );
+
+	return [ ...taps, ...pe ];
+
 }
 
 /**
@@ -46,8 +132,14 @@ export interface NTCCpuModel {
  * concatenated onto the decoder's input exactly as before - this must match
  * training bit-for-bit, or the decoder sees an input distribution it was
  * never fit against.
+ *
+ * `levelTextures` (see NTCHalfFloatTexture.buildLevelTextures) is only
+ * needed - and only consulted - when `cpuModel.positionalEncoding` is true;
+ * `mipChainTexture` is ignored in that case (see
+ * `evaluatePositionalEncodingFeatures`'s doc comment for why that path
+ * can't reuse the smooth cross-level mip-chain trick).
  */
-function evaluateNeuralTextureRaw( uvNode: any, cpuModel: NTCCpuModel, mipChainTexture: any, renderer: any | null = null, lodNode: any = null ): any[] {
+function evaluateNeuralTextureRaw( uvNode: any, cpuModel: NTCCpuModel, mipChainTexture: any, renderer: any | null = null, lodNode: any = null, levelTextures: any[] | null = null ): any[] {
 
 	// renderer is accepted for compatibility with the higher-level material
 	// constructor, but this stock-Three.js path always uses fp32 uniforms.
@@ -56,11 +148,27 @@ function evaluateNeuralTextureRaw( uvNode: any, cpuModel: NTCCpuModel, mipChainT
 	const resolvedLodNode = lodNode || float( 0 );
 	const channels = cpuModel.channels;
 
-	const sample = textureLevel( mipChainTexture, uvNode, resolvedLodNode );
-	const features: any[] = [ sample.x, sample.y, sample.z, sample.w ].slice( 0, channels );
+	let features: any[];
+
+	if ( cpuModel.positionalEncoding ) {
+
+		if ( ! levelTextures ) {
+
+			throw new Error( 'THREE.NTCDecoderTSL: a positionalEncoding model requires levelTextures (see NTCHalfFloatTexture.buildLevelTextures).' );
+
+		}
+
+		features = evaluatePositionalEncodingFeatures( uvNode, cpuModel, levelTextures, resolvedLodNode );
+
+	} else {
+
+		const sample = textureLevel( mipChainTexture, uvNode, resolvedLodNode );
+		features = [ sample.x, sample.y, sample.z, sample.w ].slice( 0, channels );
+
+	}
 
 	// Append the normalized LOD value as the decoder's final input component
-	// - must match NTCGridPyramidModel.js's `inputSize = channels + 1` /
+	// - must match NTCGridPyramidModel.js's `computeDecoderInputSize` /
 	// NTCGPUComputeTSL.js's forward pass exactly.
 	// Math.max(1, ...) guards against a genuine maxLod of 0 (a model that
 	// only ever supports LOD 0, see NTCGridPyramidModel.js) - dividing by 0
@@ -99,4 +207,4 @@ function evaluateNeuralTextureRaw( uvNode: any, cpuModel: NTCCpuModel, mipChainT
 
 }
 
-export { evaluateNeuralTextureRaw, buildMipChainTexture };
+export { evaluateNeuralTextureRaw, buildMipChainTexture, buildLevelTextures };

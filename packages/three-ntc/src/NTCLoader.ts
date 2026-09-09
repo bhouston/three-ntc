@@ -26,6 +26,7 @@ export interface NTCManifest {
 		mipsPerLevel: number;
 		maxLod: number;
 		wrap?: string;
+		positionalEncoding?: boolean;
 	};
 	mlp: MLPBlock;
 	outputChannels?: number;
@@ -150,7 +151,10 @@ class NTCLoader extends Loader {
 			// field existed, or one that never had a detected/explicit UV
 			// transform) - see NTCFormat.js's decodeUvTransform and
 			// NTCNodeMaterial.js's query-time coord build.
-			uvTransform: decodeUvTransform( manifest.uvTransform )
+			uvTransform: decodeUvTransform( manifest.uvTransform ),
+			// Optional/additive, defaults to false for manifests saved before
+			// this field existed - see NTCDecoderTSL.js / NTCNodeMaterial.js.
+			positionalEncoding: manifest.latents.positionalEncoding === true
 		};
 
 		const channelClassification = decodeChannelClassification( manifest.channels, manifest.renderFlags );

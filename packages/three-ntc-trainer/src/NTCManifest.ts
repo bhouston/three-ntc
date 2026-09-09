@@ -76,7 +76,13 @@ function encodeNTC( cpuModel: any, channelClassification: any, options: any = {}
 			// a `VERSION` bump (2) rather than an optional/additive field like
 			// most other manifest additions - see NTCFormat.js.
 			mipsPerLevel: cpuModel.mipsPerLevel,
-			maxLod: cpuModel.maxLod
+			maxLod: cpuModel.maxLod,
+			// Optional/additive (default false when absent, matching every
+			// manifest saved before this field existed) - see
+			// NTCGridPyramidModel.js's `computeDecoderInputSize` doc comment.
+			// Only written when true, since false is the default a loader
+			// already falls back to.
+			positionalEncoding: cpuModel.positionalEncoding || undefined
 		},
 		outputChannels: cpuModel.outputChannels,
 		// Omitted entirely (rather than always written as the 6-number
