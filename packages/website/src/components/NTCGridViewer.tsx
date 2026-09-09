@@ -10,6 +10,9 @@ const HDR_ENVIRONMENT_URL = '/textures/equirectangular/san_giuseppe_bridge_2k.hd
 const COLUMNS = 3;
 const SPACING = 2.4;
 
+// Slow, constant spin so viewers can tell each mesh is 3D: one full turn every 30s.
+const ROTATION_SPEED = (2 * Math.PI) / 30;
+
 export interface NTCGridSlot {
   label: string;
   material: any | null;
@@ -90,10 +93,14 @@ export function NTCGridViewer({ slots }: { slots: NTCGridSlot[] }) {
     const ro = new ResizeObserver(resize);
     if (canvas.parentElement) ro.observe(canvas.parentElement);
 
+    const clock = new THREE.Clock();
+
     renderer.init().then(() => {
       if (disposed) return;
       resize();
       renderer.setAnimationLoop(() => {
+        const dt = clock.getDelta();
+        for (const mesh of meshes) mesh.rotation.y += ROTATION_SPEED * dt;
         controls.update();
         renderer.render(scene, camera);
       });

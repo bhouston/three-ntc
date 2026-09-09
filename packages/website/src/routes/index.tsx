@@ -45,10 +45,10 @@ function HomePage() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 p-6">
       <div className="flex flex-col gap-3 text-center">
-        <h1 className="text-2xl font-semibold">three-ntc</h1>
+        <h1 className="text-2xl font-semibold">Neural Texture Compression for Three.js</h1>
         <p className="mx-auto max-w-2xl text-sm text-muted-foreground">
           A three.js implementation of{' '}
-          <a href={NTC_PAPER_URL} target="_blank" rel="noreferrer" className="text-foreground underline underline-offset-4">
+          <a href={NTC_PAPER_URL} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-4">
             NVIDIA's 2023 Neural Texture Compression paper
           </a>
           . It represents materials as a tiny neural network instead of a stack of full-resolution textures,
@@ -66,7 +66,7 @@ function HomePage() {
         <Link to="/viewer">
           <Card className="h-full transition-colors hover:bg-accent">
             <CardHeader>
-              <CardTitle>Viewer</CardTitle>
+              <CardTitle className="text-primary underline underline-offset-4">Viewer</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
@@ -79,7 +79,7 @@ function HomePage() {
         <Link to="/trainer">
           <Card className="h-full transition-colors hover:bg-accent">
             <CardHeader>
-              <CardTitle>Trainer</CardTitle>
+              <CardTitle className="text-primary underline underline-offset-4">Trainer</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">

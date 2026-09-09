@@ -7,7 +7,42 @@ import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 // Same environment map the three.js NTC examples use, for a matching look.
 const HDR_ENVIRONMENT_URL = '/textures/equirectangular/san_giuseppe_bridge_2k.hdr';
 
+// Slow, constant spin so viewers can tell the mesh is 3D: one full turn every 30s.
+const ROTATION_SPEED = (2 * Math.PI) / 30;
+
 export type NTCViewerShape = 'torus' | 'sphere' | 'plane';
+
+// A text label rendered onto a plane instead of an HTML overlay, so it lives
+// in the scene and pans/rotates/zooms with the meshes. Faces +z (the
+// camera's start orientation) and is never re-oriented after that - per
+// product decision, it doesn't need to billboard as the user orbits.
+function makeTextLabel(text: string): any {
+  const fontSize = 64;
+  const canvas = document.createElement('canvas');
+  const measureCtx = canvas.getContext('2d')!;
+  measureCtx.font = `${fontSize}px sans-serif`;
+  const width = Math.ceil(measureCtx.measureText(text).width) + 40;
+  const height = fontSize + 40;
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d')!;
+  ctx.font = `${fontSize}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(text, width / 2, height / 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+
+  const planeHeight = 0.16;
+  const geometry = new THREE.PlaneGeometry((planeHeight * width) / height, planeHeight);
+  const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false, depthTest: false });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.renderOrder = 999;
+  mesh.visible = false;
+  return mesh;
+}
 
 function buildShapeGeometry(shape: NTCViewerShape): any {
   const geometry =
@@ -45,6 +80,8 @@ export function NTCViewer({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const meshRef = useRef<any>(null);
   const teacherMeshRef = useRef<any>(null);
+  const labelRef = useRef<any>(null);
+  const teacherLabelRef = useRef<any>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -85,6 +122,14 @@ export function NTCViewer({
     scene.add(teacherMesh);
     teacherMeshRef.current = teacherMesh;
 
+    const label = makeTextLabel('NTC material');
+    scene.add(label);
+    labelRef.current = label;
+
+    const teacherLabel = makeTextLabel('MaterialX teacher');
+    scene.add(teacherLabel);
+    teacherLabelRef.current = teacherLabel;
+
     let disposed = false;
     let envTexture: any = null;
 
@@ -108,10 +153,15 @@ export function NTCViewer({
     const ro = new ResizeObserver(resize);
     if (canvas.parentElement) ro.observe(canvas.parentElement);
 
+    const clock = new THREE.Clock();
+
     renderer.init().then(() => {
       if (disposed) return;
       resize();
       renderer.setAnimationLoop(() => {
+        const dt = clock.getDelta();
+        mesh.rotation.y += ROTATION_SPEED * dt;
+        teacherMesh.rotation.y += ROTATION_SPEED * dt;
         controls.update();
         renderer.render(scene, camera);
       });
@@ -125,9 +175,17 @@ export function NTCViewer({
       mesh.geometry.dispose();
       mesh.material?.dispose && mesh.material.dispose();
       envTexture?.dispose();
+      label.geometry.dispose();
+      label.material.map.dispose();
+      label.material.dispose();
+      teacherLabel.geometry.dispose();
+      teacherLabel.material.map.dispose();
+      teacherLabel.material.dispose();
       renderer.dispose();
       meshRef.current = null;
       teacherMeshRef.current = null;
+      labelRef.current = null;
+      teacherLabelRef.current = null;
     };
   }, []);
 
@@ -155,18 +213,28 @@ export function NTCViewer({
   useEffect(() => {
     const mesh = meshRef.current;
     const teacherMesh = teacherMeshRef.current;
-    if (!mesh || !teacherMesh) return;
+    const label = labelRef.current;
+    const teacherLabel = teacherLabelRef.current;
+    if (!mesh || !teacherMesh || !label || !teacherLabel) return;
 
     if (teacherMaterial) {
       teacherMesh.visible = true;
-      teacherMesh.position.x = -1.25;
-      mesh.position.x = 1.25;
+      teacherMesh.position.x = -0.625;
+      mesh.position.x = 0.625;
       teacherMesh.scale.setScalar(0.58);
       mesh.scale.setScalar(0.58);
+
+      label.visible = true;
+      teacherLabel.visible = true;
+      label.position.set(mesh.position.x, 0.75, 0);
+      teacherLabel.position.set(teacherMesh.position.x, 0.75, 0);
     } else {
       teacherMesh.visible = false;
       mesh.position.x = 0;
       mesh.scale.setScalar(1);
+
+      label.visible = false;
+      teacherLabel.visible = false;
     }
   }, [Boolean(teacherMaterial)]);
 

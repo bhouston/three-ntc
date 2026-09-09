@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { defineChart, lineY } from '@tanstack/charts';
 import { scaleLinear } from '@tanstack/charts/scales/linear';
 import { Chart } from '@tanstack/charts/react';
+import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import {
   bakeMaterialToTextures,
   classifyMaterialChannels,
@@ -28,23 +29,18 @@ import {
   NTCExporter,
   NTCTrainer,
 } from 'three-ntc-trainer';
-import { buildChannelActivations, MAX_TOTAL_CHANNELS, NTCLoader, NTCNodeMaterial } from 'three-ntc';
+import { buildChannelActivations, MAX_TOTAL_CHANNELS, NTCNodeMaterial } from 'three-ntc';
 
 import { NTCViewer, type NTCViewerShape } from '@/components/NTCViewer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from '@/components/ui/field';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { getSharedRenderer } from '@/lib/renderer';
+import { cn } from '@/lib/utils';
 
 export const Route = createFileRoute('/trainer')({
   component: TrainerPage,
@@ -148,12 +144,38 @@ function SelectFormField({
   );
 }
 
+// A FieldSet that can collapse its FieldGroup away, legend doubling as the
+// toggle button. Defaults open so existing behavior/layout doesn't change
+// until someone actually clicks a section shut.
+function CollapsibleSection({
+  title,
+  defaultOpen = true,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Collapsible defaultOpen={defaultOpen} className="rounded-lg border border-border p-4">
+      <CollapsibleTrigger className="group -ml-1 flex w-full items-center gap-1 px-1 text-sm font-medium text-foreground">
+        <ChevronDown className="size-4 shrink-0 transition-transform group-data-[state=closed]:-rotate-90" />
+        {title}
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pt-4">
+        <FieldGroup>{children}</FieldGroup>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 function TrainerPage() {
   const ga = useGoogleAnalytics();
   const form = useForm({ defaultValues: DEFAULT_VALUES });
   const values = useStore(form.store, (state) => state.values);
 
   const [status, setStatus] = useState('Ready.');
+  const [settingsOpen, setSettingsOpen] = useState(true);
   const [mtlxDragOver, setMtlxDragOver] = useState(false);
   const [sourceName, setSourceName] = useState<string | null>(null);
   const [builtInKey, setBuiltInKey] = useState(DEFAULT_MATERIALX_KEY);
@@ -170,7 +192,6 @@ function TrainerPage() {
   const previewMaterialRef = useRef<any>(null);
   const sourceTexturesRef = useRef<any[] | null>(null);
   const mtlxInputRef = useRef<HTMLInputElement>(null);
-  const ntcInputRef = useRef<HTMLInputElement>(null);
 
   // Full-resolution point history lives in a ref (training can call
   // onProgress a couple thousand times over a run) - `lossPoints` state is a
@@ -220,10 +241,10 @@ function TrainerPage() {
     sourceTexturesRef.current = null;
   }, []);
 
-  const rebuildPreviewMaterial = useCallback((cpuModel: any, classification: any, lodBias: number) => {
+  const rebuildPreviewMaterial = useCallback((renderer: any, cpuModel: any, classification: any, lodBias: number) => {
     const previous = previewMaterialRef.current;
     const material = new NTCNodeMaterial(cpuModel, classification, {
-      renderer: getSharedRenderer(),
+      renderer,
       // ponytail: lodBias is only baked in at construction time (a plain
       // number, not a live TSL uniform) - the simplest option
       // NTCNodeMaterial's constructor supports. Dragging the slider takes
@@ -331,7 +352,7 @@ function TrainerPage() {
     setStatus('Baking material channels...');
 
     try {
-      const renderer = getSharedRenderer();
+      const renderer = await getSharedRenderer();
       disposeSourceTextures();
       const renderTargets = await bakeMaterialToTextures(
         renderer,
@@ -372,11 +393,11 @@ function TrainerPage() {
         onProgress: (progress: any) => {
           const isLast = progress.iteration >= progress.iterations - 1;
           addLossPoint({ iteration: progress.iteration, loss: progress.loss }, isLast);
-          rebuildPreviewMaterial(progress.cpuModel, channelClassification, Number(values.lodBias));
+          rebuildPreviewMaterial(renderer, progress.cpuModel, channelClassification, Number(values.lodBias));
         },
       });
 
-      rebuildPreviewMaterial(result.cpuModel, channelClassification, Number(values.lodBias));
+      rebuildPreviewMaterial(renderer, result.cpuModel, channelClassification, Number(values.lodBias));
       setStatus(result.stoppedEarly ? 'Stopped.' : 'Training complete.');
     } catch (err) {
       console.error(err);
@@ -403,34 +424,6 @@ function TrainerPage() {
     setStatus(`Saved ${safeName}.ntc.`);
   }, [sourceName]);
 
-  const onNtcFileSelected = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-    try {
-      setStatus(`Loading ${file.name}...`);
-      const payload = JSON.parse(await file.text());
-      const { name, cpuModel, channelClassification: loaded } = new NTCLoader().parse(payload);
-
-      materialXMaterialRef.current = null;
-      uvTransformRef.current = new THREE.Matrix3();
-      setHasSource(false); // no MaterialX source to (re)train against
-      setBuiltInKey('');
-      setTeacherMaterial(null); // nothing to show side-by-side either
-      disposeSourceTextures();
-
-      setChannelClassification(loaded);
-      setSourceName(name || file.name);
-      rebuildPreviewMaterial(cpuModel, loaded, Number(values.lodBias));
-
-      const activeKeys = loaded.activeChannels.map((c: any) => c.key).join(', ') || 'none';
-      setStatus(`Loaded "${name || file.name}" (${loaded.totalChannels}/${MAX_TOTAL_CHANNELS} channels: ${activeKeys}).`);
-    } catch (err) {
-      console.error(err);
-      setStatus(errorMessage(err));
-    }
-  }, [disposeSourceTextures, rebuildPreviewMaterial, values.lodBias]);
-
   const modelSizeSummary = useMemo(() => {
     const outputChannels = channelClassification ? channelClassification.totalChannels : MAX_TOTAL_CHANNELS;
     const channels = 4;
@@ -455,259 +448,258 @@ function TrainerPage() {
   }, [form]);
 
   return (
-    <div className="grid flex-1 grid-cols-1 gap-4 p-4 lg:grid-cols-[380px_1fr]">
-      <div className="flex max-h-[calc(100svh-5rem)] flex-col gap-4 overflow-y-auto pr-1">
-        <div>
-          <h1 className="text-lg font-semibold">MaterialX Trainer</h1>
-          <p className="text-sm text-muted-foreground">
-            Fit a MaterialX material into a neural texture compression (.ntc) model, right in the browser.
-          </p>
-        </div>
-
-        <FieldSet>
-          <FieldLegend>Source</FieldLegend>
-          <FieldGroup>
-            <Field>
-              <FieldLabel>Built-in MaterialX</FieldLabel>
-              <Select
-                value={builtInKey}
-                onValueChange={(key) => {
-                  setBuiltInKey(key);
-                  ga.event('trainer-default-materialx', { materialx_key: key });
-                  void loadBuiltInMaterial(key);
-                }}
-                disabled={isTraining}
-              >
-                <SelectTrigger size="sm">
-                  <SelectValue placeholder="Choose an example…" />
-                </SelectTrigger>
-                <SelectContent>
-                  {MATERIALX_SAMPLES.map((sample) => (
-                    <SelectItem key={sample.key} value={sample.key}>
-                      {sample.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <div
-              className={`flex items-center gap-2 rounded-lg border-2 border-dashed p-2 transition-colors ${
-                mtlxDragOver ? 'border-primary bg-accent' : 'border-transparent'
-              }`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setMtlxDragOver(true);
-              }}
-              onDragLeave={() => setMtlxDragOver(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setMtlxDragOver(false);
-                const file = e.dataTransfer.files[0];
-                if (!file) return;
-                ga.event('trainer-drop-materialx', { file_name: file.name });
-                void loadMtlxFile(file);
-              }}
-            >
-              <Button type="button" variant="outline" size="sm" disabled={isTraining} onClick={() => mtlxInputRef.current?.click()}>
-                Open .mtlx
-              </Button>
-              <span className="truncate text-sm text-muted-foreground">
-                {sourceName ?? 'loading default'} — or drag & drop a .mtlx file here
-              </span>
-            </div>
-            <input ref={mtlxInputRef} type="file" accept=".mtlx,.zip,.mtlx.zip" hidden onChange={onMtlxFileSelected} />
-
-            <form.Field name="bakeResolution">
-              {(field) => (
-                <SelectFormField
-                  field={field}
-                  label="Bake resolution"
-                  options={BAKE_RESOLUTION_OPTIONS}
-                  parse={Number}
-                />
-              )}
-            </form.Field>
-          </FieldGroup>
-        </FieldSet>
-
-        <FieldSet>
-          <FieldLegend>Network (grid + MLP)</FieldLegend>
-          <FieldGroup>
-            <Field>
-              <FieldLabel>Preset</FieldLabel>
-              <Select value={values.preset} onValueChange={applyPreset}>
-                <SelectTrigger size="sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {NTC_PROFILE_NAMES.map((name) => (
-                    <SelectItem key={name} value={name}>
-                      {NTC_PROFILES[name].label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <form.Field name="levels">
-              {(field) => <SelectFormField field={field} label="Feature levels" options={GRID_LEVELS_OPTIONS} parse={Number} />}
-            </form.Field>
-            <form.Field name="baseResolution">
-              {(field) => (
-                <SelectFormField field={field} label="Finest grid res" options={GRID_BASE_RESOLUTION_OPTIONS} parse={Number} />
-              )}
-            </form.Field>
-            <form.Field name="hiddenSize">
-              {(field) => (
-                <SelectFormField
-                  field={field}
-                  label="MLP hidden width (x2 layers)"
-                  options={MLP_HIDDEN_SIZE_OPTIONS}
-                  parse={Number}
-                />
-              )}
-            </form.Field>
-            <form.Field name="hiddenActivation">
-              {(field) => <SelectFormField field={field} label="MLP hidden activation" options={MLP_ACTIVATION_OPTIONS} />}
-            </form.Field>
-          </FieldGroup>
-        </FieldSet>
-
-        <FieldSet>
-          <FieldLegend>Training</FieldLegend>
-          <FieldGroup>
-            <form.Field name="batchSize">
-              {(field) => <SelectFormField field={field} label="Batch size" options={BATCH_SIZE_OPTIONS} parse={Number} />}
-            </form.Field>
-
-            <form.Field name="iterations">
-              {(field) => (
-                <Field>
-                  <FieldLabel>Iterations: {field.state.value}</FieldLabel>
-                  <Slider
-                    min={200}
-                    max={20000}
-                    step={100}
-                    value={[field.state.value]}
-                    onValueChange={([v]) => field.handleChange(v)}
-                  />
-                </Field>
-              )}
-            </form.Field>
-
-            <form.Field name="learningRate">
-              {(field) => (
-                <Field>
-                  <FieldLabel>Learning rate: {field.state.value.toFixed(3)}</FieldLabel>
-                  <Slider
-                    min={0.001}
-                    max={0.05}
-                    step={0.001}
-                    value={[field.state.value]}
-                    onValueChange={([v]) => field.handleChange(v)}
-                  />
-                </Field>
-              )}
-            </form.Field>
-
-            <Field>
-              <FieldLabel>Quantization</FieldLabel>
-              <Select
-                value={values.quantization}
-                onValueChange={(v) => form.setFieldValue('quantization', v as 'none' | 'uint8')}
-              >
-                <SelectTrigger size="sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {QUANTIZATION_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-          </FieldGroup>
-        </FieldSet>
-
-        <FieldSet>
-          <FieldLegend>Object</FieldLegend>
-          <FieldGroup>
-            <form.Field name="shape">
-              {(field) => <SelectFormField field={field} label="Shape" options={SHAPE_OPTIONS} />}
-            </form.Field>
-          </FieldGroup>
-        </FieldSet>
-
-        <FieldSet>
-          <FieldLegend>View</FieldLegend>
-          <FieldGroup>
-            <form.Field name="interpolation">
-              {(field) => (
-                <Field orientation="horizontal">
-                  <FieldLabel htmlFor={field.name}>Interpolation (feature grid)</FieldLabel>
-                  <Switch
-                    id={field.name}
-                    checked={field.state.value}
-                    onCheckedChange={(checked) => {
-                      field.handleChange(checked);
-                      previewMaterialRef.current?.setInterpolation?.(checked);
-                    }}
-                  />
-                </Field>
-              )}
-            </form.Field>
-
-            <form.Field name="lodBias">
-              {(field) => (
-                <Field>
-                  <FieldLabel>LOD bias (force finer): {field.state.value.toFixed(2)}</FieldLabel>
-                  <Slider
-                    min={-4}
-                    max={16}
-                    step={0.25}
-                    value={[field.state.value]}
-                    onValueChange={([v]) => field.handleChange(v)}
-                  />
-                </Field>
-              )}
-            </form.Field>
-          </FieldGroup>
-        </FieldSet>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Model size</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">{modelSizeSummary}</p>
-          </CardContent>
-        </Card>
-
-        <div className="flex flex-wrap gap-2">
+    <div className="relative flex flex-1 flex-col gap-4 p-4">
+      {/* Settings panel: normal-flow block on mobile (stacked above the
+          viewer); becomes an absolutely-positioned, collapsible overlay on
+          top of the viewer at lg+ - `left-0/top-0/bottom-0` line up with the
+          padding edge the container's own `p-4` already provides, so no
+          doubled-up inset math is needed. */}
+      <div
+        className={cn(
+          'flex flex-col gap-4 overflow-y-auto',
+          'lg:absolute lg:top-0 lg:bottom-0 lg:left-0 lg:z-10 lg:rounded-xl lg:border lg:border-border lg:bg-background/95 lg:p-4 lg:shadow-lg lg:backdrop-blur-sm',
+          settingsOpen ? 'lg:w-[380px]' : 'lg:w-auto',
+        )}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <div className={cn(!settingsOpen && 'lg:hidden')}>
+            <h1 className="text-lg font-semibold">MaterialX Trainer</h1>
+            <p className="text-sm text-muted-foreground">
+              Fit a MaterialX material into a neural texture compression (.ntc) model, right in the browser.
+            </p>
+          </div>
           <Button
             type="button"
-            disabled={isTraining || !hasSource}
-            onClick={() => {
-              ga.event('trainer-train', { materialx_key: builtInKey || sourceName || 'unknown' });
-              void train();
-            }}
+            variant="ghost"
+            size="sm"
+            className="hidden shrink-0 lg:inline-flex lg:w-8 lg:px-0"
+            onClick={() => setSettingsOpen((open) => !open)}
+            aria-label={settingsOpen ? 'Collapse settings' : 'Expand settings'}
           >
-            Train
+            {settingsOpen ? <PanelLeftClose className="size-4" /> : <PanelLeftOpen className="size-4" />}
           </Button>
-          <Button type="button" variant="outline" disabled={!isTraining} onClick={stopTraining}>
-            Stop training
-          </Button>
+        </div>
+
+        <div className={cn('flex flex-col gap-4', !settingsOpen && 'lg:hidden')}>
+        <div className="flex flex-wrap gap-2">
+          {isTraining ? (
+            <Button type="button" variant="outline" onClick={stopTraining}>
+              Stop training
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              disabled={!hasSource}
+              onClick={() => {
+                ga.event('trainer-train', { materialx_key: builtInKey || sourceName || 'unknown' });
+                void train();
+              }}
+            >
+              Train
+            </Button>
+          )}
           <Button type="button" variant="outline" disabled={!hasTrainedModel} onClick={saveNtc}>
             Save .ntc
           </Button>
-          <Button type="button" variant="outline" onClick={() => ntcInputRef.current?.click()}>
-            Load .ntc
-          </Button>
-          <input ref={ntcInputRef} type="file" accept=".ntc,.json" hidden onChange={onNtcFileSelected} />
         </div>
+
+        <CollapsibleSection title="Source">
+              <Field>
+                <FieldLabel>Built-in MaterialX</FieldLabel>
+                <Select
+                  value={builtInKey}
+                  onValueChange={(key) => {
+                    setBuiltInKey(key);
+                    ga.event('trainer-default-materialx', { materialx_key: key });
+                    void loadBuiltInMaterial(key);
+                  }}
+                  disabled={isTraining}
+                >
+                  <SelectTrigger size="sm">
+                    <SelectValue placeholder="Choose an example…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MATERIALX_SAMPLES.map((sample) => (
+                      <SelectItem key={sample.key} value={sample.key}>
+                        {sample.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <div
+                className={`flex items-center gap-2 rounded-lg border-2 border-dashed p-2 transition-colors ${
+                  mtlxDragOver ? 'border-primary bg-accent' : 'border-transparent'
+                }`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setMtlxDragOver(true);
+                }}
+                onDragLeave={() => setMtlxDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setMtlxDragOver(false);
+                  const file = e.dataTransfer.files[0];
+                  if (!file) return;
+                  ga.event('trainer-drop-materialx', { file_name: file.name });
+                  void loadMtlxFile(file);
+                }}
+              >
+                <Button type="button" variant="outline" size="sm" disabled={isTraining} onClick={() => mtlxInputRef.current?.click()}>
+                  Open .mtlx
+                </Button>
+                <span className="truncate text-sm text-muted-foreground">
+                  {sourceName ?? 'loading default'} — or drag & drop a .mtlx file here
+                </span>
+              </div>
+              <input ref={mtlxInputRef} type="file" accept=".mtlx,.zip,.mtlx.zip" hidden onChange={onMtlxFileSelected} />
+
+              <form.Field name="bakeResolution">
+                {(field) => (
+                  <SelectFormField
+                    field={field}
+                    label="Bake resolution"
+                    options={BAKE_RESOLUTION_OPTIONS}
+                    parse={Number}
+                  />
+                )}
+              </form.Field>
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Network (grid + MLP)">
+              <Field>
+                <FieldLabel>Preset</FieldLabel>
+                <Select value={values.preset} onValueChange={applyPreset}>
+                  <SelectTrigger size="sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {NTC_PROFILE_NAMES.map((name) => (
+                      <SelectItem key={name} value={name}>
+                        {NTC_PROFILES[name].label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <form.Field name="levels">
+                {(field) => <SelectFormField field={field} label="Feature levels" options={GRID_LEVELS_OPTIONS} parse={Number} />}
+              </form.Field>
+              <form.Field name="baseResolution">
+                {(field) => (
+                  <SelectFormField field={field} label="Finest grid res" options={GRID_BASE_RESOLUTION_OPTIONS} parse={Number} />
+                )}
+              </form.Field>
+              <form.Field name="hiddenSize">
+                {(field) => (
+                  <SelectFormField
+                    field={field}
+                    label="MLP hidden width (x2 layers)"
+                    options={MLP_HIDDEN_SIZE_OPTIONS}
+                    parse={Number}
+                  />
+                )}
+              </form.Field>
+              <form.Field name="hiddenActivation">
+                {(field) => <SelectFormField field={field} label="MLP hidden activation" options={MLP_ACTIVATION_OPTIONS} />}
+              </form.Field>
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Training">
+              <form.Field name="batchSize">
+                {(field) => <SelectFormField field={field} label="Batch size" options={BATCH_SIZE_OPTIONS} parse={Number} />}
+              </form.Field>
+
+              <form.Field name="iterations">
+                {(field) => (
+                  <Field>
+                    <FieldLabel>Iterations: {field.state.value}</FieldLabel>
+                    <Slider
+                      min={200}
+                      max={20000}
+                      step={100}
+                      value={[field.state.value]}
+                      onValueChange={([v]) => field.handleChange(v)}
+                    />
+                  </Field>
+                )}
+              </form.Field>
+
+              <form.Field name="learningRate">
+                {(field) => (
+                  <Field>
+                    <FieldLabel>Learning rate: {field.state.value.toFixed(3)}</FieldLabel>
+                    <Slider
+                      min={0.001}
+                      max={0.05}
+                      step={0.001}
+                      value={[field.state.value]}
+                      onValueChange={([v]) => field.handleChange(v)}
+                    />
+                  </Field>
+                )}
+              </form.Field>
+
+              <Field>
+                <FieldLabel>Quantization</FieldLabel>
+                <Select
+                  value={values.quantization}
+                  onValueChange={(v) => form.setFieldValue('quantization', v as 'none' | 'uint8')}
+                >
+                  <SelectTrigger size="sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {QUANTIZATION_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+        </CollapsibleSection>
+
+        <CollapsibleSection title="Object">
+              <form.Field name="shape">
+                {(field) => <SelectFormField field={field} label="Shape" options={SHAPE_OPTIONS} />}
+              </form.Field>
+        </CollapsibleSection>
+
+        <CollapsibleSection title="View">
+              <form.Field name="interpolation">
+                {(field) => (
+                  <Field orientation="horizontal">
+                    <FieldLabel htmlFor={field.name}>Interpolation (feature grid)</FieldLabel>
+                    <Switch
+                      id={field.name}
+                      checked={field.state.value}
+                      onCheckedChange={(checked) => {
+                        field.handleChange(checked);
+                        previewMaterialRef.current?.setInterpolation?.(checked);
+                      }}
+                    />
+                  </Field>
+                )}
+              </form.Field>
+
+              <form.Field name="lodBias">
+                {(field) => (
+                  <Field>
+                    <FieldLabel>LOD bias (force finer): {field.state.value.toFixed(2)}</FieldLabel>
+                    <Slider
+                      min={-4}
+                      max={16}
+                      step={0.25}
+                      value={[field.state.value]}
+                      onValueChange={([v]) => field.handleChange(v)}
+                    />
+                  </Field>
+                )}
+              </form.Field>
+        </CollapsibleSection>
 
         <Card>
           <CardHeader>
@@ -717,36 +709,42 @@ function TrainerPage() {
             <p className="whitespace-pre-line text-sm text-muted-foreground">{status}</p>
           </CardContent>
         </Card>
+        </div>
       </div>
 
-      <div className="flex min-h-[320px] flex-col gap-4">
+      <div className="flex min-h-[320px] flex-1 flex-col gap-4">
         <div className="relative min-h-[320px] flex-1 overflow-hidden rounded-xl border border-border bg-black">
           <NTCViewer material={previewMaterial} teacherMaterial={teacherMaterial} shape={values.shape} />
-          {teacherMaterial && (
-            <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center gap-32 text-xs text-white/80">
-              <span>MaterialX teacher</span>
-              <span>NTC material</span>
-            </div>
-          )}
         </div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm">Training loss</CardTitle>
-              <span className="text-xs text-muted-foreground">{lossIps}</span>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {lossPoints.length > 1 ? (
-              <Chart definition={lossChartDefinition} height={160} ariaLabel="Training loss, log scale" />
-            ) : (
-              <p className="flex h-[160px] items-center justify-center text-sm text-muted-foreground">
-                No training data yet.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[220px_1fr]">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Model size</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">{modelSizeSummary}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm">Training loss</CardTitle>
+                <span className="text-xs text-muted-foreground">{lossIps}</span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {lossPoints.length > 1 ? (
+                <Chart definition={lossChartDefinition} height={160} ariaLabel="Training loss, log scale" />
+              ) : (
+                <p className="flex h-[160px] items-center justify-center text-sm text-muted-foreground">
+                  No training data yet.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

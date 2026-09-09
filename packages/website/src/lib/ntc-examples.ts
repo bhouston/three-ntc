@@ -23,7 +23,7 @@ export async function parseNtc(text: string): Promise<LoadedMaterial> {
   const manifest = JSON.parse(text);
   const loader = new NTCLoader();
   const { name, cpuModel, channelClassification } = loader.parse(manifest);
-  const material = new NTCNodeMaterial(cpuModel, channelClassification, { renderer: getSharedRenderer() });
+  const material = new NTCNodeMaterial(cpuModel, channelClassification, { renderer: await getSharedRenderer() });
   const channels = Object.keys(channelClassification ?? {}).filter((key) => Boolean((channelClassification as any)[key]));
   return { name: name ?? 'Untitled', channels, material };
 }

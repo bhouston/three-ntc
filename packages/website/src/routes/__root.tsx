@@ -39,14 +39,22 @@ function RootLayout() {
       <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-3">
         <div className="flex items-center gap-4">
           <span className="font-semibold">three-ntc</span>
-          <nav className="flex gap-4 text-sm text-muted-foreground">
-            <Link to="/" activeProps={{ className: 'text-foreground' }}>
+          <nav className="flex gap-4 text-sm">
+            <Link to="/" className="text-primary underline underline-offset-4" activeProps={{ className: 'font-semibold' }}>
               Home
             </Link>
-            <Link to="/viewer" activeProps={{ className: 'text-foreground' }}>
+            <Link
+              to="/viewer"
+              className="text-primary underline underline-offset-4"
+              activeProps={{ className: 'font-semibold' }}
+            >
               Viewer
             </Link>
-            <Link to="/trainer" activeProps={{ className: 'text-foreground' }}>
+            <Link
+              to="/trainer"
+              className="text-primary underline underline-offset-4"
+              activeProps={{ className: 'font-semibold' }}
+            >
               Trainer
             </Link>
           </nav>
@@ -66,14 +74,14 @@ function RootLayout() {
       <footer className="border-t border-border">
         <p className="flex items-center justify-center gap-1 px-4 py-3 text-sm text-muted-foreground">
           Made by
-          <a href="https://ben3d.ca" className="text-foreground underline underline-offset-4">
+          <a href="https://ben3d.ca" className="text-primary underline underline-offset-4">
             Ben Houston
           </a>
           with
           <HeartIcon className="size-3.5 fill-current text-destructive" aria-hidden />
           <span className="sr-only">love</span>
           — sponsored by
-          <a href="https://landofassets.com" className="text-foreground underline underline-offset-4">
+          <a href="https://landofassets.com" className="text-primary underline underline-offset-4">
             Land of Assets
           </a>
         </p>
@@ -90,7 +98,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="bg-background text-foreground antialiased">
         {import.meta.env.PROD ? <GoogleAnalytics measurementId={GA_MEASUREMENT_ID} /> : null}
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
           <Toaster />
         </ThemeProvider>
