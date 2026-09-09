@@ -2,12 +2,11 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { NTCLoader, NTCNodeMaterial } from 'three-ntc';
-import { WebGPURenderer } from 'three/webgpu';
 
 import { NTCViewer } from '@/components/NTCViewer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select } from '@/components/ui/select';
+import { getSharedRenderer } from '@/lib/renderer';
 
 export const Route = createFileRoute('/')({
   component: ViewerPage,
@@ -28,14 +27,6 @@ interface LoadedMaterial {
   name: string;
   channels: string[];
   material: any;
-}
-
-// Shared renderer instance for the offscreen loader (NTCNodeMaterial wants
-// one to build its node graph against). Created lazily, once, in the browser.
-let sharedRenderer: any | null = null;
-function getSharedRenderer() {
-  sharedRenderer ??= new WebGPURenderer();
-  return sharedRenderer;
 }
 
 async function parseNtc(text: string): Promise<LoadedMaterial> {
@@ -102,11 +93,12 @@ function ViewerPage() {
             <CardTitle>Load material</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            <Select
+            <select
               defaultValue=""
               onChange={(e) => {
                 if (e.target.value) void loadFromUrl(e.target.value);
               }}
+              className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="" disabled>
                 Choose an example…
@@ -116,7 +108,7 @@ function ViewerPage() {
                   {f.label}
                 </option>
               ))}
-            </Select>
+            </select>
 
             <button
               type="button"

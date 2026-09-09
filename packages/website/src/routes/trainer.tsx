@@ -1,89 +1,683 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { useForm, useStore } from '@tanstack/react-form';
+import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import * as THREE from 'three';
+import {
+  bakeMaterialToTextures,
+  classifyMaterialChannels,
+  computeGridLatentTexels,
+  computeGridLevels,
+  computeMLPFlops,
+  computeMLPParamCount,
+  computeModelFootprint,
+  formatModelSizeSummary,
+  GRID_BASE_RESOLUTION_OPTIONS,
+  GRID_LEVELS_OPTIONS,
+  getNTCProfile,
+  inferAlbedoUvTransform,
+  MATERIALX_SAMPLES,
+  MaterialXLoader,
+  MLP_ACTIVATION_OPTIONS,
+  MLP_HIDDEN_SIZE_OPTIONS,
+  NTC_PROFILE_NAMES,
+  NTC_PROFILES,
+  NTCExporter,
+  NTCLossGraph,
+  NTCTrainer,
+} from 'three-ntc-trainer';
+import { buildChannelActivations, MAX_TOTAL_CHANNELS, NTCLoader, NTCNodeMaterial } from 'three-ntc';
 
+import { NTCViewer, type NTCViewerShape } from '@/components/NTCViewer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from '@/components/ui/field';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { getSharedRenderer } from '@/lib/renderer';
 
 export const Route = createFileRoute('/trainer')({
   component: TrainerPage,
 });
 
-// Friendly labels derived from the filenames in public/materialx/.
-const EXAMPLE_MATERIALS = [
-  { value: '/materialx/alpha_cutoff.mtlx', label: 'Alpha Cutoff' },
-  { value: '/materialx/brick.mtlx', label: 'Brick' },
-  { value: '/materialx/checkerboard_normal.mtlx', label: 'Checkerboard Normal' },
-  { value: '/materialx/checkerboard_transparency.mtlx', label: 'Checkerboard Transparency' },
-  { value: '/materialx/checkerboard.mtlx', label: 'Checkerboard' },
-  { value: '/materialx/emissive_grid.mtlx', label: 'Emissive Grid' },
-  { value: '/materialx/glossy_constant.mtlx', label: 'Glossy Constant' },
-  { value: '/materialx/glossy_gold.mtlx', label: 'Glossy Gold' },
-  { value: '/materialx/glossy_red.mtlx', label: 'Glossy Red' },
-  { value: '/materialx/gltf_pbr_glass_dispersion.mtlx', label: 'glTF PBR Glass Dispersion' },
-  { value: '/materialx/lambert_constant.mtlx', label: 'Lambert Constant' },
-  { value: '/materialx/lambert_red.mtlx', label: 'Lambert Red' },
-  { value: '/materialx/normal_map.mtlx', label: 'Normal Map' },
-  { value: '/materialx/open_pbr_surface_honey.mtlx', label: 'OpenPBR Surface Honey' },
-  { value: '/materialx/open_pbr_surface_pearl.mtlx', label: 'OpenPBR Surface Pearl' },
-  { value: '/materialx/open_pbr_surface_velvet.mtlx', label: 'OpenPBR Surface Velvet' },
-  { value: '/materialx/road_aggregate.mtlx', label: 'Road Aggregate' },
-  { value: '/materialx/standard_surface_color3_vec3_cm_test.mtlx', label: 'Standard Surface Color3 Vec3 CM Test' },
-  { value: '/materialx/standard_surface_combined_test.mtlx', label: 'Standard Surface Combined Test' },
-  { value: '/materialx/standard_surface_conditional_if_float.mtlx', label: 'Standard Surface Conditional If Float' },
-  { value: '/materialx/standard_surface_heightnormal.mtlx', label: 'Standard Surface Height Normal' },
-  {
-    value: '/materialx/standard_surface_heighttonormal_normal_input.mtlx',
-    label: 'Standard Surface Height To Normal Input',
-  },
-  { value: '/materialx/standard_surface_image_transform.mtlx', label: 'Standard Surface Image Transform' },
-  { value: '/materialx/standard_surface_ior_test.mtlx', label: 'Standard Surface IOR Test' },
-  { value: '/materialx/standard_surface_opacity_only_test.mtlx', label: 'Standard Surface Opacity Only Test' },
-  { value: '/materialx/standard_surface_opacity_test.mtlx', label: 'Standard Surface Opacity Test' },
-  { value: '/materialx/standard_surface_rotate_scale2d_test.mtlx', label: 'Standard Surface Rotate Scale2D Test' },
-  { value: '/materialx/standard_surface_rotate2d_test.mtlx', label: 'Standard Surface Rotate2D Test' },
-  { value: '/materialx/standard_surface_rotate3d_test.mtlx', label: 'Standard Surface Rotate3D Test' },
-  { value: '/materialx/standard_surface_roughness_test.mtlx', label: 'Standard Surface Roughness Test' },
-  { value: '/materialx/standard_surface_scale_rotate2d_test.mtlx', label: 'Standard Surface Scale Rotate2D Test' },
-  { value: '/materialx/standard_surface_scale2d_test.mtlx', label: 'Standard Surface Scale2D Test' },
-  { value: '/materialx/standard_surface_sheen_test.mtlx', label: 'Standard Surface Sheen Test' },
-  { value: '/materialx/standard_surface_specular_test.mtlx', label: 'Standard Surface Specular Test' },
-  { value: '/materialx/standard_surface_texture_opacity_test.mtlx', label: 'Standard Surface Texture Opacity Test' },
-  {
-    value: '/materialx/standard_surface_thin_film_ior_clamp_test.mtlx',
-    label: 'Standard Surface Thin Film IOR Clamp Test',
-  },
-  { value: '/materialx/standard_surface_thin_film_rainbow_test.mtlx', label: 'Standard Surface Thin Film Rainbow Test' },
-  { value: '/materialx/standard_surface_transmission_only_test.mtlx', label: 'Standard Surface Transmission Only Test' },
-  { value: '/materialx/standard_surface_transmission_rough.mtlx', label: 'Standard Surface Transmission Rough' },
-  { value: '/materialx/standard_surface_transmission_test.mtlx', label: 'Standard Surface Transmission Test' },
-  { value: '/materialx/uv_grid_glossy.mtlx', label: 'UV Grid Glossy' },
-  { value: '/materialx/uv_grid.mtlx', label: 'UV Grid' },
-  { value: '/materialx/velvet.mtlx', label: 'Velvet' },
-  { value: '/materialx/wood.mtlx', label: 'Wood' },
+const BAKE_RESOLUTION_OPTIONS = [128, 256, 512, 1024, 2048, 4096];
+const BATCH_SIZE_OPTIONS = [1024, 2048, 4096, 8192, 16384];
+const QUANTIZATION_OPTIONS: Array<{ value: 'none' | 'uint8'; label: string }> = [
+  { value: 'none', label: 'Off' },
+  { value: 'uint8', label: '8-bit' },
 ];
+const SHAPE_OPTIONS: NTCViewerShape[] = ['torus', 'sphere', 'plane'];
+const DEFAULT_MATERIALX_KEY = 'checkerboard_normal';
+
+type FormValues = {
+  bakeResolution: number;
+  preset: string;
+  levels: number;
+  baseResolution: number;
+  hiddenSize: number;
+  hiddenActivation: string;
+  batchSize: number;
+  iterations: number;
+  learningRate: number;
+  quantization: 'none' | 'uint8';
+  shape: NTCViewerShape;
+  interpolation: boolean;
+  lodBias: number;
+};
+
+const DEFAULT_VALUES: FormValues = {
+  bakeResolution: 1024,
+  preset: 'mobile-balanced',
+  levels: 3,
+  baseResolution: 256,
+  hiddenSize: 8,
+  hiddenActivation: 'relu',
+  batchSize: 8192,
+  iterations: 10000,
+  learningRate: 0.01,
+  quantization: 'uint8',
+  shape: 'torus',
+  interpolation: true,
+  lodBias: 0,
+};
+
+function isPhysicalNodeMaterial(material: any): boolean {
+  return material !== undefined && (material?.isMeshPhysicalNodeMaterial === true || material?.type === 'MeshPhysicalNodeMaterial');
+}
+
+function download(filename: string, text: string) {
+  const blob = new Blob([text], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
+// Small shared render for a <Select> bound to a `form.Field` render-prop
+// object - every network/training/object/view dropdown on this page uses
+// this same label + trigger + content shape, only the option list/parser
+// change.
+function SelectFormField({
+  field,
+  label,
+  options,
+  getLabel = String,
+  disabled,
+  parse = (v: string) => v as unknown,
+}: {
+  field: any;
+  label: string;
+  options: readonly (string | number)[];
+  getLabel?: (value: string | number) => string;
+  disabled?: boolean;
+  parse?: (value: string) => unknown;
+}) {
+  return (
+    <Field data-invalid={field.state.meta.errors.length > 0}>
+      <FieldLabel htmlFor={field.name}>{label}</FieldLabel>
+      <Select value={String(field.state.value)} onValueChange={(v) => field.handleChange(parse(v))} disabled={disabled}>
+        <SelectTrigger id={field.name} size="sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((opt) => (
+            <SelectItem key={String(opt)} value={String(opt)}>
+              {getLabel(opt)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <FieldError errors={field.state.meta.errors} />
+    </Field>
+  );
+}
 
 function TrainerPage() {
+  const form = useForm({ defaultValues: DEFAULT_VALUES });
+  const values = useStore(form.store, (state) => state.values);
+
+  const [status, setStatus] = useState('Ready.');
+  const [sourceName, setSourceName] = useState<string | null>(null);
+  const [builtInKey, setBuiltInKey] = useState(DEFAULT_MATERIALX_KEY);
+  const [hasSource, setHasSource] = useState(false);
+  const [channelClassification, setChannelClassification] = useState<any | null>(null);
+  const [isTraining, setIsTraining] = useState(false);
+  const [hasTrainedModel, setHasTrainedModel] = useState(false);
+  const [previewMaterial, setPreviewMaterial] = useState<any>(null);
+  const [teacherMaterial, setTeacherMaterial] = useState<any>(null);
+
+  const materialXMaterialRef = useRef<any>(null);
+  const uvTransformRef = useRef<any>(new THREE.Matrix3());
+  const activeTrainerRef = useRef<any>(null);
+  const previewMaterialRef = useRef<any>(null);
+  const sourceTexturesRef = useRef<any[] | null>(null);
+  const mtlxInputRef = useRef<HTMLInputElement>(null);
+  const ntcInputRef = useRef<HTMLInputElement>(null);
+
+  const lossCanvasRef = useRef<HTMLCanvasElement>(null);
+  const lossLegendRef = useRef<HTMLDivElement>(null);
+  const lossIpsRef = useRef<HTMLSpanElement>(null);
+  const lossGraphRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!lossCanvasRef.current) return;
+    lossGraphRef.current = new NTCLossGraph(
+      lossCanvasRef.current,
+      [{ key: 'loss', label: 'L2 loss (log)', color: '#50c8ff' }],
+      { legend: lossLegendRef.current, ips: lossIpsRef.current },
+    );
+  }, []);
+
+  const disposeSourceTextures = useCallback(() => {
+    for (const rt of sourceTexturesRef.current ?? []) rt.dispose();
+    sourceTexturesRef.current = null;
+  }, []);
+
+  const rebuildPreviewMaterial = useCallback((cpuModel: any, classification: any, lodBias: number) => {
+    const previous = previewMaterialRef.current;
+    const material = new NTCNodeMaterial(cpuModel, classification, {
+      renderer: getSharedRenderer(),
+      // ponytail: lodBias is only baked in at construction time (a plain
+      // number, not a live TSL uniform) - the simplest option
+      // NTCNodeMaterial's constructor supports. Dragging the slider takes
+      // effect on the next train/rebuild rather than instantly; upgrade path
+      // is passing a shared `uniform(lodBias)` node here and writing its
+      // `.value` on slider change instead.
+      lodBias,
+      interpolation: form.getFieldValue('interpolation'),
+    });
+    previewMaterialRef.current = material;
+    setPreviewMaterial(material);
+    setHasTrainedModel(cpuModel !== null);
+    if (previous?.dispose) previous.dispose();
+    return material;
+  }, [form]);
+
+  const setSourceMaterial = useCallback((material: any, name: string) => {
+    materialXMaterialRef.current = material;
+    setTeacherMaterial(material);
+    const classification = classifyMaterialChannels(material);
+    setChannelClassification(classification);
+
+    const surfaceShaderNode = material.materialXSurfaceShaderNode;
+    const materialXDocument = material.materialXDocument;
+    uvTransformRef.current =
+      surfaceShaderNode && materialXDocument
+        ? inferAlbedoUvTransform(materialXDocument, surfaceShaderNode)
+        : new THREE.Matrix3();
+
+    setSourceName(material.name || name);
+    setHasSource(true);
+
+    if (previewMaterialRef.current?.dispose) previewMaterialRef.current.dispose();
+    previewMaterialRef.current = null;
+    setPreviewMaterial(null);
+    setHasTrainedModel(false);
+    disposeSourceTextures();
+
+    const activeKeys = classification.activeChannels.map((c: any) => c.key).join(', ') || 'none';
+    const uvNote = uvTransformRef.current.equals(new THREE.Matrix3())
+      ? ''
+      : ' A UV transform was detected on the albedo graph and will be baked out / re-applied at render time.';
+    setStatus(
+      `MaterialX loaded. Training ${classification.totalChannels}/${MAX_TOTAL_CHANNELS} channels: ${activeKeys}.${uvNote} Press Train to fit.`,
+    );
+  }, [disposeSourceTextures]);
+
+  const loadBuiltInMaterial = useCallback(async (key: string) => {
+    const sample = MATERIALX_SAMPLES.find((s) => s.key === key);
+    if (!sample) return;
+    try {
+      setStatus(`Loading ${sample.file}...`);
+      const loader = new MaterialXLoader().setPath('/materialx/');
+      const asset: any = await loader.loadAsync(sample.file, { uvSpace: 'top-left', throwOnErrors: true });
+      const materials = asset?.materials ?? asset;
+      const material = Object.values(materials).find(isPhysicalNodeMaterial) ?? Object.values(materials)[0];
+      if (!material) throw new Error('MaterialXLoader did not produce any materials.');
+      if (asset.texturesReady) await asset.texturesReady;
+      setSourceMaterial(material, sample.file);
+    } catch (err) {
+      console.error(err);
+      setStatus(errorMessage(err));
+    }
+  }, [setSourceMaterial]);
+
+  useEffect(() => {
+    void loadBuiltInMaterial(DEFAULT_MATERIALX_KEY);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onMtlxFileSelected = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+      setStatus(`Loading ${file.name}...`);
+      const loader = new MaterialXLoader();
+      const asset: any = loader.parseBuffer(await file.arrayBuffer(), file.name, { uvSpace: 'top-left', throwOnErrors: true });
+      const materials = asset?.materials ?? asset;
+      const material = Object.values(materials).find(isPhysicalNodeMaterial) ?? Object.values(materials)[0];
+      if (!material) throw new Error('MaterialXLoader did not produce any materials.');
+      if (asset.texturesReady) await asset.texturesReady;
+      setBuiltInKey('');
+      setSourceMaterial(material, file.name);
+    } catch (err) {
+      console.error(err);
+      setStatus(errorMessage(err));
+    }
+  }, [setSourceMaterial]);
+
+  const train = useCallback(async () => {
+    const material = materialXMaterialRef.current;
+    if (!material || !channelClassification) return;
+
+    if (channelClassification.activeChannels.length === 0) {
+      setStatus('Every channel is constant on this material - nothing to train.');
+      return;
+    }
+
+    setIsTraining(true);
+    lossGraphRef.current?.reset();
+    setStatus('Baking material channels...');
+
+    try {
+      const renderer = getSharedRenderer();
+      disposeSourceTextures();
+      const renderTargets = await bakeMaterialToTextures(
+        renderer,
+        material,
+        Number(values.bakeResolution),
+        channelClassification.activeChannels,
+        uvTransformRef.current,
+      );
+      sourceTexturesRef.current = renderTargets;
+
+      setStatus('Training...');
+
+      const trainer = new NTCTrainer({
+        channels: 4,
+        levels: Number(values.levels),
+        baseResolution: Number(values.baseResolution),
+        hiddenSizes: [Number(values.hiddenSize), Number(values.hiddenSize)],
+        hiddenActivation: values.hiddenActivation,
+        outputChannels: channelClassification.totalChannels,
+        channelActivations: buildChannelActivations(channelClassification.activeChannels) as string[],
+        batchSize: Number(values.batchSize),
+        iterations: Number(values.iterations),
+        learningRate: Number(values.learningRate),
+        // Only `mode` is meaningful here (matches the upstream three.js
+        // example, which passes exactly this) - NTCTrainer.resolveQuantizationConfig
+        // fills in the rest (target/range/perLevel) from its own defaults at
+        // runtime; the TS port's option type is stricter than that runtime
+        // behavior, so this is cast rather than hand-duplicating those defaults.
+        quantization: { mode: values.quantization } as any,
+        uvTransform: uvTransformRef.current,
+        seed: 1,
+      });
+      activeTrainerRef.current = trainer;
+
+      const result = await trainer.train({
+        renderer,
+        sourceTextures: renderTargets.map((rt: any) => rt.texture),
+        onProgress: (progress: any) => {
+          lossGraphRef.current?.addPoint({ iteration: progress.iteration, loss: progress.loss });
+          lossGraphRef.current?.draw();
+          rebuildPreviewMaterial(progress.cpuModel, channelClassification, Number(values.lodBias));
+        },
+      });
+
+      rebuildPreviewMaterial(result.cpuModel, channelClassification, Number(values.lodBias));
+      setStatus(result.stoppedEarly ? 'Stopped.' : 'Training complete.');
+    } catch (err) {
+      console.error(err);
+      setStatus(errorMessage(err));
+    } finally {
+      activeTrainerRef.current = null;
+      setIsTraining(false);
+    }
+  }, [channelClassification, values, disposeSourceTextures, rebuildPreviewMaterial]);
+
+  const stopTraining = useCallback(() => {
+    if (!activeTrainerRef.current) return;
+    activeTrainerRef.current.abort();
+    setStatus('Stopping...');
+  }, []);
+
+  const saveNtc = useCallback(() => {
+    const material = previewMaterialRef.current;
+    if (!material || !material.cpuModel) return;
+    const name = sourceName || 'Untitled neural material';
+    const manifest = new NTCExporter().parse(material, { name, source: 'Exported from the three-ntc trainer.' });
+    const safeName = name.trim().replace(/[^a-z0-9-_]+/gi, '_') || 'neural-material';
+    download(`${safeName}.ntc`, JSON.stringify(manifest));
+    setStatus(`Saved ${safeName}.ntc.`);
+  }, [sourceName]);
+
+  const onNtcFileSelected = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+      setStatus(`Loading ${file.name}...`);
+      const payload = JSON.parse(await file.text());
+      const { name, cpuModel, channelClassification: loaded } = new NTCLoader().parse(payload);
+
+      materialXMaterialRef.current = null;
+      uvTransformRef.current = new THREE.Matrix3();
+      setHasSource(false); // no MaterialX source to (re)train against
+      setBuiltInKey('');
+      setTeacherMaterial(null); // nothing to show side-by-side either
+      disposeSourceTextures();
+
+      setChannelClassification(loaded);
+      setSourceName(name || file.name);
+      rebuildPreviewMaterial(cpuModel, loaded, Number(values.lodBias));
+
+      const activeKeys = loaded.activeChannels.map((c: any) => c.key).join(', ') || 'none';
+      setStatus(`Loaded "${name || file.name}" (${loaded.totalChannels}/${MAX_TOTAL_CHANNELS} channels: ${activeKeys}).`);
+    } catch (err) {
+      console.error(err);
+      setStatus(errorMessage(err));
+    }
+  }, [disposeSourceTextures, rebuildPreviewMaterial, values.lodBias]);
+
+  const modelSizeSummary = useMemo(() => {
+    const outputChannels = channelClassification ? channelClassification.totalChannels : MAX_TOTAL_CHANNELS;
+    const channels = 4;
+    const resolutions = computeGridLevels(Number(values.baseResolution), Number(values.levels));
+    const latentTexels = computeGridLatentTexels(resolutions);
+    const gridParams = latentTexels * channels;
+    const inputSize = channels + 1;
+    const mlpSpec = { inputSize, hiddenSize: Number(values.hiddenSize), hiddenLayers: 2, outputSize: outputChannels };
+    const mlpParams = computeMLPParamCount(mlpSpec);
+    const flops = computeMLPFlops(mlpSpec);
+    return formatModelSizeSummary(computeModelFootprint({ gridParams, mlpParams, flops }));
+  }, [channelClassification, values.baseResolution, values.levels, values.hiddenSize]);
+
+  const applyPreset = useCallback((name: string) => {
+    form.setFieldValue('preset', name);
+    const profile = getNTCProfile(name);
+    if (!profile) return;
+    form.setFieldValue('levels', profile.levels);
+    form.setFieldValue('baseResolution', profile.baseResolution);
+    form.setFieldValue('hiddenSize', profile.hiddenSizes[profile.hiddenSizes.length - 1]);
+    form.setFieldValue('hiddenActivation', profile.hiddenActivation);
+  }, [form]);
+
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
-      <div>
-        <h1 className="text-lg font-semibold">MaterialX Trainer</h1>
-        <p className="text-sm text-muted-foreground">
-          Pick a MaterialX example to bake into a .ntc model. Training UI coming soon.
-        </p>
+    <div className="grid flex-1 grid-cols-1 gap-4 p-4 lg:grid-cols-[380px_1fr]">
+      <div className="flex max-h-[calc(100svh-5rem)] flex-col gap-4 overflow-y-auto pr-1">
+        <div>
+          <h1 className="text-lg font-semibold">MaterialX Trainer</h1>
+          <p className="text-sm text-muted-foreground">
+            Fit a MaterialX material into a neural texture compression (.ntc) model, right in the browser.
+          </p>
+        </div>
+
+        <FieldSet>
+          <FieldLegend>Source</FieldLegend>
+          <FieldGroup>
+            <Field>
+              <FieldLabel>Built-in MaterialX</FieldLabel>
+              <Select
+                value={builtInKey}
+                onValueChange={(key) => {
+                  setBuiltInKey(key);
+                  void loadBuiltInMaterial(key);
+                }}
+                disabled={isTraining}
+              >
+                <SelectTrigger size="sm">
+                  <SelectValue placeholder="Choose an example…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MATERIALX_SAMPLES.map((sample) => (
+                    <SelectItem key={sample.key} value={sample.key}>
+                      {sample.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" size="sm" disabled={isTraining} onClick={() => mtlxInputRef.current?.click()}>
+                Open .mtlx
+              </Button>
+              <span className="truncate text-sm text-muted-foreground">{sourceName ?? 'loading default'}</span>
+            </div>
+            <input ref={mtlxInputRef} type="file" accept=".mtlx,.zip,.mtlx.zip" hidden onChange={onMtlxFileSelected} />
+
+            <form.Field name="bakeResolution">
+              {(field) => (
+                <SelectFormField
+                  field={field}
+                  label="Bake resolution"
+                  options={BAKE_RESOLUTION_OPTIONS}
+                  parse={Number}
+                />
+              )}
+            </form.Field>
+          </FieldGroup>
+        </FieldSet>
+
+        <FieldSet>
+          <FieldLegend>Network (grid + MLP)</FieldLegend>
+          <FieldGroup>
+            <Field>
+              <FieldLabel>Preset</FieldLabel>
+              <Select value={values.preset} onValueChange={applyPreset}>
+                <SelectTrigger size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {NTC_PROFILE_NAMES.map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {NTC_PROFILES[name].label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <form.Field name="levels">
+              {(field) => <SelectFormField field={field} label="Feature levels" options={GRID_LEVELS_OPTIONS} parse={Number} />}
+            </form.Field>
+            <form.Field name="baseResolution">
+              {(field) => (
+                <SelectFormField field={field} label="Finest grid res" options={GRID_BASE_RESOLUTION_OPTIONS} parse={Number} />
+              )}
+            </form.Field>
+            <form.Field name="hiddenSize">
+              {(field) => (
+                <SelectFormField
+                  field={field}
+                  label="MLP hidden width (x2 layers)"
+                  options={MLP_HIDDEN_SIZE_OPTIONS}
+                  parse={Number}
+                />
+              )}
+            </form.Field>
+            <form.Field name="hiddenActivation">
+              {(field) => <SelectFormField field={field} label="MLP hidden activation" options={MLP_ACTIVATION_OPTIONS} />}
+            </form.Field>
+          </FieldGroup>
+        </FieldSet>
+
+        <FieldSet>
+          <FieldLegend>Training</FieldLegend>
+          <FieldGroup>
+            <form.Field name="batchSize">
+              {(field) => <SelectFormField field={field} label="Batch size" options={BATCH_SIZE_OPTIONS} parse={Number} />}
+            </form.Field>
+
+            <form.Field name="iterations">
+              {(field) => (
+                <Field>
+                  <FieldLabel>Iterations: {field.state.value}</FieldLabel>
+                  <Slider
+                    min={200}
+                    max={20000}
+                    step={100}
+                    value={[field.state.value]}
+                    onValueChange={([v]) => field.handleChange(v)}
+                  />
+                </Field>
+              )}
+            </form.Field>
+
+            <form.Field name="learningRate">
+              {(field) => (
+                <Field>
+                  <FieldLabel>Learning rate: {field.state.value.toFixed(3)}</FieldLabel>
+                  <Slider
+                    min={0.001}
+                    max={0.05}
+                    step={0.001}
+                    value={[field.state.value]}
+                    onValueChange={([v]) => field.handleChange(v)}
+                  />
+                </Field>
+              )}
+            </form.Field>
+
+            <Field>
+              <FieldLabel>Quantization</FieldLabel>
+              <Select
+                value={values.quantization}
+                onValueChange={(v) => form.setFieldValue('quantization', v as 'none' | 'uint8')}
+              >
+                <SelectTrigger size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {QUANTIZATION_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          </FieldGroup>
+        </FieldSet>
+
+        <FieldSet>
+          <FieldLegend>Object</FieldLegend>
+          <FieldGroup>
+            <form.Field name="shape">
+              {(field) => <SelectFormField field={field} label="Shape" options={SHAPE_OPTIONS} />}
+            </form.Field>
+          </FieldGroup>
+        </FieldSet>
+
+        <FieldSet>
+          <FieldLegend>View</FieldLegend>
+          <FieldGroup>
+            <form.Field name="interpolation">
+              {(field) => (
+                <Field orientation="horizontal">
+                  <FieldLabel htmlFor={field.name}>Interpolation (feature grid)</FieldLabel>
+                  <Switch
+                    id={field.name}
+                    checked={field.state.value}
+                    onCheckedChange={(checked) => {
+                      field.handleChange(checked);
+                      previewMaterialRef.current?.setInterpolation?.(checked);
+                    }}
+                  />
+                </Field>
+              )}
+            </form.Field>
+
+            <form.Field name="lodBias">
+              {(field) => (
+                <Field>
+                  <FieldLabel>LOD bias (force finer): {field.state.value.toFixed(2)}</FieldLabel>
+                  <Slider
+                    min={-4}
+                    max={16}
+                    step={0.25}
+                    value={[field.state.value]}
+                    onValueChange={([v]) => field.handleChange(v)}
+                  />
+                </Field>
+              )}
+            </form.Field>
+          </FieldGroup>
+        </FieldSet>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Model size</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">{modelSizeSummary}</p>
+          </CardContent>
+        </Card>
+
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" disabled={isTraining || !hasSource} onClick={() => void train()}>
+            Train
+          </Button>
+          <Button type="button" variant="outline" disabled={!isTraining} onClick={stopTraining}>
+            Stop training
+          </Button>
+          <Button type="button" variant="outline" disabled={!hasTrainedModel} onClick={saveNtc}>
+            Save .ntc
+          </Button>
+          <Button type="button" variant="outline" onClick={() => ntcInputRef.current?.click()}>
+            Load .ntc
+          </Button>
+          <input ref={ntcInputRef} type="file" accept=".ntc,.json" hidden onChange={onNtcFileSelected} />
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="whitespace-pre-line text-sm text-muted-foreground">{status}</p>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {EXAMPLE_MATERIALS.map((m) => (
-          <Card key={m.value}>
-            <CardHeader>
-              <CardTitle className="text-sm">{m.label}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Button size="sm" variant="outline" disabled className="w-full">
-                Train (coming soon)
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="flex min-h-[320px] flex-col gap-4">
+        <div className="relative min-h-[320px] flex-1 overflow-hidden rounded-xl border border-border bg-black">
+          <NTCViewer material={previewMaterial} teacherMaterial={teacherMaterial} shape={values.shape} />
+          {teacherMaterial && (
+            <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center gap-32 text-xs text-white/80">
+              <span>MaterialX teacher</span>
+              <span>NTC material</span>
+            </div>
+          )}
+        </div>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm">Training loss</CardTitle>
+              <span ref={lossIpsRef} className="text-xs text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            <canvas ref={lossCanvasRef} width={396} height={120} className="w-full rounded border border-border bg-black" />
+            <div ref={lossLegendRef} className="flex justify-center gap-3 text-xs text-muted-foreground" />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
