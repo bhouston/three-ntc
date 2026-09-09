@@ -10,6 +10,19 @@ const HDR_ENVIRONMENT_URL = '/textures/equirectangular/san_giuseppe_bridge_2k.hd
 // Slow, constant spin so viewers can tell the mesh is 3D: one full turn every 30s.
 const ROTATION_SPEED = (2 * Math.PI) / 30;
 
+// Vertical FOV at aspect 1:1 - the reference frame the mesh is sized to fit.
+const BASE_FOV_DEG = 45;
+
+// PerspectiveCamera.fov is a *vertical* angle, so on a tall/narrow viewport
+// (aspect < 1) the horizontal extent shrinks below BASE_FOV_DEG and crops the
+// mesh's sides. Widen the vertical FOV to compensate, keeping the horizontal
+// extent pinned to the aspect-1 baseline - like CSS `object-fit: contain`.
+function fitFovDeg(aspect: number): number {
+  if (aspect >= 1) return BASE_FOV_DEG;
+  const halfWidth = Math.tan(THREE.MathUtils.degToRad(BASE_FOV_DEG) / 2);
+  return THREE.MathUtils.radToDeg(2 * Math.atan(halfWidth / aspect));
+}
+
 export type NTCViewerShape = 'torus' | 'sphere' | 'plane';
 
 // A text label rendered onto a plane instead of an HTML overlay, so it lives
@@ -90,7 +103,7 @@ export function NTCViewer({
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x1a1a1a);
 
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    const camera = new THREE.PerspectiveCamera(BASE_FOV_DEG, 1, 0.1, 100);
     camera.position.set(0, 0, 3);
 
     const renderer = new WebGPURenderer({ canvas, antialias: true });
@@ -146,6 +159,7 @@ export function NTCViewer({
       if (!parent) return;
       const { clientWidth: width, clientHeight: height } = parent;
       camera.aspect = width / height;
+      camera.fov = fitFovDeg(camera.aspect);
       camera.updateProjectionMatrix();
       renderer.setSize(width, height, false);
     };
