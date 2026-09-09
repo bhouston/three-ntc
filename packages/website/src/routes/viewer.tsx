@@ -195,33 +195,28 @@ function ViewerPage() {
                     {[loaded.mlpLayers[0]?.inputSize, ...loaded.mlpLayers.map((l) => l.outputSize)].join('→')})
                   </dd>
                 </div>
-                <div>
-                  <dt className="text-muted-foreground">Channels</dt>
-                  <dd>
-                    <table className="mt-1 w-full text-left text-sm">
-                      <thead>
-                        <tr className="text-muted-foreground">
-                          <th className="pr-4 font-normal">Channel</th>
-                          <th className="font-normal">Source</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {loaded.activeChannels.map((key) => (
-                          <tr key={key}>
-                            <td className="pr-4">{key}</td>
-                            <td>MLP</td>
-                          </tr>
-                        ))}
-                        {loaded.constantChannels.map((key) => (
-                          <tr key={key}>
-                            <td className="pr-4">{key}</td>
-                            <td>Fixed</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </dd>
-                </div>
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="text-muted-foreground">
+                      <th className="pr-4 font-normal">Channel</th>
+                      <th className="font-normal">Source</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loaded.activeChannels.map((key) => (
+                      <tr key={key}>
+                        <td className="pr-4">{key}</td>
+                        <td>MLP</td>
+                      </tr>
+                    ))}
+                    {loaded.constantChannels.map((key) => (
+                      <tr key={key}>
+                        <td className="pr-4">{key}</td>
+                        <td>Fixed</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </dl>
             ) : (
               <p className="text-sm text-muted-foreground">No material loaded yet.</p>
