@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Slider } from '@/components/ui/slider';
-import { EXAMPLE_FILES, type LoadedMaterial, parseNtc } from '@/lib/ntc-examples';
+import { DEFAULT_LOD_BIAS, EXAMPLE_FILES, type LoadedMaterial, parseNtc } from '@/lib/ntc-examples';
 
 export interface ViewerSearch {
   src?: string;
@@ -31,7 +31,7 @@ function ViewerPage() {
   const [loaded, setLoaded] = useState<LoadedMaterial | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [lodBias, setLodBias] = useState(0);
+  const [lodBias, setLodBias] = useState(DEFAULT_LOD_BIAS);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async (text: string, sourceLabel: string) => {

@@ -38,6 +38,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { DEFAULT_LOD_BIAS } from '@/lib/ntc-examples';
 import { getSharedRenderer } from '@/lib/renderer';
 
 export interface TrainerSearch {
@@ -92,7 +93,7 @@ const DEFAULT_VALUES: FormValues = {
   quantization: 'uint8',
   shape: 'torus',
   interpolation: true,
-  lodBias: 0,
+  lodBias: DEFAULT_LOD_BIAS,
 };
 
 function isPhysicalNodeMaterial(material: any): boolean {

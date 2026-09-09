@@ -13,6 +13,13 @@ export const EXAMPLE_FILES = [
   { value: '/ntc/wood_flooring.ntc', label: 'Wood Flooring' },
 ];
 
+// Reconstructing one mip level finer than the raw screen-space estimate
+// looks better in practice (this addon's tail-mip reconstruction tolerates
+// the extra sharpness - see NTCNodeMaterial's computeAutoLodNode doc
+// comment) - shared default for every place that builds/previews a
+// material without its own explicit lodBias control.
+export const DEFAULT_LOD_BIAS = 1;
+
 export interface LoadedMaterialGrid {
   width: number;
   height: number;
@@ -39,7 +46,10 @@ export async function parseNtc(text: string): Promise<LoadedMaterial> {
   const manifest = JSON.parse(text);
   const loader = new NTCLoader();
   const { name, cpuModel, channelClassification } = loader.parse(manifest);
-  const material = new NTCNodeMaterial(cpuModel, channelClassification, { renderer: await getSharedRenderer() });
+  const material = new NTCNodeMaterial(cpuModel, channelClassification, {
+    renderer: await getSharedRenderer(),
+    lodBias: DEFAULT_LOD_BIAS,
+  });
   const activeChannels = (channelClassification?.activeChannels ?? []).map((c: any) => c.key);
   // A constant channel that just equals its declared default (i.e. was never
   // meaningfully set on the source material) isn't actionable info for a
