@@ -2,6 +2,7 @@
   "name": "three-ntc-monorepo",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "pnpm -r build",
@@ -9,7 +10,9 @@
     "dev": "pnpm --parallel --filter three-ntc --filter three-ntc-trainer --filter website dev",
     "test": "pnpm tsc && vitest run",
     "format": "oxfmt .",
-    "lint": "oxlint ."
+    "lint": "oxlint .",
+    "make-release:three-ntc": "node scripts/make-release.mjs packages/three-ntc",
+    "make-release:three-ntc-trainer": "node scripts/make-release.mjs packages/three-ntc-trainer"
   },
   "devDependencies": {
     "@types/node": "^22.20.0",

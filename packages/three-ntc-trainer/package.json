@@ -2,6 +2,18 @@
   "name": "three-ntc-trainer",
   "version": "0.0.0",
   "description": "GPU trainer that bakes a MaterialX material into a .ntc Neural Texture Compression model.",
+  "keywords": ["three.js", "threejs", "webgpu", "tsl", "neural texture compression", "materialx", "training"],
+  "homepage": "https://github.com/bhouston/three-ntc/tree/master/packages/three-ntc-trainer",
+  "bugs": {
+    "url": "https://github.com/bhouston/three-ntc/issues"
+  },
+  "license": "MIT",
+  "author": "Ben Houston (https://ben3d.ca)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bhouston/three-ntc.git",
+    "directory": "packages/three-ntc-trainer"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
