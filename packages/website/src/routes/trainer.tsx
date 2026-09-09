@@ -2,6 +2,9 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useForm, useStore } from '@tanstack/react-form';
 import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { defineChart, lineY } from '@tanstack/charts';
+import { scaleLinear } from '@tanstack/charts/scales/linear';
+import { Chart } from '@tanstack/charts/react';
 import {
   bakeMaterialToTextures,
   classifyMaterialChannels,
@@ -22,7 +25,6 @@ import {
   NTC_PROFILE_NAMES,
   NTC_PROFILES,
   NTCExporter,
-  NTCLossGraph,
   NTCTrainer,
 } from 'three-ntc-trainer';
 import { buildChannelActivations, MAX_TOTAL_CHANNELS, NTCLoader, NTCNodeMaterial } from 'three-ntc';
@@ -167,19 +169,48 @@ function TrainerPage() {
   const mtlxInputRef = useRef<HTMLInputElement>(null);
   const ntcInputRef = useRef<HTMLInputElement>(null);
 
-  const lossCanvasRef = useRef<HTMLCanvasElement>(null);
-  const lossLegendRef = useRef<HTMLDivElement>(null);
-  const lossIpsRef = useRef<HTMLSpanElement>(null);
-  const lossGraphRef = useRef<any>(null);
+  // Full-resolution point history lives in a ref (training can call
+  // onProgress a couple thousand times over a run) - `lossPoints` state is a
+  // throttled snapshot of it, flushed at most every `LOSS_FLUSH_INTERVAL_MS`,
+  // so re-rendering the TanStack Charts SVG scene doesn't fight the training
+  // loop for every single progress tick.
+  const LOSS_FLUSH_INTERVAL_MS = 150;
+  const lossPointsRef = useRef<Array<{ iteration: number; loss: number }>>([]);
+  const lastLossFlushRef = useRef(0);
+  const trainStartRef = useRef(0);
+  const [lossPoints, setLossPoints] = useState<Array<{ iteration: number; loss: number; logLoss: number }>>([]);
+  const [lossIps, setLossIps] = useState('');
 
-  useEffect(() => {
-    if (!lossCanvasRef.current) return;
-    lossGraphRef.current = new NTCLossGraph(
-      lossCanvasRef.current,
-      [{ key: 'loss', label: 'L2 loss (log)', color: '#50c8ff' }],
-      { legend: lossLegendRef.current, ips: lossIpsRef.current },
-    );
+  const resetLoss = useCallback(() => {
+    lossPointsRef.current = [];
+    lastLossFlushRef.current = 0;
+    trainStartRef.current = performance.now();
+    setLossPoints([]);
+    setLossIps('');
   }, []);
+
+  const addLossPoint = useCallback((point: { iteration: number; loss: number }, force = false) => {
+    lossPointsRef.current.push(point);
+    const now = performance.now();
+    if (!force && now - lastLossFlushRef.current < LOSS_FLUSH_INTERVAL_MS) return;
+    lastLossFlushRef.current = now;
+    // `loss` is always > 0 (L2 loss) in practice, but guard the log anyway.
+    setLossPoints(lossPointsRef.current.map((p) => ({ ...p, logLoss: Math.log10(Math.max(p.loss, 1e-12)) })));
+    const elapsedSeconds = (now - trainStartRef.current) / 1000;
+    if (elapsedSeconds > 0) setLossIps(`${(point.iteration / elapsedSeconds).toFixed(1)} it/s`);
+  }, []);
+
+  const lossChartDefinition = useMemo(
+    () =>
+      defineChart({
+        marks: [lineY(lossPoints, { x: 'iteration', y: 'logLoss', stroke: '#50c8ff', strokeWidth: 2 })],
+        scales: {
+          x: { scale: scaleLinear, axis: { label: 'Iteration' } },
+          y: { scale: scaleLinear, nice: true, grid: true, axis: { label: 'log10(L2 loss)' } },
+        },
+      }),
+    [lossPoints],
+  );
 
   const disposeSourceTextures = useCallback(() => {
     for (const rt of sourceTexturesRef.current ?? []) rt.dispose();
@@ -290,7 +321,7 @@ function TrainerPage() {
     }
 
     setIsTraining(true);
-    lossGraphRef.current?.reset();
+    resetLoss();
     setStatus('Baking material channels...');
 
     try {
@@ -333,8 +364,8 @@ function TrainerPage() {
         renderer,
         sourceTextures: renderTargets.map((rt: any) => rt.texture),
         onProgress: (progress: any) => {
-          lossGraphRef.current?.addPoint({ iteration: progress.iteration, loss: progress.loss });
-          lossGraphRef.current?.draw();
+          const isLast = progress.iteration >= progress.iterations - 1;
+          addLossPoint({ iteration: progress.iteration, loss: progress.loss }, isLast);
           rebuildPreviewMaterial(progress.cpuModel, channelClassification, Number(values.lodBias));
         },
       });
@@ -348,7 +379,7 @@ function TrainerPage() {
       activeTrainerRef.current = null;
       setIsTraining(false);
     }
-  }, [channelClassification, values, disposeSourceTextures, rebuildPreviewMaterial]);
+  }, [channelClassification, values, disposeSourceTextures, rebuildPreviewMaterial, resetLoss, addLossPoint]);
 
   const stopTraining = useCallback(() => {
     if (!activeTrainerRef.current) return;
@@ -670,12 +701,17 @@ function TrainerPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm">Training loss</CardTitle>
-              <span ref={lossIpsRef} className="text-xs text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">{lossIps}</span>
             </div>
           </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            <canvas ref={lossCanvasRef} width={396} height={120} className="w-full rounded border border-border bg-black" />
-            <div ref={lossLegendRef} className="flex justify-center gap-3 text-xs text-muted-foreground" />
+          <CardContent>
+            {lossPoints.length > 1 ? (
+              <Chart definition={lossChartDefinition} height={160} ariaLabel="Training loss, log scale" />
+            ) : (
+              <p className="flex h-[160px] items-center justify-center text-sm text-muted-foreground">
+                No training data yet.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>

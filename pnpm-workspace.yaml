@@ -8,3 +8,4 @@ link-workspace-packages: true
 
 minimumReleaseAgeExclude:
   - three@0.186.0
+  - '@tanstack/charts@0.16.2'

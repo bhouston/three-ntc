@@ -11,6 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@tanstack/charts": "^0.16.2",
     "@tanstack/nitro-v2-vite-plugin": "1.155.0",
     "@tanstack/react-form": "^1.29.1",
     "@tanstack/react-router": "1.170.17",
