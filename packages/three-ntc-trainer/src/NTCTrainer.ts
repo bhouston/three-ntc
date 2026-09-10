@@ -1,3 +1,4 @@
+import { resolveGradientPrecision, validateGPUDispatch } from './NTCGPUCapabilities.js';
 import { createLanczosSourceTexture } from './NTCLanczosSource.js';
 import { createNTCGridPyramidModel } from './NTCGridPyramidModel.js';
 import { DEFAULT_MIPS_PER_LEVEL } from './NTCGridModel.js';
@@ -46,7 +47,7 @@ function resolveSourceTextureResolution( textures: any[] ): number | null {
 }
 
 const DEFAULT_OPTIONS = {
-	gradientPrecision: 'float' as const,
+	gradientPrecision: 'auto' as const,
 	// Feature-vector width per grid cell (the paper's "grid channels") - see
 	// NTCGridPyramidModel.js.
 	gridChannels: 4,
@@ -100,8 +101,8 @@ const DEFAULT_OPTIONS = {
 };
 
 interface NTCTrainerOptions {
-	/** Float accumulation avoids per-sample truncation and overflow; fixed preserves legacy deterministic sums. */
-	gradientPrecision?: 'fixed' | 'float';
+	/** Auto uses float accumulation when its shader compiles, otherwise legacy fixed-point. */
+	gradientPrecision?: 'auto' | 'fixed' | 'float';
 	gridChannels?: number;
 	levels?: number;
 	baseResolution?: number;
@@ -252,7 +253,10 @@ class NTCTrainer {
 		};
 
 		const cpuModel = createNTCGridPyramidModel( modelSettings, this.random );
-		const gpuModel = new NTCGPUModel( modelSettings );
+		await renderer.init();
+		const device = renderer.backend.device;
+		const gradientPrecision = await resolveGradientPrecision(device, settings.gradientPrecision ?? 'auto');
+		const gpuModel = new NTCGPUModel( { ...modelSettings, gradientPrecision } );
 		gpuModel.initFromCPUModel( cpuModel );
 
 		const ownedTextures:any[]=[];
@@ -295,11 +299,16 @@ class NTCTrainer {
 				gpuModel.stepUniform.value = iteration + 1;
 				gpuModel.maxGradientNormUniform.value = settings.maxGradientNorm;
 
-				renderer.compute( latentsFrozen ? frozenBatchNode : trainBatchNode );
-				renderer.compute( resetGradientNormNode );
-				renderer.compute( latentsFrozen ? frozenNormNode : accumulateGradientNormNode );
-				renderer.compute( adamWeightsNode );
-				if ( ! latentsFrozen ) renderer.compute( adamLatentsNode );
+				const dispatch = () => {
+					renderer.compute( latentsFrozen ? frozenBatchNode : trainBatchNode );
+					renderer.compute( resetGradientNormNode );
+					renderer.compute( latentsFrozen ? frozenNormNode : accumulateGradientNormNode );
+					renderer.compute( adamWeightsNode );
+					if ( ! latentsFrozen ) renderer.compute( adamLatentsNode );
+				};
+				// Validate each shader variant before reporting any loss or preview.
+				if (iteration === 0 || iteration === trainIterations) await validateGPUDispatch(device, dispatch);
+				else dispatch();
 
 				completedIterations = iteration + 1;
 

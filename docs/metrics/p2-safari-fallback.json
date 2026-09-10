@@ -1,0 +1,54 @@
+{
+  "chromium": {
+    "kind": "default-brick-safari-fallback",
+    "sourceResolution": 1024,
+    "batchSize": 8192,
+    "scheduleIterations": 10000,
+    "simulatedCompilerFailure": true,
+    "metrics": [
+      {
+        "gradientPrecision": "fixed",
+        "iterations": 129,
+        "firstLoss": 0.630490234375,
+        "lastLoss": 0.01612685791015625,
+        "trainingMs": 9346.20000000298
+      },
+      {
+        "gradientPrecision": "auto",
+        "iterations": 129,
+        "firstLoss": 0.630490234375,
+        "lastLoss": 0.01612685791015625,
+        "trainingMs": 8198.89999999851
+      }
+    ]
+  },
+  "webkit": {
+    "kind": "default-brick-safari-fallback",
+    "sourceResolution": 1024,
+    "batchSize": 8192,
+    "scheduleIterations": 10000,
+    "simulatedCompilerFailure": true,
+    "metrics": [
+      {
+        "gradientPrecision": "fixed",
+        "iterations": 129,
+        "firstLoss": 0.6304765002441406,
+        "lastLoss": 0.015956478271484376,
+        "trainingMs": 5774
+      },
+      {
+        "gradientPrecision": "auto",
+        "iterations": 129,
+        "firstLoss": 0.6304765002441406,
+        "lastLoss": 0.015956478271484376,
+        "trainingMs": 1163
+      }
+    ]
+  },
+  "nativeSafari": {
+    "validation": "User confirmed default brick trains after reloading the rebuilt application.",
+    "before": "Pipeline compile failure: atomicCompareExchangeWeak translated to an invalid Metal address-space-qualified template field; zero loss and white preview.",
+    "after": "Auto probes float atomic compilation and selects fixed on failure.",
+    "automatedMetricsAvailable": false
+  }
+}
