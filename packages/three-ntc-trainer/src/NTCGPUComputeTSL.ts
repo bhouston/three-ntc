@@ -125,7 +125,7 @@ function sampleTrainingLod( seedBase: TSLNode, maxLod: number ): TSLNode {
  * softplus) instead of forcing every channel through the same unbounded
  * linear output.
  */
-function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextures: TSLNode[] ): TSLNode {
+function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextures: TSLNode[], samples: { uv?: TSLNode; lod?: TSLNode } = {} ): TSLNode {
 
 	const {
 		layout,
@@ -183,14 +183,14 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 	return Fn( () => {
 
 		const sampleIdx = int( instanceIndex );
-		const uv = randomStratifiedUV( sampleIdx, stepUniform, gridSize );
+		const uv = samples.uv ?? randomStratifiedUV( sampleIdx, stepUniform, gridSize );
 		const actBase = sampleIdx.mul( int( activationStride ) );
 
 		// This sample's stochastically chosen, exact-integer training LOD,
 		// across the model's full physical mip range - see
 		// sampleTrainingLod's doc comment - and the *stored* grid level it
 		// maps onto (see this function's doc comment and NTCMipBands.js).
-		const lod = sampleTrainingLod( float( sampleIdx ).mul( 12.9898 ).add( stepUniform.mul( 78.233 ) ), maxLod );
+		const lod = samples.lod ?? sampleTrainingLod( float( sampleIdx ).mul( 12.9898 ).add( stepUniform.mul( 78.233 ) ), maxLod );
 		const selectedLevel = selectFeatureLevelTSL( lod, gridLevels.length, mipsPerLevel );
 
 		const targetComponents: TSLNode[] = [];
@@ -269,22 +269,13 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 			levelTaps.push( { off0, off1, off2, off3, w0, w1, w2, w3, weight } );
 
-			// Bilinear blend of the 4 taps, QAT forward-quantized (STE) - the
-			// backward scatter in step 5 below still targets the *raw*
-			// latentsStorage taps untouched, exactly as it did before QAT:
-			// only this forward-read value changes.
-			const readBilinear = ( c: number ): TSLNode => {
-
-				const z_c = latentsStorage.element( off0.add( c ) ).mul( w0 )
-					.add( latentsStorage.element( off1.add( c ) ).mul( w1 ) )
-					.add( latentsStorage.element( off2.add( c ) ).mul( w2 ) )
-					.add( latentsStorage.element( off3.add( c ) ).mul( w3 ) );
-
-				return quantizeLatent !== null ?
-					quantizeLatent( z_c, quantizationRangeUniforms[ g ].min, quantizationRangeUniforms[ g ].max ) :
-					z_c;
-
+			// Quantization belongs to stored values, before any interpolation.
+			const readTap = ( offset: TSLNode, c: number ): TSLNode => {
+				const value = latentsStorage.element( offset.add( c ) );
+				return quantizeLatent ? quantizeLatent( value, quantizationRangeUniforms[g].min, quantizationRangeUniforms[g].max ) : value;
 			};
+			const readBilinear = ( c: number ): TSLNode => readTap(off0,c).mul(w0)
+				.add(readTap(off1,c).mul(w1)).add(readTap(off2,c).mul(w2)).add(readTap(off3,c).mul(w3));
 
 			// G1 (dualGrid): the coarsest level's bilinear tap, unconditionally
 			// (no `weight` gate - it's LOD-independent by design).

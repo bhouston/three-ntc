@@ -1,12 +1,28 @@
 import { appendFileSync, mkdirSync } from 'node:fs';
-import { spawn } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { spawn, execFileSync } from 'node:child_process';
+import { mkdir, writeFile, copyFile, mkdtemp, symlink } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const label = process.argv[2];
 if (!label || !/^[a-z0-9-]+$/.test(label)) throw new Error('Supply a lowercase measurement label');
 const root = fileURLToPath(new URL('../', import.meta.url));
-const cwd = process.argv[3] || root;
+let cwd = process.argv[3];
+if (!cwd) {
+  cwd = await mkdtemp(join(tmpdir(), 'ntc-quality-'+label+'-'));
+  const files = execFileSync('git', ['ls-files','-c','-o','--exclude-standard'], {cwd:root,encoding:'utf8'}).trim().split('\n');
+  for (const file of new Set(files)) {
+    if (!/\.(ts|tsx|js|mjs|json|yaml|html|mtlx|ntc)$/.test(file) || file.startsWith('docs/')) continue;
+    await mkdir(dirname(join(cwd,file)),{recursive:true});
+    await copyFile(join(root,file),join(cwd,file));
+  }
+  for (const sub of ['', 'packages/three-ntc', 'packages/three-ntc-trainer', 'packages/website']) {
+    await mkdir(join(cwd,sub),{recursive:true});
+    await symlink(join(root,sub,'node_modules'),join(cwd,sub,'node_modules'),'dir');
+  }
+}
+console.log('Benchmark checkout: '+cwd);
 mkdirSync(`${root}docs/metrics`, {recursive:true});
 await writeFile(`${root}docs/metrics/${label}.log`, '');
 const child = spawn(process.execPath, [fileURLToPath(new URL('vitest.mjs', import.meta.resolve('vitest/package.json'))),

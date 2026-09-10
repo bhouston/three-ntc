@@ -29,7 +29,8 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 
 1. Native feature sampling: regression verifies alternating features survive
    LOD 1 within a two-mip band. Decoder GPU suite: 26 passed; TypeScript passed.
-2. Quantize taps before interpolation: pending.
+2. Quantize taps before interpolation: complete. Training GPU suite: 8 passed.
+   Fixed-coordinate uint2 test verifies both bilinear inputs remain 0.4.
 3. Independent and complete UV/LOD sampling: pending.
 4. Frozen-gradient handling: pending.
 5. G0/G1 pairs and feature capacity: pending.
@@ -45,3 +46,19 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 |---|---:|---:|---:|
 | baseline | 0.01294998 | 18.8773 | — |
 | step1: native features | 0.01176782 | 19.2930 | -9.13% |
+| step2: quantize taps before interpolation | 0.01153805 | 19.3787 | -1.95% |
+
+## Per-change details
+
+### step2: quantize taps before interpolation
+
+Compared with step1. Six quality cases passed (finite error only; no PSNR threshold).
+
+| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
+|---|---|---:|---:|---:|
+| smooth | false | 0.00416424 | 23.805 | 4.23% |
+| smooth | true | 0.00620372 | 22.073 | 0.40% |
+| checker | false | 0.01665406 | 17.785 | -6.51% |
+| checker | true | 0.01119423 | 19.510 | -2.66% |
+| waves | false | 0.02449993 | 16.108 | -0.34% |
+| waves | true | 0.00651213 | 21.863 | -0.34% |

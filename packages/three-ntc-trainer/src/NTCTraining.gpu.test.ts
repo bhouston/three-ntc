@@ -8,7 +8,7 @@
 // the MLP forward/backward on the CPU from there; the latent-gradient
 // scatter (the one piece that depends on the sample UV) is checked by
 // finite differences of the kernel's own loss.
-import { uv, vec4 } from 'three/tsl';
+import { float, uv, vec2, vec4 } from 'three/tsl';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { bakeColorNodeToTexture } from './NTCTextureSource.js';
@@ -69,6 +69,20 @@ async function readGrad(attribute: any): Promise<Float32Array> {
 }
 
 describe('train-batch kernel', () => {
+  it('interpolates quantized stored taps without re-quantizing the result', async () => {
+    const texture = await constantTexture();
+    const {gpuModel} = setup({gridChannels:1, levels:1, baseResolution:2,
+      hiddenSizes:[4], outputChannels:4, dualGrid:true, batchSize:1,
+      quantization:{mode:'uint2', range:[0,1]}});
+    gpuModel.latentsBuffers.attribute.array.set([0,1,0,1]);
+    gpuModel.latentsBuffers.attribute.needsUpdate = true;
+    renderer.compute(createTextureTrainBatchComputeNode(gpuModel,[texture],
+      {uv:vec2(0.45,0.5), lod:float(0)}));
+    const act = await readF32(gpuModel.activationsAttribute);
+    expect(act[0]).toBeCloseTo(0.4,5);
+    expect(act[1]).toBeCloseTo(0.4,5); // G1 must use the same ordering.
+    texture.dispose(); gpuModel.dispose();
+  });
   const options = {
     gridChannels: 4,
     levels: 2,
