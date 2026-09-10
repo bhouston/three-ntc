@@ -55,3 +55,14 @@ describe('NTCGridPyramidModel', () => {
     expect(withPE.decoder.layers[0].inputSize).toBe(4 * 4 + 12 + 1);
   });
 });
+
+it('physical mip limits match GPU textures for unit and non-power-of-two sources', () => {
+  for(const [size,lod] of [[1,0],[3,1],[6,2],[1000,9]]) {
+    const options={textureResolution:size,baseResolution:2,levels:1,hiddenSizes:[],outputChannels:3};
+    const cpu=createNTCGridPyramidModel(options,()=>0.5);
+    expect(cpu.maxLod).toBe(lod);
+    expect(computeTextureModelLayout(options).maxLod).toBe(lod);
+    const manifest=encodeNTC(cpu,{activeChannels:[{key:'albedo'}],constantValues:{}});
+    expect(new NTCLoader().parse(manifest).cpuModel.maxLod).toBe(lod);
+  }
+});

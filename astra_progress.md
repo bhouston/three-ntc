@@ -251,3 +251,11 @@ is a filter-quality measurement, separate from compression MSE.
 
 Lanczos preserves negative lobes and signed physical channels. It can ring;
 these two frequency tests do not establish superiority for every material.
+
+### Physical mip bounds
+
+A final edge-case check found `ceil(log2(size))` requested a nonexistent mip
+for non-power-of-two sources. Both model layouts now use floor, and the loader
+accepts a valid maxLod of zero. CPU/roundtrip checks cover sizes 1, 3, 6, 1000;
+GPU training on 1x1 and 6x6 sources produces finite losses. Power-of-two
+benchmark geometry is unchanged.

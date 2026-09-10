@@ -98,7 +98,7 @@ function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextu
 	// doc comment.
 	const resolvedTextureResolution = textureResolution || resolutions[ 0 ];
 	const lodOffset = computeFeatureLodOffset(resolvedTextureResolution,resolutions[0]);
-	const maxLod = Math.ceil( Math.log2( Math.max( 1, resolvedTextureResolution ) ) );
+	const maxLod = Math.floor( Math.log2( Math.max( 1, resolvedTextureResolution ) ) );
 
 	const gridLevels: GridLevelLayout[] = [];
 	let latentOffset = 0;

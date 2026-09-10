@@ -237,7 +237,7 @@ function validateManifest( manifest: NTCManifest ): void {
 	// stored grid a given LOD selects, and `maxLod` is the physical mip range
 	// the decoder's LOD input was normalized against.
 	assertInteger( manifest.latents.mipsPerLevel, 'latents.mipsPerLevel', 1 );
-	assertInteger( manifest.latents.maxLod, 'latents.maxLod', 1 );
+	assertInteger( manifest.latents.maxLod, 'latents.maxLod', 0 );
 
 	if ( ! manifest.mlp || typeof manifest.mlp.dataBase64 !== 'string' || ! Array.isArray( manifest.mlp.layout ) ) {
 

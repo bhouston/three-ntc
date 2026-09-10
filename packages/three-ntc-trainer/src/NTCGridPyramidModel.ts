@@ -161,7 +161,7 @@ function createNTCGridPyramidModel( options: NTCGridPyramidOptions, random: () =
 
 	const resolvedTextureResolution = textureResolution || resolutions[ 0 ];
 	const lodOffset = computeFeatureLodOffset(resolvedTextureResolution,resolutions[0]);
-	const maxLod = Math.ceil( Math.log2( Math.max( 1, resolvedTextureResolution ) ) );
+	const maxLod = Math.floor( Math.log2( Math.max( 1, resolvedTextureResolution ) ) );
 
 	const inputSize = computeDecoderInputSize( channels, positionalEncoding, dualGrid, lowResChannels );
 	const decoder = createMLP( inputSize, hiddenSizes, outputChannels, random, hiddenActivation, 'linear' );
