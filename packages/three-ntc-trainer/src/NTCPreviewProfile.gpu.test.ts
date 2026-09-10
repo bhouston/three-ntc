@@ -4,6 +4,7 @@ import { float } from 'three/tsl';
 import { expect, it } from 'vitest';
 import { commands } from 'vitest/browser';
 import { CHANNELS, getChannel, layoutChannels, NTCNodeMaterial } from 'three-ntc';
+import { summarizeTimings } from '../../../test/performance-metrics.js';
 import { NTCTrainer } from './NTCTrainer.js';
 import { readRenderTargetFloats } from '../../../test/gpu-helpers.js';
 
@@ -48,6 +49,16 @@ it('profiles five default-size training steps with two live physical preview upd
   const device=viewing.backend.device,create=device.createShaderModule.bind(device);
   let shaderModules=0,initialShaderModules=0;
   device.createShaderModule=(d:any)=>{shaderModules++;return create(d);};
+  const animationIntervals:number[]=[];
+  let lastAnimationFrame=0;
+  viewing.setAnimationLoop(()=>{
+    if(!material) return;
+    const now=performance.now();
+    if(lastAnimationFrame) animationIntervals.push(now-lastAnimationFrame);
+    lastAnimationFrame=now;
+    viewing.setRenderTarget(target);
+    viewing.render(scene,camera);
+  });
   const start=performance.now();
   try {
     await trainer.train({renderer:training,sourceTextures:textures,onProgress:p=>{
@@ -64,6 +75,8 @@ it('profiles five default-size training steps with two live physical preview upd
       progress.push(metric);
       completions.push(device.queue.onSubmittedWorkDone().then(()=>{metric.completedMs=performance.now()-frameStart;}));
     }});
+    // End the concurrent preview before readback and isolated frame measurements.
+    viewing.setAnimationLoop(null);
     await Promise.all(completions);
     const pixels=await readRenderTargetFloats(viewing,target,256);
     const frames:number[]=[];
@@ -78,9 +91,11 @@ it('profiles five default-size training steps with two live physical preview upd
     expect([...pixels].every(Number.isFinite)).toBe(true);
     expect(shaderModules).toBe(initialShaderModules);
     expect(heartbeats).toBeGreaterThan(0);
-    await (commands as any).recordMetric({kind:'training-preview-profile',adapter:Object.fromEntries(['vendor','architecture','device','description'].map(key=>[key,device.adapterInfo?.[key]])),
+    expect(animationIntervals.length).toBeGreaterThan(0);
+    await (commands as any).recordMetric({kind:'training-preview-profile',userAgent:navigator.userAgent,animationIntervals,animationSummary:animationIntervals.length ? summarizeTimings(animationIntervals) : null,adapter:Object.fromEntries(['vendor','architecture','device','description'].map(key=>[key,device.adapterInfo?.[key]])),
       elapsedMs:performance.now()-start,maxHeartbeatGap,heartbeats,progress,steadyFrameMs:frames,shaderModules,errors});
   } finally {
+    viewing.setAnimationLoop(null);
     clearInterval(heartbeat);device.createShaderModule=create;
     [training,viewing].forEach((renderer,i)=>renderer.backend.device.removeEventListener('uncapturederror',listeners[i]));
     material?.dispose();geometry.dispose();target.dispose();textures.forEach(t=>t.dispose());

@@ -437,3 +437,39 @@ after five warmup frames):
 
 All three cases passed in both WebKit and Chromium/Metal at DPR 2. TypeScript,
 all 32 unit tests, and the website production build passed.
+
+## Expanded browser performance matrix (2026-09-10)
+
+Committed the concise cause summary in
+[docs/viewer_performance_summary.md](docs/viewer_performance_summary.md).
+Added a serial `pnpm profile:browser chromium|webkit|safari` runner that saves JSON
+metrics and complete logs, including failures. See
+[the workload and reproduction guide](docs/browser_performance_tests.md).
+
+Actual website components now run for 120 frames each at two CSS sizes and DPR 1/2
+in Playwright. Metrics include first-frame time, raw steady-frame intervals, GPU
+completion delays, heartbeat gaps, and mean/p50/p95/p99/max summaries. Five-step
+training also renders an animated physical preview concurrently on a separate
+renderer, retaining loss, finite-pixel, and shader-reuse checks.
+
+Chromium/Metal and WebKit each passed 16 cases (eight per DPR). At 1024×768 CSS,
+DPR 2, steady-state frame interval medians/p95 were:
+
+| Viewer | Chromium median / p95 | WebKit median / p95 |
+| --- | --- | --- |
+| Standalone | 16.6 / 17.3 ms | 17 / 18 ms |
+| Trainer comparison | 16.7 / 17.5 ms | 17 / 18 ms |
+| Gallery | 16.7 / 17.4 ms | 17 / 18 ms |
+
+The first training profiles exposed startup stalls: maximum heartbeat gaps were
+379.4 ms in Chromium and 512 ms in WebKit. Subsequent profiles reported 39.4 ms
+and 74 ms respectively. These are observations from separate runs with potentially
+warm driver caches, not evidence that DPR improves training (its offscreen preview
+has fixed resolution). Both engines retained shipped-brick raw CPU-reference MSE
+7.6800803e-6; training loss remained 0.299537 → 0.230104. No WebGPU errors occurred.
+
+Native Safari was retried after the user enabled automation, including through the
+new runner. Its session still timed out before tests executed; this is recorded as
+a failed launch with no timings. No new Safari settings were changed. Summary
+measurements are in [browser-profile-baseline.json](docs/metrics/browser-profile-baseline.json).
+TypeScript and all 34 unit tests passed, including percentile/tail-stall validation.

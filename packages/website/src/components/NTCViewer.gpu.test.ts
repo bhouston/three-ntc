@@ -5,16 +5,23 @@ import { WebGPURenderer } from "three/webgpu";
 import { NTCLoader, NTCNodeMaterial } from "three-ntc";
 import { expect, it } from "vitest";
 import { commands } from "vitest/browser";
+import { summarizeTimings } from "../../../../test/performance-metrics.js";
 import { NTCViewer } from "./NTCViewer.js";
 import { NTCGridViewer } from "./NTCGridViewer.js";
 import brick from "../../public/ntc/brick.ntc?raw";
 import hdrUrl from "../../public/textures/equirectangular/san_giuseppe_bridge_2k.hdr?url";
 
-it.each(["single", "trainer", "grid"] as const)(
-  "profiles the %s brick viewer canvas after HDR loading",
-  async (viewer) => {
+// Long enough to expose queue buildup after the initial pipeline compilation.
+const frameCount = 120;
+const warmupFrames = 20;
+const cases = (["single", "trainer", "grid"] as const).flatMap((viewer) =>
+  [512, 1024].map((width) => ({ viewer, width })),
+);
+it.each(cases)(
+  "profiles the $viewer brick viewer at $width CSS pixels after HDR loading",
+  async ({ viewer, width }) => {
     const fixture = document.createElement("div");
-    fixture.style.cssText = "width:1024px;height:768px;position:relative";
+    fixture.style.cssText = `width:${width}px;height:${width * 0.75}px;position:relative`;
     document.body.append(fixture);
     const root = createRoot(fixture, {
       onUncaughtError: (error) => {
@@ -37,6 +44,15 @@ it.each(["single", "trainer", "grid"] as const)(
     const done = new Promise<void>((resolve) => {
       finish = resolve;
     });
+    const mountedAt = performance.now();
+    let firstFrameMs = 0;
+    const heartbeatGaps: number[] = [];
+    let lastHeartbeat = mountedAt;
+    const heartbeat = setInterval(() => {
+      const now = performance.now();
+      heartbeatGaps.push(now - lastHeartbeat);
+      lastHeartbeat = now;
+    }, 16);
     const onError = (event: any) => {
       errors.push(event.error.message);
       finish();
@@ -44,8 +60,14 @@ it.each(["single", "trainer", "grid"] as const)(
     prototype.render = function (scene: any, camera: any, ...rest: any[]) {
       const start = performance.now();
       const result = render.call(this, scene, camera, ...rest);
-      if (active && fixture.contains(this.domElement) && scene.environment && frames.length < 25) {
+      if (
+        active &&
+        fixture.contains(this.domElement) &&
+        scene.environment &&
+        frames.length < frameCount
+      ) {
         if (!renderer) {
+          firstFrameMs = start - mountedAt;
           renderer = this;
           renderer.backend.device.addEventListener("uncapturederror", onError);
           renderer.backend.device.lost.then((info: any) => {
@@ -62,7 +84,7 @@ it.each(["single", "trainer", "grid"] as const)(
           .onSubmittedWorkDone()
           .then(() => {
             metric.completedMs = performance.now() - start;
-            if (frames.length === 25 && frames.every((f) => f.completedMs > 0)) finish();
+            if (frames.length === frameCount && frames.every((f) => f.completedMs > 0)) finish();
           })
           .catch((error: unknown) => {
             errors.push(String(error));
@@ -84,20 +106,33 @@ it.each(["single", "trainer", "grid"] as const)(
       );
       await done;
       expect(errors).toEqual([]);
-      expect(frames).toHaveLength(25);
+      expect(frames).toHaveLength(frameCount);
       expect(renderer.samples).toBe(0);
+      expect(heartbeatGaps.length).toBeGreaterThan(0);
+      const steadyFrames = frames.slice(warmupFrames);
       await (commands as any).recordMetric({
         kind: "react-brick-viewer",
         viewer,
+        cssSize: [width, width * 0.75],
+        warmupFrames,
+        firstFrameMs, // Includes HDR loading and initial pipeline work.
+        adapter: renderer.backend.device.adapterInfo?.description ?? "unavailable",
         userAgent: navigator.userAgent,
         samples: renderer.samples,
         pixelRatio: window.devicePixelRatio,
         canvas: [renderer.domElement.width, renderer.domElement.height],
-        steadyFrames: frames.slice(5),
+        steadyFrames,
+        summary: {
+          interval: summarizeTimings(steadyFrames.map((frame) => frame.intervalMs)),
+          completion: summarizeTimings(steadyFrames.map((frame) => frame.completedMs)),
+          heartbeat: summarizeTimings(heartbeatGaps),
+        },
+        heartbeatGaps,
         errors,
       });
     } finally {
       active = false;
+      clearInterval(heartbeat);
       prototype.render = render;
       renderer?.backend.device.removeEventListener("uncapturederror", onError);
       root.unmount();

@@ -33,6 +33,9 @@ Installed Safari is a separate target: its native driver accepted the enabled
 remote-automation setting but timed out creating a session, so these results must
 not be presented as measurements from installed Safari.
 
+For repeatable Chrome-engine and Safari/WebKit workloads, see
+[browser performance tests](browser_performance_tests.md).
+
 See [the full investigation](../tsl_performance_regression_cause_and_fix.md),
 [raw before/after measurements](metrics/runtime-msaa.json), and
 [the progress report](../astra_progress.md).

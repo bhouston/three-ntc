@@ -14,7 +14,8 @@
     "lint": "oxlint .",
     "make-release:three-ntc": "node scripts/make-release.mjs packages/three-ntc",
     "make-release:three-ntc-trainer": "node scripts/make-release.mjs packages/three-ntc-trainer",
-    "test:gpu:safari": "NTC_BROWSER=safari vitest run --project gpu --fileParallelism=false"
+    "test:gpu:safari": "NTC_BROWSER=safari vitest run --project gpu --fileParallelism=false",
+    "profile:browser": "node scripts/profile-browsers.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.0",
