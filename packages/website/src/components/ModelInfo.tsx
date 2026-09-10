@@ -16,7 +16,6 @@ export function ModelInfo({ info, samplingMode }: { info: ModelInfoData; samplin
       <dt>Decoder</dt><dd>{size.inputSize} inputs · {size.mlpParams.toLocaleString('en-US')} parameters</dd>
       <dt>MLP work per sample</dt><dd>{formatFlops(size.flopsPerDecode * evaluations)} · {evaluations} {evaluations === 1 ? 'evaluation' : 'evaluations'}</dd>
     </dl>
-    <p>FLOPs count dense-layer arithmetic, excluding feature sampling, activations, and shading.</p>
     {info.trainingQuantizationOff && <p>Training quantization is off; export still stores 8-bit grids.</p>}
     <details>
       <summary className="cursor-pointer font-medium text-foreground">Channels ({info.activeChannels.length})</summary>
