@@ -39,7 +39,7 @@ function createUniformScheme( bits: number ) {
 		quantizeForwardTSL: ( xNode: any, minNode: any, maxNode: any ) => {
 
 			const range = maxNode.sub( minNode );
-			const t = min( float( 1.0 ), max( float( 0.0 ), xNode.sub( minNode ).div( range ) ) );
+			const t = min( float( 1.0 ), max( float( 0.0 ), xNode.sub( minNode ).div( range.max(1e-20) ) ) );
 
 			return minNode.add( round( t.mul( float( maxLevel ) ) ).div( float( maxLevel ) ).mul( range ) );
 
@@ -66,6 +66,7 @@ const VALID_TARGETS = [ 'latents', 'weights', 'both' ];
 
 interface NTCQuantizationOptions {
 	mode?: string;
+	method?: 'noise' | 'ste';
 	target?: string;
 	range?: 'auto' | [ number, number ];
 	perLevel?: boolean;
@@ -73,6 +74,7 @@ interface NTCQuantizationOptions {
 
 interface ResolvedNTCQuantizationConfig {
 	mode: string;
+	method: 'noise' | 'ste';
 	target: string;
 	range: 'auto' | [ number, number ];
 	perLevel: boolean;
@@ -80,6 +82,7 @@ interface ResolvedNTCQuantizationConfig {
 
 const DEFAULT_QUANTIZATION_OPTIONS: ResolvedNTCQuantizationConfig = {
 	mode: 'none',
+	method: 'noise',
 	target: 'latents',
 	range: 'auto',
 	perLevel: true
@@ -99,7 +102,10 @@ function resolveQuantizationConfig( options: { quantization?: NTCQuantizationOpt
 	const input = options.quantization || {};
 	const mode = input.mode !== undefined ? input.mode : DEFAULT_QUANTIZATION_OPTIONS.mode;
 	const target = input.target !== undefined ? input.target : DEFAULT_QUANTIZATION_OPTIONS.target;
-	const range = input.range !== undefined ? input.range : DEFAULT_QUANTIZATION_OPTIONS.range;
+	const method = input.method ?? (input.range !== undefined ? 'ste' : 'noise');
+	const range = input.range ?? (mode !== 'none' && method === 'noise' ? zeroAlignedRange(mode) : 'auto');
+	if (method !== 'noise' && method !== 'ste') throw new Error('Invalid quantization.method');
+	if (method === 'noise' && mode !== 'none' && range === 'auto') throw new Error('Noise QAT requires a fixed quantization.range');
 	const perLevel = input.perLevel !== undefined ? input.perLevel : DEFAULT_QUANTIZATION_OPTIONS.perLevel;
 
 	if ( QUANTIZATION_SCHEMES[ mode ] === undefined ) {
@@ -139,7 +145,7 @@ function resolveQuantizationConfig( options: { quantization?: NTCQuantizationOpt
 
 	}
 
-	return { mode, target, range, perLevel };
+	return { mode, method, target, range, perLevel };
 
 }
 
@@ -240,3 +246,10 @@ export {
 	refreshGPUQuantizationRange
 };
 export type { NTCQuantizationOptions, ResolvedNTCQuantizationConfig, GridLevelLayout };
+
+/** N equally spaced levels with step 1/N, including exact zero. */
+export function zeroAlignedRange(mode: string): [number,number] {
+	const bits=Number(mode.replace('uint',''));
+	if (![2,4,8].includes(bits)) throw new Error('Unsupported quantization.mode');
+	return [-0.5, 0.5 - 1/(2 ** bits)];
+}

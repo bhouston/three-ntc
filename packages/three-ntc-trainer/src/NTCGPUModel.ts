@@ -290,6 +290,7 @@ class NTCGPUModel {
 	invBatchUniform: TSLNode;
 	learningRateUniform: TSLNode;
 	weightsLearningRateScale: number;
+	quantizationNoiseUniform: TSLNode;
 	stepUniform: TSLNode;
 	maxGradientNormUniform: TSLNode;
 	quantization: ResolvedNTCQuantizationConfig;
@@ -334,6 +335,7 @@ class NTCGPUModel {
 		// real range - a fixed `range` tuple is written once here and never
 		// refreshed.
 		this.quantization = resolveQuantizationConfig( options );
+		this.quantizationNoiseUniform = uniform(this.quantization.method === 'noise' ? 1 : 0);
 		this.quantizationRangeUniforms = this.layout.gridLevels.map( () => ( {
 			min: uniform( this.quantization.range === 'auto' ? - 1 : this.quantization.range[ 0 ] ),
 			max: uniform( this.quantization.range === 'auto' ? 1 : this.quantization.range[ 1 ] )
@@ -378,6 +380,11 @@ class NTCGPUModel {
 		latents.fill( 0 );
 
 		copyModel( cpuModel, this.layout, weights, latents, 'toGPU' );
+		if (this.quantization.mode !== 'none' && this.quantization.range !== 'auto') {
+			const [lo,hi]=this.quantization.range;
+			for(let i=0;i<latents.length;i++) latents[i]=Math.min(hi,Math.max(lo,latents[i]));
+		}
+
 
 		this.weightsBuffers.attribute.needsUpdate = true;
 		this.latentsBuffers.attribute.needsUpdate = true;

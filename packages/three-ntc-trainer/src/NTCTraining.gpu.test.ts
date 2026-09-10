@@ -400,7 +400,7 @@ describe('NTCTrainer', () => {
       { renderer, sourceTexture: texture },
     );
     expect(result.quantization.mode).toBe('uint4');
-    expect(result.iterations).toBe(42); // 40 + 5% retrain
+    expect(result.iterations).toBe(40); // Includes the final 5% frozen adaptation.
     const quantize = QUANTIZATION_SCHEMES.uint4.quantizeForwardCPU;
     result.cpuModel.grids.forEach((grid: any, g: number) => {
       const [lo, hi] = result.quantizationRange![g];

@@ -8,8 +8,11 @@ Baseline source revision: `d8fc5cb`. Each improvement is committed separately.
 smooth, checkerboard, and wave material channels, each with learned interpolation
 enabled and disabled. Each packs RGB albedo and scalar roughness in [0,1].
 Settings: 64x64 source, 16x16 finest grid, 3 levels, 4 features, two 16-wide
-hardGELU layers, seed 7, 400 iterations, 2048 samples/batch, uint4 quantization,
-and 5% frozen-grid adaptation. Architectural fixes can change parameter count;
+hardGELU layers, seed 7, 420 total optimizer iterations, 2048 samples/batch, uint4 quantization,
+and 5% frozen-grid adaptation. Through step8 the configuration and raw JSON
+recorded 400 main iterations, with 20 extra adaptation steps. From step9 the
+configured 420 iterations include adaptation (399 main + 21 frozen), and the
+cosine rate spans the whole budget. Thus the actual update count stays fixed. Architectural fixes can change parameter count;
 those comparisons are not claims of equal bitrate or equal decode cost.
 
 We evaluate every texel of every source mip (64x64 through 1x1) using GPU
@@ -54,7 +57,10 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
    A tested opt-in 8/12-feature, 64x64 hardGELU paper profile includes separate
    MLP/latent rates and the full paper budget. Nine training GPU tests and
    27 unit tests pass. Fixed benchmark settings remain unchanged.
-9. Bounded noise quantization: pending.
+9. Bounded noise quantization: complete. GPU tests verify the exact noise
+   stream, its mean/variance, disabled noise during adaptation, post-Adam bounds,
+   and finite constant-range quantization. All nine training tests pass.
+   STE with explicit/auto ranges remains available for comparison.
 10. Positional encoding, source mip filtering, convergence coverage: pending.
 
 ## Measurements
@@ -70,6 +76,7 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 | step6: resolution-aware feature mip bands | 0.00852505 | 20.6930 | -15.01% |
 | step7: discrete texel training and decoded-value filtering | 0.00621377 | 22.0665 | -27.11% |
 | step8: consistent presets and opt-in paper profile | 0.00621377 | 22.0665 | 0.00% |
+| step9: bounded noise QAT and in-budget frozen adaptation | 0.00613309 | 22.1232 | -1.30% |
 
 ## Per-change details
 
@@ -163,3 +170,16 @@ Compared with step7. Six quality cases passed (finite error only; no PSNR thresh
 | checker | true | 0.00281665 | 25.503 | 0.00% |
 | waves | false | 0.02368443 | 16.255 | 0.00% |
 | waves | true | 0.00135283 | 28.688 | 0.00% |
+
+### step9: bounded noise QAT and in-budget frozen adaptation
+
+Compared with step8. Six quality cases passed (finite error only; no PSNR threshold).
+
+| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
+|---|---|---:|---:|---:|
+| smooth | false | 0.00237807 | 26.238 | -1.78% |
+| smooth | true | 0.00154572 | 28.109 | -16.89% |
+| checker | false | 0.00553242 | 22.571 | 7.47% |
+| checker | true | 0.00219570 | 26.584 | -22.05% |
+| waves | false | 0.02387866 | 16.220 | 0.82% |
+| waves | true | 0.00126799 | 28.969 | -6.27% |

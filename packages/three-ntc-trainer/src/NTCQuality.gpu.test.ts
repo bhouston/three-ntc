@@ -25,7 +25,7 @@ for (const fixture of ['smooth', 'checker', 'waves']) {
         64, { generateMipmaps: true });
       const options = { gridChannels: 4, levels: 3, baseResolution: 16, mipsPerLevel: 2,
         hiddenSizes: [16,16], hiddenActivation: 'hgelu', outputChannels: 4,
-        positionalEncoding, dualGrid: true, batchSize: 2048, iterations: 400,
+        positionalEncoding, dualGrid: true, batchSize: 2048, iterations: 420,
         seed: 7, quantization: { mode: 'uint4' } };
       const result = await new NTCTrainer(options).train({ renderer, sourceTexture: source.texture });
       const manifest = encodeNTC(result.cpuModel, {activeChannels: [{key:'albedo'}, {key:'roughness'}], constantValues:{}});
@@ -51,7 +51,7 @@ for (const fixture of ['smooth', 'checker', 'waves']) {
         mip?.dispose(); levels.forEach(t => t.dispose());
       }
       await (commands as any).recordMetric({fixture, positionalEncoding, seed:7,
-        iterations:400, batchSize:2048, sourceSize:64, ...metrics});
+        iterations:result.iterations, batchSize:2048, sourceSize:64, ...metrics});
       source.dispose();
     });
   }

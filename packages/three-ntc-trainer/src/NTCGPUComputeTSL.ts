@@ -12,7 +12,7 @@ import {
 	textureSize,
 	texture,
 } from 'three/tsl';
-import { trainingUVTSL, trainingLodTSL } from './NTCSampling.js';
+import { trainingRandomTSL, trainingUVTSL, trainingLodTSL } from './NTCSampling.js';
 import { FIXED_POINT_SCALE, GRADIENT_NORM_SCALE } from './NTCGPUTrainingConstants.js';
 import {
 	wrapIndexTSL,
@@ -222,7 +222,14 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 			// Quantization belongs to stored values, before any interpolation.
 			const readTap = ( offset: TSLNode, c: number ): TSLNode => {
 				const value = latentsStorage.element( offset.add( c ) );
-				return quantizeLatent ? quantizeLatent( value, quantizationRangeUniforms[g].min, quantizationRangeUniforms[g].max ) : value;
+				if (!quantizeLatent) return value;
+				const {min:lo,max:hi}=quantizationRangeUniforms[g];
+				if (quantization.method === 'noise') {
+					const bins=2 ** Number(quantization.mode.slice(4));
+					return value.add(trainingRandomTSL(offset.add(c),stepUniform,11).sub(0.5)
+						.mul(hi.sub(lo).div(bins-1)).mul(gpuModel.quantizationNoiseUniform));
+				}
+				return quantizeLatent(value,lo,hi);
 			};
 			const readBilinear = ( c: number ): TSLNode => readTap(off0,c).mul(w0)
 				.add(readTap(off1,c).mul(w1)).add(readTap(off2,c).mul(w2)).add(readTap(off3,c).mul(w3));
@@ -581,7 +588,9 @@ function createTextureAdamLatentsComputeNode( gpuModel: NTCGPUModel, { beta1 = 0
 		beta1,
 		beta2,
 		epsilon,
-		name: 'NTCAdamLatents'
+		name: 'NTCAdamLatents',
+		transform: gpuModel.quantization.mode !== 'none' && gpuModel.quantization.range !== 'auto'
+			? (value: any) => value.clamp(gpuModel.quantization.range[0],gpuModel.quantization.range[1]) : undefined
 	} );
 
 }

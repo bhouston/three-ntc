@@ -204,6 +204,7 @@ class NTCTrainer {
 
 		( gpuModel.latentsBuffers.attribute.array as Float32Array ).set( latents );
 		gpuModel.latentsBuffers.attribute.needsUpdate = true;
+		gpuModel.quantizationNoiseUniform.value = 0;
 
 	}
 
@@ -258,14 +259,10 @@ class NTCTrainer {
 			const adamWeightsNode = createTextureAdamWeightsComputeNode( gpuModel );
 			const adamLatentsNode = createTextureAdamLatentsComputeNode( gpuModel );
 
-			const trainIterations = settings.iterations as number;
+			const iterations = settings.iterations as number;
 			const retrainIterations = quantization.mode === 'none' ? 0 :
-				Math.round( trainIterations * ( settings.retrainAfterQuantize as number ) );
-			const iterations = trainIterations + retrainIterations;
-			// Retrain phase: its own short cosine schedule at a tenth of the
-			// base rate - a full-rate restart on the MLP alone would undo more
-			// than the frozen rounding error it's meant to absorb.
-			const retrainSettings = { ...settings, iterations: retrainIterations, learningRate: ( settings.learningRate as number ) * 0.1 };
+				Math.round(iterations * (settings.retrainAfterQuantize as number));
+			const trainIterations = iterations - retrainIterations;
 			let lastLoss = NaN;
 			let completedIterations = 0;
 			let latentsFrozen = false;
@@ -281,9 +278,7 @@ class NTCTrainer {
 
 				}
 
-				const learningRate = latentsFrozen ?
-					getLearningRate( retrainSettings as any, iteration - trainIterations ) :
-					getLearningRate( settings as any, iteration );
+				const learningRate = getLearningRate(settings as any, iteration);
 				gpuModel.resetLoss();
 				gpuModel.learningRateUniform.value = learningRate;
 				gpuModel.stepUniform.value = iteration + 1;
@@ -334,6 +329,10 @@ class NTCTrainer {
 
 			}
 
+			if (quantization.mode !== 'none' && !latentsFrozen && completedIterations > 0) {
+				await this._quantizeAndFreezeLatents(gpuModel,renderer,quantization);
+				latentsFrozen = true;
+			}
 			await gpuModel.syncToCPU( cpuModel, renderer );
 
 			// Freeze the final QAT range (see NeuralQuantization.js) so a

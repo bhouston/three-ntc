@@ -327,11 +327,11 @@ function createAdamComputeNode( {
 	beta1 = 0.9,
 	beta2 = 0.999,
 	epsilon = 1e-7,
-	name
+	name, transform
 }: {
 	valuesStorage: TSLNode; gradAtomic: TSLNode; mStorage: TSLNode; vStorage: TSLNode; gradNormAtomic: TSLNode;
 	maxGradientNormUniform: TSLNode; learningRateUniform: TSLNode; stepUniform: TSLNode; invBatchUniform?: TSLNode | null;
-	offset?: number; count: number; beta1?: number; beta2?: number; epsilon?: number; name: string;
+	offset?: number; count: number; beta1?: number; beta2?: number; epsilon?: number; name: string; transform?: (value: TSLNode) => TSLNode;
 } ): TSLNode {
 
 	return Fn( () => {
@@ -357,7 +357,8 @@ function createAdamComputeNode( {
 		const vHat = nextV.div( max( beta2Corr, float( 1e-10 ) ) );
 
 		const stepVal = learningRateUniform.mul( mHat ).div( sqrt( max( vHat, float( 0.0 ) ) ).add( float( epsilon ) ) );
-		valuesStorage.element( idx ).assign( value.sub( stepVal ) );
+		const updated = value.sub(stepVal);
+		valuesStorage.element( idx ).assign( transform ? transform(updated) : updated );
 
 	} )().compute( count ).setName( name );
 
