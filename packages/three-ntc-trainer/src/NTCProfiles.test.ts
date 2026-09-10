@@ -33,7 +33,7 @@ it('UI defaults and preset selection preserve both decoder width and depth', () 
     expect(Array(controls.hiddenLayers).fill(controls.hiddenSize)).toEqual(getNTCProfile(name)!.hiddenSizes);
   }
   expect(getNTCProfileControls('mobile-balanced')).toMatchObject({hiddenSize:32,hiddenLayers:2,levels:4});
-  expect(getNTCProfileControls('mobile-fast')).toMatchObject({hiddenSize:16,hiddenLayers:1});
+  expect(getNTCProfileControls('mobile-fast')).toMatchObject({hiddenSize:16,hiddenLayers:2});
 });
 
 it('offers the paper architecture and explicitly expensive training budget', () => {

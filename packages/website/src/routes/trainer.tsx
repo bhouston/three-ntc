@@ -88,14 +88,14 @@ type FormValues = {
 
 const DEFAULT_VALUES: FormValues = {
   bakeResolution: 1024,
-  preset: 'mobile-balanced',
-  ...getNTCProfileControls('mobile-balanced')!,
+  preset: 'mobile-fast',
+  ...getNTCProfileControls('mobile-fast')!,
   positionalEncoding: true,
   dualGrid: true,
   batchSize: 8192,
   iterations: 10000,
   learningRate: 0.01,
-  quantization: 'uint8',
+  quantization: 'uint2',
   shape: 'torus',
   samplingMode: 'nearest',
   lodBias: DEFAULT_LOD_BIAS,

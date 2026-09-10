@@ -11,11 +11,10 @@
  * computeModelFootprint for the exact byte accounting).
  *
  * `mobile-fast` mirrors the mobile-oriented defaults sketched in this repo's
- * `EXT_neural_textures.md` draft (1 hidden layer, width 16, targeting
- * roughly <=800 FLOPs/pixel) - it trades reconstruction quality for the
- * smallest decoder (fewest weights, fewest ALU ops per shaded pixel,
- * smallest fp32-uniform footprint and is the safest default for unknown/
- * low-end mobile hardware.
+ * `EXT_neural_textures.md` draft (2 hidden layers, width 16) - it trades
+ * reconstruction quality for the smallest decoder (fewest weights, fewest
+ * ALU ops per shaded pixel, smallest fp32-uniform footprint and is the
+ * safest default for unknown/low-end mobile hardware.
  *
  * `mobile-balanced` is this addon's own long-standing default shape (2
  * hidden layers of width 32, relu) - already a reasonable middle ground
@@ -49,10 +48,10 @@ interface NTCProfile {
 const NTC_PROFILES: Record<string, NTCProfile> = {
 	'mobile-fast': {
 		label: 'Mobile (fast)',
-		description: 'Smallest/cheapest decoder - 1 hidden layer x16, relu. Best default for unknown or low-end mobile GPUs.',
-		levels: 3,
+		description: 'Smallest/cheapest decoder - 2 hidden layers x16, relu. Best default for unknown or low-end mobile GPUs.',
+		levels: 2,
 		baseResolution: 128,
-		hiddenSizes: [ 16 ],
+		hiddenSizes: [ 16, 16 ],
 		hiddenActivation: 'relu'
 	},
 	'mobile-balanced': {
