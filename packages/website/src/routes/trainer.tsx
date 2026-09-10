@@ -390,7 +390,7 @@ function TrainerPage() {
       setStatus('Training...');
 
       const trainer = new NTCTrainer({
-        channels: 4,
+        gridChannels: 4,
         levels: Number(values.levels),
         baseResolution: Number(values.baseResolution),
         hiddenSizes: [Number(values.hiddenSize), Number(values.hiddenSize)],

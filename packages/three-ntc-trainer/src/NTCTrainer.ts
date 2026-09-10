@@ -45,7 +45,9 @@ function resolveSourceTextureResolution( textures: any[] ): number | null {
 }
 
 const DEFAULT_OPTIONS = {
-	channels: 4,
+	// Feature-vector width per grid cell (the paper's "grid channels") - see
+	// NTCGridPyramidModel.js.
+	gridChannels: 4,
 	levels: 4,
 	baseResolution: 128,
 	// How many physical mip levels each stored grid level is reused to
@@ -96,7 +98,7 @@ const DEFAULT_OPTIONS = {
 };
 
 interface NTCTrainerOptions {
-	channels?: number;
+	gridChannels?: number;
 	levels?: number;
 	baseResolution?: number;
 	mipsPerLevel?: number;

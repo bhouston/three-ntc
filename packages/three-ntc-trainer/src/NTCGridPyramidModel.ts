@@ -4,7 +4,12 @@ import { createMLP, type MLP } from './NTCMLP.js';
 import { computeGridLevels, createLatentGrid, LATENT_INIT_SCALE, DEFAULT_MIPS_PER_LEVEL, MAX_GRID_RESOLUTION, type LatentGrid } from './NTCGridModel.js';
 
 interface NTCGridPyramidOptions {
-	channels?: number;
+	// Feature-vector width per grid cell - the paper's "grid channels"
+	// (Table 2, C_k in Section 4.4; the `.ntc` manifest's `channelsPerLevel`).
+	// Distinct from the decoder's `outputChannels` (the texture set's channel
+	// count) and from the PBR channel *vocabulary* `fitNTCMaterial`/
+	// `NTCNodeMaterial` call `channels`.
+	gridChannels?: number;
 	levels?: number;
 	baseResolution?: number;
 	mipsPerLevel?: number;
@@ -99,7 +104,7 @@ function resolveNTCGridPyramidOptions( options: NTCGridPyramidOptions = {} ): Re
 	const textureResolution = options.textureResolution;
 
 	return {
-		channels: options.channels || 4,
+		channels: options.gridChannels || 4,
 		levels: options.levels || 4,
 		baseResolution: options.baseResolution || ( textureResolution ? Math.min( textureResolution, MAX_GRID_RESOLUTION ) : 128 ),
 		mipsPerLevel: options.mipsPerLevel || DEFAULT_MIPS_PER_LEVEL,

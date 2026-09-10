@@ -70,7 +70,7 @@ async function readGrad(attribute: any): Promise<Float32Array> {
 
 describe('train-batch kernel', () => {
   const options = {
-    channels: 4,
+    gridChannels: 4,
     levels: 2,
     baseResolution: 8,
     mipsPerLevel: 2,
@@ -193,7 +193,7 @@ describe('train-batch kernel', () => {
       const texture = await constantTexture(16);
       const { gpuModel } = setup({
         ...variant,
-        channels: 2,
+        gridChannels: 2,
         levels: 2,
         baseResolution: 4,
         mipsPerLevel: 1,
@@ -324,7 +324,7 @@ describe('train-batch kernel', () => {
 
 describe('NTCTrainer', () => {
   const smallOptions = {
-    channels: 4,
+    gridChannels: 4,
     levels: 2,
     baseResolution: 16,
     hiddenSizes: [16],

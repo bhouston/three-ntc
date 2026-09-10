@@ -70,7 +70,7 @@ describe('evaluateNeuralTextureRaw matches the CPU reference decoder', () => {
       it(`${JSON.stringify(config)} lod=${lod}`, async () => {
         const cpuModel = makeModel(7, {
           ...config,
-          channels: 4,
+          gridChannels: 4,
           levels: 3,
           baseResolution: 16,
           hiddenSizes: [16, 16],

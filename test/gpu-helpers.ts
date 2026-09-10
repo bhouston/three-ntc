@@ -34,6 +34,17 @@ export async function renderNodeToFloats(
   size: number,
 ): Promise<Float32Array> {
   const renderTarget = await bakeColorNodeToTexture(renderer, vec4Node, size);
+  const out = await readRenderTargetFloats(renderer, renderTarget, size);
+  renderTarget.dispose();
+  return out;
+}
+
+/** Reads a `size` x `size` half-float render target back as RGBA floats. */
+export async function readRenderTargetFloats(
+  renderer: any,
+  renderTarget: any,
+  size: number,
+): Promise<Float32Array> {
   const half: Uint16Array = await renderer.readRenderTargetPixelsAsync(
     renderTarget,
     0,
@@ -41,7 +52,6 @@ export async function renderNodeToFloats(
     size,
     size,
   );
-  renderTarget.dispose();
   // WebGPU buffer readback rows are padded to 256 bytes (128 half-floats);
   // three.js hands that padding back for widths under 32 texels.
   const stride = Math.max(size * 4, 128);
@@ -234,4 +244,18 @@ export function maxAbsDiff(a: ArrayLike<number>, b: ArrayLike<number>): number {
   let m = 0;
   for (let i = 0; i < a.length; i++) m = Math.max(m, Math.abs(a[i] - b[i]));
   return m;
+}
+
+/** Peak signal-to-noise ratio (dB) over the first `channels` of every RGBA pixel. */
+export function psnr(a: ArrayLike<number>, b: ArrayLike<number>, channels = 3): number {
+  let sum = 0;
+  let n = 0;
+  for (let i = 0; i < a.length; i += 4) {
+    for (let c = 0; c < channels; c++) {
+      const d = a[i + c] - b[i + c];
+      sum += d * d;
+      n++;
+    }
+  }
+  return 10 * Math.log10(1 / (sum / n));
 }
