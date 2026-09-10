@@ -23,7 +23,7 @@ export interface NTCChannelClassification {
 export interface NTCNodeMaterialOptions {
 	channels?: NTCChannel[];
 	renderer?: any | null;
-	/** Defaults to nearest; stochastic requires temporal reconstruction for a stable image. */
+	/** Shader-build choice, default nearest. Stochastic needs temporal reconstruction for a stable image. */
 	samplingMode?: NTCSamplingMode;
 	uvTransform?: any;
 	lodNode?: any;
@@ -147,11 +147,11 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 	uvTransform: any;
 
 	private _localUv: any;
-	private _slices: Record<string, any>;
+	private _slices!: Record<string, any>; // Initialized by _buildSamplingGraph in the constructor.
 	private _constantValues: Record<string, any>;
 	private _shadedColorNode: any;
 	private _lodBiasUniform: any;
-	private _samplingModeUniform: any;
+	private _lodNode: any;
 	private _decoderParameters: ReturnType<typeof packDecoder>;
 	private _modelShape: string;
 
@@ -261,20 +261,27 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 
 		}
 
-		const lodNode = options.lodNode || computeAutoLodNode( coord, cpuModel.maxLod, this._lodBiasUniform, cpuModel.textureResolution );
-
-		this._samplingModeUniform = uniform(NTC_SAMPLING_MODES.indexOf(this._samplingMode), 'int');
-		const activations = Array.from({length:cpuModel.outputChannels}, (_,i) => activeChannels.find(c=>i>=c.offset && i<c.offset+c.size)?.activation);
-		// Integer hashing varies samples by screen pixel and rendered frame. A future
-		// temporal resolve can accumulate this noise; none is applied here.
-		const seed = uint(screenCoordinate.x).mul(1973).add(uint(screenCoordinate.y).mul(9277)).add(uint(frameId).mul(26699));
-		// FP32 conversion can round the hash's largest values to 1. Keep jitter below 1.
-		const random = vec3(hash(seed), hash(seed.add(104729)), hash(seed.add(224737))).min(1 - 2 ** -24);
-		const outputs = evaluateNeuralTextureSampled(tiledUV,cpuModel,this.levelTextures!,lodNode,activations,this._samplingModeUniform,random,this._decoderParameters);
-		const slices = sliceChannels( outputs, activeChannels, true );
-		this._slices = slices;
+		this._lodNode = options.lodNode || computeAutoLodNode( coord, cpuModel.maxLod, this._lodBiasUniform, cpuModel.textureResolution );
 		this._constantValues = constantValues;
+		this.userData.debugView = options.debugView || 'shaded';
+		this._buildSamplingGraph(true);
+	}
 
+	/** Rebind decoded channel nodes while retaining model textures and weight uniforms. */
+	private _buildSamplingGraph(initialize = false): void {
+		const cpuModel = this.cpuModel, activeChannels = this.activeChannels;
+		const channels = this.channels, constantValues = this._constantValues;
+		const activations = Array.from({length:cpuModel.outputChannels}, (_,i) => activeChannels.find(c=>i>=c.offset && i<c.offset+c.size)?.activation);
+		let random: any;
+		if (this._samplingMode === 'stochastic') {
+			// Only stochastic shaders depend on screen coordinates, frame ID, or hashing.
+			const seed = uint(screenCoordinate.x).mul(1973).add(uint(screenCoordinate.y).mul(9277)).add(uint(frameId).mul(26699));
+			// FP32 conversion can round the largest hash values to 1.
+			random = vec3(hash(seed), hash(seed.add(104729)), hash(seed.add(224737))).min(1 - 2 ** -24);
+		}
+		const outputs = evaluateNeuralTextureSampled(this._localUv,cpuModel,this.levelTextures!,this._lodNode,activations,this._samplingMode,random,this._decoderParameters);
+		const slices = sliceChannels(outputs, activeChannels, true);
+		this._slices = slices;
 		const isActive = ( key: string ) => Object.prototype.hasOwnProperty.call( slices, key );
 
 		// Every channel in the vocabulary is applied identically here: a
@@ -287,7 +294,7 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 		for ( const channel of channels ) {
 
 			if ( isActive( channel.key ) ) channel.applyActive( this, slices[ channel.key ] );
-			else channel.applyConstant( this, constantValues[ channel.key ] );
+			else if (initialize) channel.applyConstant( this, constantValues[ channel.key ] );
 
 		}
 
@@ -297,8 +304,7 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 		// "trained color node" to swap back in via setDebugView('shaded').
 		this._shadedColorNode = this._shadedColorNode || null;
 
-		this.setDebugView( options.debugView || 'shaded' );
-
+		this.setDebugView(this.userData.debugView);
 	}
 
 	/**
@@ -412,11 +418,12 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 
 	set samplingMode(mode: NTCSamplingMode) {
 		if (!NTC_SAMPLING_MODES.includes(mode)) throw new Error(`Unknown NTC sampling mode: ${mode}`);
+		if (mode === this._samplingMode) return;
 		this._samplingMode = mode;
-		this._samplingModeUniform.value = NTC_SAMPLING_MODES.indexOf(mode);
+		this._buildSamplingGraph();
 	}
 
-	/** Changes sampling on the next frame without rebuilding the shader. */
+	/** Rebuilds the TSL graph for this mode; the renderer compiles it on next use. */
 	setSamplingMode(mode: NTCSamplingMode): void { this.samplingMode = mode; }
 
 	/**

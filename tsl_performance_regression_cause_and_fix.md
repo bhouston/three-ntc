@@ -14,9 +14,10 @@ establish that Safari is fixed.
 
 Nearest is now the default and executes one MLP evaluation. Stochastic also executes
 one evaluation, selecting a physical texel/mip using per-pixel, per-frame noise.
-Trilinear remains an explicit eight-evaluation option. All modes share one shader
-with a live uniform and a loop bounded to either one or eight iterations; turning
-filtering off no longer computes seven unused taps. No temporal reconstruction is
+Trilinear remains an explicit eight-evaluation option. Sampling is selected when
+building TSL: each shader contains exactly one sampling path, with no mode uniform
+or mode branches. Nearest/stochastic have no sampling loop; trilinear has a fixed
+eight-tap loop. Changing modes rebuilds the graph and invalidates the material. No temporal reconstruction is
 implemented. The paper's §§5.3 and 6.4.4 identify eight-decode trilinear as expensive
 and use stochastic sampling for the main performance results. The historical MSAA
 measurements below were made with trilinear enabled, not the new nearest default.

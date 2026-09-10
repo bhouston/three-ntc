@@ -49,10 +49,10 @@ const material = new NTCNodeMaterial(cpuModel, channelClassification, {
   lodBias: 0,
 });
 
-// Live uniform changes: no material or shader rebuild.
+// Sampling changes rebuild the TSL graph and compile a specialized shader on next use.
 material.setSamplingMode('stochastic'); // or 'nearest' / 'trilinear'
 material.samplingMode = 'nearest';     // equivalent property setter
-material.setLodBias(1);                // positive bias selects finer mips
+material.setLodBias(1);                // live uniform; positive bias selects finer mips
 ```
 
 | Mode | MLP evaluations per material sample | Behavior |
@@ -60,6 +60,12 @@ material.setLodBias(1);                // positive bias selects finer mips
 | `nearest` | 1 | Reconstruct the nearest physical texel at the nearest mip. |
 | `stochastic` | 1 | Randomly select a texel and mip with trilinear sampling probabilities. Noise varies by screen pixel and frame. |
 | `trilinear` | 8 | Reconstruct and blend four texels at each of two mip levels. |
+
+Sampling mode is a JavaScript build-time choice, not a shader uniform. Each shader
+contains only its selected sampling path. Changing the property or calling the setter
+rebuilds the material's channel nodes and marks it for recompilation. Selecting the
+same mode again does nothing. Existing grid textures, decoder parameters, UV/LOD
+settings, and debug view are retained; training updates still upload in place.
 
 Stochastic sampling follows the paper's UV/LOD jitter approach. It introduces noise;
 this library and the website currently apply no temporal reconstruction. Its expected

@@ -1,7 +1,9 @@
 # Why the neural viewers were slow
 
 Runtime sampling is now configurable: **nearest (default)** and **stochastic**
-evaluate the decoder once; optional **trilinear** evaluates it eight times. The
+evaluate the decoder once; optional **trilinear** evaluates it eight times. Each
+mode builds a separate shader path; changing modes rebuilds the graph, and no
+sampling-mode uniform or branches are present in the generated shader. The
 paper describes all three, and uses stochastic filtering with temporal reconstruction
 for its main rendering results. We have not added temporal reconstruction here.
 The eight-decode implementation below was an expensive choice, not a requirement

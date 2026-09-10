@@ -1,5 +1,5 @@
 import { HalfFloatType, Mesh, OrthographicCamera, PlaneGeometry, RenderTarget, Scene } from "three";
-import { float, floor, int, uv, vec2, vec3, vec4 } from "three/tsl";
+import { float, floor, uv, vec2, vec3, vec4 } from "three/tsl";
 import { expect, it } from "vitest";
 import { commands } from "vitest/browser";
 import { evaluateNeuralTextureSampled } from "./NTCDecoderTSL.js";
@@ -106,7 +106,7 @@ it("stochastic samples individual decoded texels and its stratified mean matches
       textures,
       float(lod),
       ["sigmoid", "sigmoid", "sigmoid"],
-      int(1),
+      "stochastic",
       random,
     );
     const actual = await renderNodeToFloats(renderer, vec4(...nodes, 1), 8);
@@ -127,7 +127,7 @@ it("stochastic samples individual decoded texels and its stratified mean matches
   }
 });
 
-it("switches live material modes without recompilation and bounds nearest/stochastic to one decode", async () => {
+it("rebuilds a shader containing only the selected sampling path and preserves model resources", async () => {
   const renderer = await getRenderer(),
     model = fixture();
   const material = new NTCNodeMaterial(
@@ -159,19 +159,33 @@ it("switches live material modes without recompilation and bounds nearest/stocha
     const nearest = await readRenderTargetFloats(renderer, target, 32),
       initialModules = shaders.length;
     const fragment = shaders.find((code) => code.includes("@fragment"))!;
-    // This checks the generated execution bound, not just zero-valued tap weights.
-    const branch = fragment.match(/if \( (\w+) \) \{\s*(\w+) = 8;\s*\} else \{\s*\2 = 1;\s*\}/);
-    expect(branch).not.toBeNull();
-    expect(fragment).toContain(`ntcSampleCount = ${branch![2]};`);
-    expect(fragment).toMatch(/for \( var ntcSample[^;]*; ntcSample < ntcSampleCount;/);
+    const assertPath = (code: string, mode: string) => {
+      expect(code).not.toContain('ntcSampleCount');
+      // Hash integer constants identify stochastic sampling, independent of node names.
+      expect(code.includes('747796405')).toBe(mode === 'stochastic');
+      expect(code.includes('ntcTrilinearTap')).toBe(mode === 'trilinear');
+      if (mode === 'trilinear') expect(code).toMatch(/ntcTrilinearTap < 8/);
+      // The fixture has a small, statically expanded MLP: any loop would be sampling work.
+      else expect(code).not.toMatch(/for \(/);
+    };
+    assertPath(fragment, 'nearest');
+    const textures = material.levelTextures!.slice();
     const version = material.version;
+    material.setSamplingMode('nearest');
+    expect(material.version).toBe(version); // Re-selecting the current mode is a no-op.
     material.setSamplingMode("trilinear");
+    expect(material.version).toBeGreaterThan(version);
     renderer.render(scene, camera);
     const trilinear = await readRenderTargetFloats(renderer, target, 32);
+    expect(shaders.length).toBeGreaterThan(initialModules);
+    assertPath(shaders.filter(code => code.includes('@fragment')).at(-1)!, 'trilinear');
+    const trilinearModules = shaders.length;
     expect(trilinear.some((value, i) => Math.abs(value - nearest[i]) > 0.001)).toBe(true);
     material.samplingMode = "stochastic";
     renderer.render(scene, camera);
     const stochastic = await readRenderTargetFloats(renderer, target, 32);
+    expect(shaders.length).toBeGreaterThan(trilinearModules);
+    assertPath(shaders.filter(code => code.includes('@fragment')).at(-1)!, 'stochastic');
     // Three advances frameId on animation frames, not on every render pass.
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     renderer.render(scene, camera);
@@ -181,8 +195,15 @@ it("switches live material modes without recompilation and bounds nearest/stocha
     renderer.render(scene, camera);
     const restored = await readRenderTargetFloats(renderer, target, 32);
     expect(restored).toEqual(nearest);
-    expect(shaders).toHaveLength(initialModules);
-    expect(material.version).toBe(version);
+    expect(material.userData.debugView).toBe('albedo');
+    expect(material.levelTextures).toEqual(textures);
+    const modulesBeforeUpdate = shaders.length;
+    model.decoder.layers[0].biases.fill(1);
+    material.updateFromModel();
+    renderer.render(scene, camera);
+    const updated = await readRenderTargetFloats(renderer, target, 32);
+    expect(updated.some((value, i) => Math.abs(value - restored[i]) > 0.001)).toBe(true);
+    expect(shaders).toHaveLength(modulesBeforeUpdate);
     expect(() => material.setSamplingMode("invalid" as any)).toThrow();
   } finally {
     device.createShaderModule = create;

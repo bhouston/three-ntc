@@ -147,7 +147,7 @@ function packDecoder(model: NTCCpuModel) {
 	}));
 }
 
-/** Public material modes. Numeric order also defines the shader uniform values. */
+/** Sampling is selected in JavaScript when building the TSL graph. */
 export const NTC_SAMPLING_MODES = ['nearest', 'stochastic', 'trilinear'] as const;
 export type NTCSamplingMode = typeof NTC_SAMPLING_MODES[number];
 
@@ -156,32 +156,36 @@ export type NTCSamplingMode = typeof NTC_SAMPLING_MODES[number];
  * sampling selects a physical mip and texel; it does not blend latent features.
  */
 function evaluateNeuralTextureSampled(uv: any, model: NTCCpuModel, textures: any[], lod: any,
- activations: NTCActivation[] = [], samplingMode: any = int(0), random: any = vec3(0.5), packed = packDecoder(model)): any[] {
+ activations: NTCActivation[] = [], samplingMode: NTCSamplingMode = 'nearest', random: any = vec3(0.5), packed = packDecoder(model)): any[] {
+ if (!NTC_SAMPLING_MODES.includes(samplingMode)) throw new Error(`Unknown NTC sampling mode: ${samplingMode}`);
  const sampled = Fn(() => {
-  const result = array(Array.from({length:model.outputChannels}, () => float(0))).toVar();
   const resolved = lod.clamp(0, model.maxLod).toVar();
+  // These are JavaScript branches: only the selected path enters the node graph.
+  if (samplingMode !== 'trilinear') {
+   const stochastic = samplingMode === 'stochastic';
+   const level = floor(resolved.add(stochastic ? random.z : 0.5)).toVar();
+   const size = floor(float(model.textureResolution ?? 2 ** model.maxLod).div(pow(2,level))).max(1).toVar();
+   const pixel = stochastic ? uv.mul(size).add(random.xy.sub(0.5)) : uv.mul(size);
+   const center = floor(pixel).add(0.5).div(size).fract();
+   const raw = evaluateNeuralTextureRaw(center,model,null,null,level,textures,packed);
+   return array(raw.map((value,c) => applyChannelActivation(value,activations[c])));
+  }
+  const result = array(Array.from({length:model.outputChannels}, () => float(0))).toVar();
   const lower = floor(resolved).toVar(), upper = lower.add(1).min(model.maxLod).toVar();
   const blend = resolved.sub(lower).toVar();
-  const trilinear = samplingMode.equal(2).toVar();
-  const stochastic = samplingMode.equal(1).toVar();
-  // Dynamic bound is essential: nearest/stochastic must not decode zero-weight taps.
-  const sampleCount = trilinear.select(int(8), int(1)).toVar('ntcSampleCount');
-  Loop({start:int(0), end:sampleCount, type:'int', condition:'<', name:'ntcSample'}, ({ntcSample:i}: {ntcSample:any}) => {
+  Loop({start:int(0), end:int(8), type:'int', condition:'<', name:'ntcTrilinearTap'}, ({ntcTrilinearTap:i}: {ntcTrilinearTap:any}) => {
    const firstMip = i.lessThan(4).toVar();
-   const singleLevel = floor(resolved.add(stochastic.select(random.z, float(0.5))));
-   const level = trilinear.select(firstMip.select(lower, upper), singleLevel).toVar();
+   const level = firstMip.select(lower, upper).toVar();
    const x = i.mod(2), y = i.div(2).mod(2);
    const size = floor(float(model.textureResolution ?? 2 ** model.maxLod).div(pow(2,level))).max(1).toVar();
    const pixel = uv.mul(size).sub(0.5).toVar();
-   const jitter = stochastic.select(random.xy.sub(0.5), vec2(0));
-   const base = trilinear.select(floor(pixel), floor(uv.mul(size).add(jitter))).toVar();
-   const fraction = pixel.sub(floor(pixel)).toVar();
+   const base = floor(pixel).toVar();
+   const fraction = pixel.sub(base).toVar();
    const center = base.add(vec2(float(x).add(0.5),float(y).add(0.5))).div(size).fract();
    const raw = evaluateNeuralTextureRaw(center,model,null,null,level,textures,packed);
-   const weight = trilinear.select(
-    x.equal(1).select(fraction.x,fraction.x.oneMinus())
-     .mul(y.equal(1).select(fraction.y,fraction.y.oneMinus()))
-     .mul(firstMip.select(blend.oneMinus(), blend)), float(1));
+   const weight = x.equal(1).select(fraction.x,fraction.x.oneMinus())
+    .mul(y.equal(1).select(fraction.y,fraction.y.oneMinus()))
+    .mul(firstMip.select(blend.oneMinus(), blend));
    for(let c=0;c<model.outputChannels;c++) result.element(c).addAssign(applyChannelActivation(raw[c],activations[c]).mul(weight));
   });
   return result;
@@ -192,7 +196,7 @@ function evaluateNeuralTextureSampled(uv: any, model: NTCCpuModel, textures: any
 /** Explicit eight-decode trilinear reference, retained for filtering diagnostics. */
 function evaluateNeuralTextureFiltered(uv: any, model: NTCCpuModel, textures: any[], lod: any,
  activations: NTCActivation[] = []): any[] {
- return evaluateNeuralTextureSampled(uv,model,textures,lod,activations,int(2));
+ return evaluateNeuralTextureSampled(uv,model,textures,lod,activations,'trilinear');
 }
 
 export { packDecoder, evaluateNeuralTextureSampled, evaluateNeuralTextureFiltered, evaluateNeuralTextureRaw, buildMipChainTexture, buildLevelTextures };

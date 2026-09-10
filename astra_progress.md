@@ -557,3 +557,44 @@ The five-step WebKit training/animated-preview regression also passed: loss
 0.299537 → 0.230104, two shader modules, no GPU errors, and 2 ms isolated preview
 frames. The final stochastic hash clamps FP32 rounding below 1 to keep jitter in its
 intended range; sampling and shader-budget checks were repeated after this guard.
+
+## Build-time sampling specialization (2026-09-10)
+
+Replaced the previous uniform-driven sampling selector with a JavaScript build-time
+choice. Each shader now includes only its selected sampling path: nearest has no
+sampling loop or random hash; stochastic adds hashing but no sampling loop; trilinear
+has a fixed eight-tap loop and no hash. The sampling-mode uniform and mode branches
+are removed. Nearest remains the default.
+
+Changing `samplingMode` now rebuilds the material's decoded channel nodes and marks
+it for recompilation on next use. Re-selecting the same mode is a no-op. Textures,
+weight uniforms, UV/LOD nodes, material identity, and debug view are preserved.
+Constant channel properties are initialized once rather than reset on mode changes.
+LOD bias remains a live uniform. The existing viewer/trainer controls call this setter.
+
+All 48 runtime/viewer checks passed in each of Chromium/Metal and Playwright WebKit.
+Tests inspect all three generated shader paths, verify recompilation and changed
+pixels, restore nearest output, and confirm training-style model updates still affect
+the rebuilt graph without reallocating textures or recompiling. Independent nearest,
+stochastic, and trilinear numerical checks remain consistent with the previous change:
+stochastic mean absolute error 0.000178285 (FP16 readback), and trilinear MSE
+4.4391e-11 / 2.2938e-10 for the 32/64-wide fixtures. All 51 unit tests, TypeScript,
+and the website production build passed.
+
+Median submit-to-GPU-completion delays for the 1024×768 CSS brick at DPR 2, with
+20 warmup + 100 measured frames:
+
+| Engine / mode | Previous uniform path | Specialized path |
+| --- | --- | --- |
+| webkit / nearest | 11.0 ms | 8.0 ms |
+| webkit / stochastic | 11.0 ms | 8.0 ms |
+| webkit / trilinear | 14.0 ms | 10.0 ms |
+| chromium / nearest | 12.3 ms | 5.4 ms |
+| chromium / stochastic | 12.3 ms | 9.9 ms |
+| chromium / trilinear | 13.6 ms | 86.8 ms |
+
+Frame intervals remained near 17 ms. These are separate local runs and completion
+delays include queueing and all rendering work; the timing differences are not a
+controlled estimate of branch cost. Generated shader inspection directly establishes
+that the unused sampling work is absent. Summaries are in
+[sampling-modes-specialized.json](docs/metrics/sampling-modes-specialized.json).
