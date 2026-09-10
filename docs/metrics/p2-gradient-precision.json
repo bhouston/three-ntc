@@ -1,0 +1,29 @@
+[
+  {
+    "kind": "gradient-precision",
+    "count": 2048,
+    "contribution": 1e-07,
+    "expected": 0.0002048,
+    "actual": 0.00020480142848100513
+  },
+  {
+    "kind": "gradient-precision",
+    "count": 524288,
+    "contribution": -0.0625,
+    "expected": -32768,
+    "actual": -32768
+  },
+  {
+    "kind": "sigmoid-dead-zone",
+    "measurements": [
+      {
+        "gradientPrecision": "fixed",
+        "mse": 9.999996165799104e-07
+      },
+      {
+        "gradientPrecision": "float",
+        "mse": 5.156532212762116e-07
+      }
+    ]
+  }
+]

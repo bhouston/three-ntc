@@ -63,6 +63,7 @@ interface NTCTextureModelLayout {
 }
 
 interface NTCGPUModelOptions extends NTCGridPyramidOptions {
+	gradientPrecision?: 'fixed' | 'float';
 	batchSize?: number;
 	learningRate?: number;
 	weightsLearningRate?: number;
@@ -296,11 +297,16 @@ class NTCGPUModel {
 	stepUniform: TSLNode;
 	maxGradientNormUniform: TSLNode;
 	quantization: ResolvedNTCQuantizationConfig;
+	floatGradients: boolean;
 	quantizationRangeUniforms: Array<{ min: TSLNode; max: TSLNode }>;
 
 	constructor( options: NTCGPUModelOptions = {} ) {
 
 		this.options = options;
+		// Keep the low-level buffer API's legacy integer representation unless requested.
+		// NTCTrainer explicitly selects floating accumulation by default.
+		if (options.gradientPrecision !== undefined && !['float','fixed'].includes(options.gradientPrecision)) throw new Error('Invalid gradientPrecision');
+		this.floatGradients = options.gradientPrecision === 'float';
 		this.batchSize = options.batchSize || 4096;
 		this.layout = computeTextureModelLayout( options );
 
@@ -428,7 +434,7 @@ class NTCGPUModel {
 		// The kernel accumulates the raw (un-batch-averaged) per-sample loss
 		// sum - see NeuralTextureGPUComputeTSL.js for why - so the mean loss is
 		// recovered here by dividing by batchSize as well as FIXED_POINT_SCALE.
-		const loss = array[ 0 ] / ( FIXED_POINT_SCALE * this.batchSize );
+		const loss = this.floatGradients ? new Float32Array(buffer)[0] / this.batchSize : array[ 0 ] / ( FIXED_POINT_SCALE * this.batchSize );
 
 		( this.lossAttribute.array as Int32Array )[ 0 ] = 0;
 		this.lossAttribute.needsUpdate = true;

@@ -355,11 +355,11 @@ describe('NTCTrainer', () => {
     return rt.texture;
   }
 
-  it('is deterministic for a fixed seed and its loss decreases', async () => {
+  it('fixed-point mode remains deterministic for a fixed seed and its loss decreases', async () => {
     const texture = await gradientTexture();
     const run = async () => {
       const losses: number[] = [];
-      const result = await new NTCTrainer(smallOptions).train({
+      const result = await new NTCTrainer({...smallOptions, gradientPrecision: 'fixed'}).train({
         renderer,
         sourceTexture: texture,
         onProgress: ({ loss }) => losses.push(loss),

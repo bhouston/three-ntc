@@ -46,6 +46,7 @@ function resolveSourceTextureResolution( textures: any[] ): number | null {
 }
 
 const DEFAULT_OPTIONS = {
+	gradientPrecision: 'float' as const,
 	// Feature-vector width per grid cell (the paper's "grid channels") - see
 	// NTCGridPyramidModel.js.
 	gridChannels: 4,
@@ -99,6 +100,8 @@ const DEFAULT_OPTIONS = {
 };
 
 interface NTCTrainerOptions {
+	/** Float accumulation avoids per-sample truncation and overflow; fixed preserves legacy deterministic sums. */
+	gradientPrecision?: 'fixed' | 'float';
 	gridChannels?: number;
 	levels?: number;
 	baseResolution?: number;

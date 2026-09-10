@@ -1,3 +1,4 @@
+import { atomicAddFloat, atomicLoadFloat } from './NTCFloatAtomic.js';
 import { StorageBufferAttribute } from 'three/webgpu';
 import { Fn, If, Loop, atomicAdd, atomicLoad, atomicStore, float, instanceIndex, int, max, min, pow, select, sqrt, storage } from 'three/tsl';
 import { FIXED_POINT_SCALE, GRADIENT_NORM_SCALE } from './NTCGPUTrainingConstants.js';
@@ -192,21 +193,23 @@ function forwardDenseLayerTSL( { activationsStorage, weightsStorage, inputBase, 
  * fixed-point adds. Shared by the same call sites as `forwardDenseLayerTSL`
  * above (their backward counterparts).
  */
-function accumulateDenseLayerGradTSL( { activationsStorage, gradWeightsAtomic, deltaBase, inputBase, inputSize, outputSize, weightsOffset, biasesOffset }: {
+function accumulateDenseLayerGradTSL( { activationsStorage, gradWeightsAtomic, deltaBase, inputBase, inputSize, outputSize, weightsOffset, biasesOffset, floatGradients = false }: {
 	activationsStorage: TSLNode; gradWeightsAtomic: TSLNode; deltaBase: TSLNode; inputBase: TSLNode; inputSize: number;
-	outputSize: number; weightsOffset: number; biasesOffset: number;
+	outputSize: number; weightsOffset: number; biasesOffset: number; floatGradients?: boolean;
 } ): void {
 
 	Loop( { start: 0, end: outputSize, type: 'int', name: 'j', condition: '<' }, ( { j }: { j: TSLNode } ) => {
 
 		const delta_j = activationsStorage.element( deltaBase.add( j ) );
-		atomicAdd( gradWeightsAtomic.element( int( biasesOffset ).add( j ) ), int( delta_j.mul( float( FIXED_POINT_SCALE ) ) ) );
+		if (floatGradients) atomicAddFloat(gradWeightsAtomic.element(int(biasesOffset).add(j)), delta_j);
+		else atomicAdd( gradWeightsAtomic.element( int( biasesOffset ).add( j ) ), int( delta_j.mul( float( FIXED_POINT_SCALE ) ) ) );
 		const rowOffset = int( weightsOffset ).add( j.mul( inputSize ) );
 
 		Loop( { start: 0, end: inputSize, type: 'int', name: 'i', condition: '<' }, ( { i }: { i: TSLNode } ) => {
 
 			const in_i = activationsStorage.element( inputBase.add( i ) );
-			atomicAdd( gradWeightsAtomic.element( rowOffset.add( i ) ), int( delta_j.mul( in_i ).mul( float( FIXED_POINT_SCALE ) ) ) );
+			if (floatGradients) atomicAddFloat(gradWeightsAtomic.element(rowOffset.add(i)), delta_j.mul(in_i));
+			else atomicAdd( gradWeightsAtomic.element( rowOffset.add( i ) ), int( delta_j.mul( in_i ).mul( float( FIXED_POINT_SCALE ) ) ) );
 
 		} );
 
@@ -248,9 +251,9 @@ function backwardDenseLayerTSL( { activationsStorage, weightsStorage, deltaBase,
 
 }
 
-function computeGradientClipScale( gradNormAtomic: TSLNode, maxGradientNormUniform: TSLNode ): TSLNode {
+function computeGradientClipScale( gradNormAtomic: TSLNode, maxGradientNormUniform: TSLNode, floatGradients = false ): TSLNode {
 
-	const normSquared = float( atomicLoad( gradNormAtomic.element( 0 ) ) ).div( float( GRADIENT_NORM_SCALE ) );
+	const normSquared = floatGradients ? atomicLoadFloat(gradNormAtomic.element(0)) : float( atomicLoad( gradNormAtomic.element( 0 ) ) ).div( float( GRADIENT_NORM_SCALE ) );
 	const unclippedScale = maxGradientNormUniform.div( sqrt( max( normSquared, float( 1e-20 ) ) ) );
 
 	return min( float( 1.0 ), unclippedScale );
@@ -327,19 +330,19 @@ function createAdamComputeNode( {
 	beta1 = 0.9,
 	beta2 = 0.999,
 	epsilon = 1e-7,
-	name, transform
+	name, transform, floatGradients = false
 }: {
 	valuesStorage: TSLNode; gradAtomic: TSLNode; mStorage: TSLNode; vStorage: TSLNode; gradNormAtomic: TSLNode;
 	maxGradientNormUniform: TSLNode; learningRateUniform: TSLNode; stepUniform: TSLNode; invBatchUniform?: TSLNode | null;
-	offset?: number; count: number; beta1?: number; beta2?: number; epsilon?: number; name: string; transform?: (value: TSLNode) => TSLNode;
+	offset?: number; count: number; beta1?: number; beta2?: number; epsilon?: number; name: string; floatGradients?: boolean; transform?: (value: TSLNode) => TSLNode;
 } ): TSLNode {
 
 	return Fn( () => {
 
 		const idx = int( instanceIndex ).add( int( offset ) );
-		let rawGrad = float( atomicLoad( gradAtomic.element( idx ) ) ).div( float( FIXED_POINT_SCALE ) );
+		let rawGrad = floatGradients ? atomicLoadFloat(gradAtomic.element(idx)) : float( atomicLoad( gradAtomic.element( idx ) ) ).div( float( FIXED_POINT_SCALE ) );
 		if ( invBatchUniform !== null ) rawGrad = rawGrad.mul( invBatchUniform );
-		const grad = rawGrad.mul( computeGradientClipScale( gradNormAtomic, maxGradientNormUniform ) );
+		const grad = rawGrad.mul( computeGradientClipScale( gradNormAtomic, maxGradientNormUniform, floatGradients ) );
 		atomicStore( gradAtomic.element( idx ), int( 0 ) );
 
 		const m = mStorage.element( idx );

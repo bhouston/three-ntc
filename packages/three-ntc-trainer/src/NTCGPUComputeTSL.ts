@@ -1,3 +1,4 @@
+import { atomicAddFloat, atomicLoadFloat } from './NTCFloatAtomic.js';
 import {
 	Fn,
 	If,
@@ -83,6 +84,10 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 		quantization,
 		quantizationRangeUniforms
 	} = gpuModel;
+	const addGradient = (destination: any, value: any) => {
+		if (gpuModel.floatGradients) atomicAddFloat(destination, value);
+		else atomicAdd(destination, int(value.mul(FIXED_POINT_SCALE)));
+	};
 	const { valuesStorage: weightsStorage, gradAtomic: gradWeightsAtomic } = gpuModel.weightsBuffers;
 	const { valuesStorage: latentsStorage, gradAtomic: gradLatentsAtomic } = gpuModel.latentsBuffers;
 	// Quantization is applied to stored taps before interpolation. Noise QAT
@@ -354,7 +359,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 		}
 
-		atomicAdd( lossAtomic.element( 0 ), int( sampleLoss.mul( float( FIXED_POINT_SCALE ) ) ) );
+		addGradient(lossAtomic.element(0), sampleLoss);
 
 		// 4. Backward through the MLP layers (output -> input).
 		for ( let l = mlpLayers.length - 1; l >= 0; l -- ) {
@@ -365,6 +370,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 			accumulateDenseLayerGradTSL( {
 				activationsStorage, gradWeightsAtomic,
+				floatGradients: gpuModel.floatGradients,
 				deltaBase, inputBase: inBase, inputSize: layer.inputSize, outputSize: layer.outputSize,
 				weightsOffset: layer.weightsOffset, biasesOffset: layer.biasesOffset
 			} );
@@ -434,10 +440,10 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 		const scatterBilinear = ( taps: typeof levelTaps[ number ], c: number, gradZ_c: TSLNode ) => {
 
-			atomicAdd( gradLatentsAtomic.element( taps.off0.add( c ) ), int( gradZ_c.mul( taps.w0 ).mul( float( FIXED_POINT_SCALE ) ) ) );
-			atomicAdd( gradLatentsAtomic.element( taps.off1.add( c ) ), int( gradZ_c.mul( taps.w1 ).mul( float( FIXED_POINT_SCALE ) ) ) );
-			atomicAdd( gradLatentsAtomic.element( taps.off2.add( c ) ), int( gradZ_c.mul( taps.w2 ).mul( float( FIXED_POINT_SCALE ) ) ) );
-			atomicAdd( gradLatentsAtomic.element( taps.off3.add( c ) ), int( gradZ_c.mul( taps.w3 ).mul( float( FIXED_POINT_SCALE ) ) ) );
+			addGradient( gradLatentsAtomic.element( taps.off0.add( c ) ), gradZ_c.mul( taps.w0 ) );
+			addGradient( gradLatentsAtomic.element( taps.off1.add( c ) ), gradZ_c.mul( taps.w1 ) );
+			addGradient( gradLatentsAtomic.element( taps.off2.add( c ) ), gradZ_c.mul( taps.w2 ) );
+			addGradient( gradLatentsAtomic.element( taps.off3.add( c ) ), gradZ_c.mul( taps.w3 ) );
 
 		};
 
@@ -460,7 +466,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 						const gradTap_c = activationsStorage.element( gradA0Base.add( t * channels + c ) ).mul( taps.weight );
 
-						atomicAdd( gradLatentsAtomic.element( offs[ t ].add( c ) ), int( gradTap_c.mul( float( FIXED_POINT_SCALE ) ) ) );
+						addGradient( gradLatentsAtomic.element( offs[ t ].add( c ) ), gradTap_c );
 
 					}
 
@@ -502,17 +508,18 @@ function createAccumulateGradientNormComputeNode( gpuModel: NTCGPUModel, include
 
 		If( idx.lessThan( int( totalWeights ) ), () => {
 
-			rawGrad.assign( float( atomicLoad( gradWeightsAtomic.element( idx ) ) ).div( float( FIXED_POINT_SCALE ) ) );
+			rawGrad.assign(gpuModel.floatGradients ? atomicLoadFloat(gradWeightsAtomic.element(idx)) : float( atomicLoad( gradWeightsAtomic.element( idx ) ) ).div( float( FIXED_POINT_SCALE ) ));
 
 		} ).Else( () => {
 
 			const latentIdx = idx.sub( int( totalWeights ) );
-			rawGrad.assign( float( atomicLoad( gradLatentsAtomic.element( latentIdx ) ) ).div( float( FIXED_POINT_SCALE ) ) );
+			rawGrad.assign(gpuModel.floatGradients ? atomicLoadFloat(gradLatentsAtomic.element(latentIdx)) : float( atomicLoad( gradLatentsAtomic.element( latentIdx ) ) ).div( float( FIXED_POINT_SCALE ) ));
 
 		} );
 
 		const grad = rawGrad.mul( invBatchUniform );
-		atomicAdd( gradNormAtomic.element( 0 ), int( grad.mul( grad ).mul( float( GRADIENT_NORM_SCALE ) ) ) );
+		if (gpuModel.floatGradients) atomicAddFloat(gradNormAtomic.element(0), grad.mul(grad));
+		else atomicAdd( gradNormAtomic.element( 0 ), int( grad.mul( grad ).mul( float( GRADIENT_NORM_SCALE ) ) ) );
 
 	} )().compute( dispatchCount ).setName( 'NTCAccumulateGradientNorm' );
 
@@ -537,6 +544,7 @@ function createTextureAdamWeightsComputeNode( gpuModel: NTCGPUModel, { beta1 = 0
 	const { valuesStorage, gradAtomic, mStorage, vStorage } = gpuModel.weightsBuffers;
 
 	return createAdamComputeNode( {
+		floatGradients: gpuModel.floatGradients,
 		valuesStorage,
 		gradAtomic,
 		mStorage,
@@ -572,6 +580,7 @@ function createTextureAdamLatentsComputeNode( gpuModel: NTCGPUModel, { beta1 = 0
 	const { valuesStorage, gradAtomic, mStorage, vStorage } = gpuModel.latentsBuffers;
 
 	return createAdamComputeNode( {
+		floatGradients: gpuModel.floatGradients,
 		valuesStorage,
 		gradAtomic,
 		mStorage,
