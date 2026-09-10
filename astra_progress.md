@@ -259,3 +259,11 @@ for non-power-of-two sources. Both model layouts now use floor, and the loader
 accepts a valid maxLod of zero. CPU/roundtrip checks cover sizes 1, 3, 6, 1000;
 GPU training on 1x1 and 6x6 sources produces finite losses. Power-of-two
 benchmark geometry is unchanged.
+
+### Final loss and frozen-grid regression
+
+Training now returns a finite final batch loss even when no progress callback
+is installed. A GPU regression also observes both G0 and G1 remaining exactly
+unchanged over multiple adaptation callbacks while MLP parameters change.
+All 10 training GPU tests pass. This adds readback/reporting only and does not
+change model updates or the reconstruction metric.

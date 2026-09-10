@@ -91,7 +91,7 @@ const DEFAULT_OPTIONS = {
 	// NeuralQuantization.js. Defaults to `mode: 'none'` (a byte-for-byte
 	// no-op vs. training without QAT at all).
 	quantization: DEFAULT_QUANTIZATION_OPTIONS,
-	// Fraction of `iterations` run *after* training with the latent grid
+	// Final fraction of the requested `iterations` with the latent grid
 	// hard-quantized and frozen, so only the MLP keeps updating and learns to
 	// absorb the real rounding error (the paper's post-quantization retrain,
 	// 5%). Ignored when `quantization.mode` is 'none'.
@@ -336,6 +336,9 @@ class NTCTrainer {
 				if ( iteration % 32 === 31 ) await yieldToBrowser();
 
 			}
+
+			// Report the last training-batch loss even without a progress callback.
+			if (completedIterations > 0) lastLoss = await gpuModel.readLoss(renderer);
 
 			if (quantization.mode !== 'none' && !latentsFrozen && completedIterations > 0) {
 				await this._quantizeAndFreezeLatents(gpuModel,renderer,quantization);

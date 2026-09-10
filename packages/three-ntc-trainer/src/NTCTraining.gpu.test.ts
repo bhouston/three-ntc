@@ -425,3 +425,20 @@ it('separate MLP learning rate scales Adam updates without scaling latent update
   expect(before-values[0]).toBeCloseTo(0.005,6);
   gpuModel.dispose();
 });
+
+it('returns finite loss without a callback and freezes both grids while the MLP adapts', async () => {
+  const texture=await constantTexture(16);
+  const options={gridChannels:1,levels:1,baseResolution:4,hiddenSizes:[4],outputChannels:4,
+    dualGrid:true,iterations:40,batchSize:128,quantization:{mode:'uint4'},retrainAfterQuantize:0.25};
+  const plain=await new NTCTrainer(options).train({renderer,sourceTexture:texture});
+  expect(Number.isFinite(plain.loss)).toBe(true);
+  const snapshots:{latents:number[];weights:number[]}[]=[];
+  await new NTCTrainer(options).train({renderer,sourceTexture:texture,onProgress:({iteration,cpuModel})=>{
+    if(iteration>30) snapshots.push({latents:[...cpuModel.grids,...cpuModel.lowResGrids].flatMap(g=>[...g.data]),
+      weights:cpuModel.decoder.layers.flatMap(l=>[...l.weights,...l.biases])});
+  }});
+  expect(snapshots.length).toBeGreaterThan(1);
+  for(const snapshot of snapshots) expect(snapshot.latents).toEqual(snapshots[0].latents);
+  expect(snapshots.at(-1)!.weights).not.toEqual(snapshots[0].weights);
+  texture.dispose();
+});
