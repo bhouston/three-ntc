@@ -102,3 +102,27 @@ export {
 	getNTCProfile
 };
 export type { NTCProfile };
+
+/** UI controls and training shape derive from the same profile. */
+export function getNTCProfileControls(name: string) {
+	const profile = getNTCProfile(name);
+	if (!profile) return null;
+	return {levels:profile.levels, baseResolution:profile.baseResolution,
+		hiddenSize:profile.hiddenSizes[0], hiddenLayers:profile.hiddenSizes.length,
+		hiddenActivation:profile.hiddenActivation};
+}
+
+/** Paper architecture and full training budget. This is intentionally opt-in:
+ * 250k batches of 524288 samples are much more expensive than browser defaults.
+ * Both grids use uint4 here; this is not a claim of a particular table-2 bitrate.
+ */
+export function getNTCPaperProfile(textureResolution: number) {
+	if (!Number.isInteger(textureResolution) || textureResolution < 16 ||
+		!Number.isInteger(Math.log2(textureResolution))) throw new Error('Paper profile requires a power-of-two texture resolution >= 16.');
+	const baseResolution = textureResolution / 4;
+	return {textureResolution, baseResolution, levels:Math.max(1,Math.floor(Math.log(baseResolution)/Math.log(4))),
+		gridChannels:8, lowResChannels:12, mipsPerLevel:2, positionalEncoding:true, dualGrid:true,
+		hiddenSizes:[64,64], hiddenActivation:'hgelu', batchSize:8*256*256,
+		iterations:250000, learningRate:0.01, weightsLearningRate:0.005, cosineAnnealingScale:0,
+		quantization:{mode:'uint4'}, retrainAfterQuantize:0.05};
+}

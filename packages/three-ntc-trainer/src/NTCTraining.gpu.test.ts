@@ -411,3 +411,17 @@ describe('NTCTrainer', () => {
     texture.dispose();
   });
 });
+
+it('separate MLP learning rate scales Adam updates without scaling latent updates', async () => {
+  const options={gridChannels:1,levels:1,baseResolution:2,hiddenSizes:[],outputChannels:4,
+    batchSize:1,learningRate:0.01,weightsLearningRate:0.005};
+  const {gpuModel}=setup(options);
+  gpuModel.stepUniform.value=1;
+  const before=gpuModel.weightsBuffers.attribute.array[0];
+  gpuModel.weightsBuffers.gradAttribute.array.fill(FIXED_POINT_SCALE);
+  gpuModel.weightsBuffers.gradAttribute.needsUpdate=true;
+  renderer.compute(createTextureAdamWeightsComputeNode(gpuModel));
+  const values=await readF32(gpuModel.weightsBuffers.attribute);
+  expect(before-values[0]).toBeCloseTo(0.005,6);
+  gpuModel.dispose();
+});

@@ -21,7 +21,7 @@ export {
 
 export { NTCTextureSource, bakeColorNodeToTexture, extractBaseColorNode, loadImageTexture } from './NTCTextureSource.js';
 
-export { NTC_PROFILES, NTC_PROFILE_NAMES, getNTCProfile } from './NTCProfiles.js';
+export { NTC_PROFILES, NTC_PROFILE_NAMES, getNTCProfileControls, getNTCPaperProfile, getNTCProfile } from './NTCProfiles.js';
 export type { NTCProfile } from './NTCProfiles.js';
 
 export { computeModelFootprint, formatModelSizeSummary, formatBytes, formatFlops, computeMLPParamCount, computeMLPFlops, computeGridLatentTexels, computeMLPLayoutStats } from './NTCModelSize.js';

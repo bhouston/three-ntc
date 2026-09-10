@@ -64,6 +64,7 @@ interface NTCTextureModelLayout {
 interface NTCGPUModelOptions extends NTCGridPyramidOptions {
 	batchSize?: number;
 	learningRate?: number;
+	weightsLearningRate?: number;
 	maxGradientNorm?: number;
 	channelActivations?: string[];
 	quantization?: NTCQuantizationOptions;
@@ -288,6 +289,7 @@ class NTCGPUModel {
 	gradNormAtomic: TSLNode;
 	invBatchUniform: TSLNode;
 	learningRateUniform: TSLNode;
+	weightsLearningRateScale: number;
 	stepUniform: TSLNode;
 	maxGradientNormUniform: TSLNode;
 	quantization: ResolvedNTCQuantizationConfig;
@@ -315,7 +317,9 @@ class NTCGPUModel {
 		this.gradNormAtomic = storage( this.gradNormAttribute, 'int', 1 ).toAtomic();
 
 		this.invBatchUniform = uniform( 1.0 / batchSize );
-		this.learningRateUniform = uniform( options.learningRate || 0.01 );
+		this.learningRateUniform = uniform( options.learningRate ?? 0.01 );
+		this.weightsLearningRateScale = options.weightsLearningRate === undefined ? 1 : options.weightsLearningRate / (options.learningRate ?? 0.01);
+		if (!Number.isFinite(this.weightsLearningRateScale) || this.weightsLearningRateScale < 0) throw new Error("Invalid weightsLearningRate / learningRate ratio");
 		this.stepUniform = uniform( 1 );
 		this.maxGradientNormUniform = uniform( options.maxGradientNorm || 1 );
 

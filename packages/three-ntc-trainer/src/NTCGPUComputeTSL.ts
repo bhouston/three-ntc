@@ -539,7 +539,7 @@ function createTextureAdamWeightsComputeNode( gpuModel: NTCGPUModel, { beta1 = 0
 		vStorage,
 		gradNormAtomic,
 		maxGradientNormUniform,
-		learningRateUniform,
+		learningRateUniform: learningRateUniform.mul(gpuModel.weightsLearningRateScale),
 		stepUniform,
 		invBatchUniform,
 		count: layout.totalWeights,

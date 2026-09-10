@@ -19,7 +19,7 @@ import {
   getMaterialXSampleUrl,
   GRID_BASE_RESOLUTION_OPTIONS,
   GRID_LEVELS_OPTIONS,
-  getNTCProfile,
+  getNTCProfileControls,
   inferAlbedoUvTransform,
   MATERIALX_SAMPLES,
   MaterialXLoader,
@@ -78,6 +78,7 @@ type FormValues = {
   levels: number;
   baseResolution: number;
   hiddenSize: number;
+  hiddenLayers: number;
   hiddenActivation: string;
   positionalEncoding: boolean;
   dualGrid: boolean;
@@ -93,10 +94,7 @@ type FormValues = {
 const DEFAULT_VALUES: FormValues = {
   bakeResolution: 1024,
   preset: 'mobile-balanced',
-  levels: 3,
-  baseResolution: 256,
-  hiddenSize: 8,
-  hiddenActivation: 'relu',
+  ...getNTCProfileControls('mobile-balanced')!,
   positionalEncoding: true,
   dualGrid: true,
   batchSize: 8192,
@@ -393,7 +391,7 @@ function TrainerPage() {
         gridChannels: 4,
         levels: Number(values.levels),
         baseResolution: Number(values.baseResolution),
-        hiddenSizes: [Number(values.hiddenSize), Number(values.hiddenSize)],
+        hiddenSizes: Array(Number(values.hiddenLayers)).fill(Number(values.hiddenSize)),
         hiddenActivation: values.hiddenActivation,
         positionalEncoding: values.positionalEncoding,
         dualGrid: values.dualGrid,
@@ -455,21 +453,23 @@ function TrainerPage() {
     const channels = 4;
     const resolutions = computeGridLevels(Number(values.baseResolution), Number(values.levels));
     const latentTexels = computeGridLatentTexels(resolutions);
-    const gridParams = latentTexels * channels;
+    const lowTexels = values.dualGrid ? resolutions.reduce((sum,r)=>sum+Math.max(1,Math.floor(r/2))**2,0) : 0;
+    const gridParams = (latentTexels + lowTexels) * channels;
     const inputSize = computeDecoderInputSize(channels, values.positionalEncoding, values.dualGrid);
-    const mlpSpec = { inputSize, hiddenSize: Number(values.hiddenSize), hiddenLayers: 2, outputSize: outputChannels };
+    const mlpSpec = { inputSize, hiddenSize: Number(values.hiddenSize), hiddenLayers: Number(values.hiddenLayers), outputSize: outputChannels };
     const mlpParams = computeMLPParamCount(mlpSpec);
     const flops = computeMLPFlops(mlpSpec);
     return formatModelSizeSummary(computeModelFootprint({ gridParams, mlpParams, flops }));
-  }, [channelClassification, values.baseResolution, values.levels, values.hiddenSize, values.positionalEncoding, values.dualGrid]);
+  }, [channelClassification, values.baseResolution, values.levels, values.hiddenSize, values.hiddenLayers, values.positionalEncoding, values.dualGrid]);
 
   const applyPreset = useCallback((name: string) => {
     form.setFieldValue('preset', name);
-    const profile = getNTCProfile(name);
+    const profile = getNTCProfileControls(name);
     if (!profile) return;
     form.setFieldValue('levels', profile.levels);
     form.setFieldValue('baseResolution', profile.baseResolution);
-    form.setFieldValue('hiddenSize', profile.hiddenSizes[profile.hiddenSizes.length - 1]);
+    form.setFieldValue('hiddenSize', profile.hiddenSize);
+    form.setFieldValue('hiddenLayers', profile.hiddenLayers);
     form.setFieldValue('hiddenActivation', profile.hiddenActivation);
   }, [form]);
 
@@ -603,11 +603,14 @@ function TrainerPage() {
                 {(field) => (
                   <SelectFormField
                     field={field}
-                    label="MLP hidden width (x2 layers)"
+                    label="MLP hidden width"
                     options={MLP_HIDDEN_SIZE_OPTIONS}
                     parse={Number}
                   />
                 )}
+              </form.Field>
+              <form.Field name="hiddenLayers">
+                {(field) => <SelectFormField field={field} label="MLP hidden layers" options={[1,2]} parse={Number} />}
               </form.Field>
               <form.Field name="hiddenActivation">
                 {(field) => <SelectFormField field={field} label="MLP hidden activation" options={MLP_ACTIVATION_OPTIONS} />}

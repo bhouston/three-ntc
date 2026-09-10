@@ -109,6 +109,8 @@ interface NTCTrainerOptions {
 	outputChannels?: number;
 	batchSize?: number;
 	learningRate?: number;
+	/** Optional separate MLP rate, decayed proportionally with the latent rate. */
+	weightsLearningRate?: number;
 	cosineAnnealingScale?: number;
 	iterations?: number;
 	maxGradientNorm?: number;

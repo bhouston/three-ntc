@@ -49,7 +49,11 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
    sampling. Existing 30 decoder and 8 training tests pass. Exact trilinear
    filtering uses eight MLP evaluations with shared weights. The metric samples
    texel centers, so its improvement measures training, not off-center filtering.
-8. Preset consistency and paper baseline: pending.
+8. Preset consistency and paper baseline: complete. Defaults derive from the
+   selected profile; hidden width and layer count both survive preset changes.
+   A tested opt-in 8/12-feature, 64x64 hardGELU paper profile includes separate
+   MLP/latent rates and the full paper budget. Nine training GPU tests and
+   27 unit tests pass. Fixed benchmark settings remain unchanged.
 9. Bounded noise quantization: pending.
 10. Positional encoding, source mip filtering, convergence coverage: pending.
 
@@ -64,8 +68,8 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 | step4: exclude frozen latent gradients | 0.01007776 | 19.9664 | 0.00% |
 | step5: independent G0/G1 pairs | 0.01003036 | 19.9868 | -0.47% |
 | step6: resolution-aware feature mip bands | 0.00852505 | 20.6930 | -15.01% |
-
 | step7: discrete texel training and decoded-value filtering | 0.00621377 | 22.0665 | -27.11% |
+| step8: consistent presets and opt-in paper profile | 0.00621377 | 22.0665 | 0.00% |
 
 ## Per-change details
 
@@ -146,3 +150,16 @@ Compared with step6. Six quality cases passed (finite error only; no PSNR thresh
 | checker | true | 0.00281665 | 25.503 | -69.02% |
 | waves | false | 0.02368443 | 16.255 | -0.68% |
 | waves | true | 0.00135283 | 28.688 | -67.55% |
+
+### step8: consistent presets and opt-in paper profile
+
+Compared with step7. Six quality cases passed (finite error only; no PSNR threshold).
+
+| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
+|---|---|---:|---:|---:|
+| smooth | false | 0.00242112 | 26.160 | 0.00% |
+| smooth | true | 0.00185991 | 27.305 | 0.00% |
+| checker | false | 0.00514766 | 22.884 | 0.00% |
+| checker | true | 0.00281665 | 25.503 | 0.00% |
+| waves | false | 0.02368443 | 16.255 | 0.00% |
+| waves | true | 0.00135283 | 28.688 | 0.00% |
