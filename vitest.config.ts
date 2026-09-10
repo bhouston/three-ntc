@@ -43,7 +43,7 @@ export default defineConfig({
           testTimeout: 120_000,
           hookTimeout: 120_000,
           browser: {
-            commands: { recordMetric: async (_context, metric) => { console.log('NTC_METRIC ' + JSON.stringify(metric)); } },
+            commands: { benchmarkConfig: async () => ({iterations:Number(process.env.NTC_BENCH_ITERATIONS || 420),physical:process.env.NTC_BENCH_PHYSICAL === '1',period:Number(process.env.NTC_BENCH_PE_PERIOD || 0)}), recordMetric: async (_context, metric) => { console.log('NTC_METRIC ' + JSON.stringify(metric)); } },
             enabled: true,
             headless: true,
             screenshotFailures: false,

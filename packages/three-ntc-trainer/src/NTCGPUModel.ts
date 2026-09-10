@@ -326,16 +326,8 @@ class NTCGPUModel {
 		this.stepUniform = uniform( 1 );
 		this.maxGradientNormUniform = uniform( options.maxGradientNorm || 1 );
 
-		// QAT (see NeuralQuantization.js) - `quantization.mode !== 'none'`
-		// makes NeuralTextureGPUComputeTSL.js's forward pass quantize every
-		// bilinear-sampled latent before it's consumed by the MLP. One
-		// [min, max] uniform pair per grid level, initialized to a generous
-		// placeholder range (latents are init'd within
-		// [-LATENT_INIT_SCALE, LATENT_INIT_SCALE], see NeuralGridModel.js, but
-		// grow during training) so nothing is clipped before the first 'auto'
-		// range refresh (see NTCTrainer.js) actually measures the
-		// real range - a fixed `range` tuple is written once here and never
-		// refreshed.
+		// One quantization range per stored grid, shared by tap sampling and export.
+		// Noise uses a fixed zero-aligned range; legacy STE can track auto ranges.
 		this.quantization = resolveQuantizationConfig( options );
 		this.quantizationNoiseUniform = uniform(this.quantization.method === 'noise' ? 1 : 0);
 		this.quantizationRangeUniforms = this.layout.gridLevels.map( () => ( {

@@ -2,6 +2,12 @@
 
 Baseline source revision: `d8fc5cb`. Each improvement is committed separately.
 
+The equal-update material-channel benchmark improved exported MSE from
+**0.01085313 to 0.00530139 (-51.15%)**. Every one of its six cases improved.
+The step-by-step linear diagnostic improved from **0.01294998 to 0.00613309
+(-52.64%)**. An additional 3x-budget run reaches **0.00429097**; that is a
+convergence result, not another equal-budget implementation improvement.
+
 ## Measurement protocol
 
 `node scripts/ntc-quality.mjs LABEL` runs six fixed WebGPU compression cases:
@@ -21,6 +27,13 @@ error of the four channels. Aggregate MSE weights mips by their texel counts;
 PSNR is -10 log10(MSE). The summary averages the six exported-model MSEs before
 converting to PSNR. Lower MSE and higher PSNR are better. Raw measurements,
 including per-mip errors, are saved under `docs/metrics/`.
+
+The step-by-step suite uses linear outputs to isolate the grid, training, and
+codec behavior. The separate `physical-baseline` / `physical-final` comparison
+trains and evaluates the channels with their actual sigmoid activations, as
+used by material reconstruction at texel centers. Both use 420 total updates.
+The original revision was rerun with that harness; these are measured baseline
+values, not estimates from the linear-output results.
 
 These small synthetic fixtures diagnose regressions; they do not establish
 quality on the paper's real-material dataset. The source mip target remains
@@ -73,11 +86,14 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
    `mipFilter: "lanczos"` rebuilds square GPU sources; the default preserves
    caller-supplied mips. The paper profile opts in. Fixed compression fixtures
    retain their box source targets, so their compression metric stays unchanged.
-12. Longer convergence measurements and final verification: pending.
+12. Longer convergence measurements and final verification: complete. Increasing
+   the same diagnostic budget from 420 to 1260 updates lowers aggregate MSE
+   another 30.04%; all six cases improve. This is still one seed and synthetic
+   data, not a substitute for the paper's full-budget real-material evaluation.
 
 ## Measurements
 
-| Revision / change | Exported MSE | PSNR (dB) | MSE change vs previous |
+| Revision / change | Exported MSE | PSNR (dB) | MSE change vs stated comparison |
 |---|---:|---:|---:|
 | baseline | 0.01294998 | 18.8773 | — |
 | step1: native features | 0.01176782 | 19.2930 | -9.13% |
@@ -92,6 +108,9 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 | step10a: eight-texel positional encoding | 0.00657211 | 21.8230 | 7.16% |
 | step10b: retain measured default; expose paper PE option | 0.00613309 | 22.1232 | -6.68% |
 | step11: optional Lanczos source mipmaps | 0.00613309 | 22.1232 | 0.00% |
+| physical-baseline (separate sigmoid benchmark) | 0.01085313 | 19.6444 | — |
+| physical-final: physical channel activations (separate benchmark) | 0.00530139 | 22.7561 | -51.15% |
+| convergence: 1260 updates (3x budget, separate comparison) | 0.00429097 | 23.6744 | -30.04% |
 
 ## Per-change details
 
@@ -267,3 +286,62 @@ is installed. A GPU regression also observes both G0 and G1 remaining exactly
 unchanged over multiple adaptation callbacks while MLP parameters change.
 All 10 training GPU tests pass. This adds readback/reporting only and does not
 change model updates or the reconstruction metric.
+
+### physical-final: physical channel activations (separate benchmark)
+
+Compared with physical-baseline. Six quality cases passed (finite error only; no PSNR threshold).
+
+| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
+|---|---|---:|---:|---:|
+| smooth | false | 0.00069507 | 31.580 | -82.64% |
+| smooth | true | 0.00055200 | 32.581 | -79.67% |
+| checker | false | 0.00348914 | 24.573 | -84.77% |
+| checker | true | 0.00329273 | 24.824 | -61.55% |
+| waves | false | 0.02321669 | 16.342 | -4.47% |
+| waves | true | 0.00056270 | 32.497 | -78.58% |
+
+### convergence: 1260 updates (3x budget, separate comparison)
+
+Compared with step11. Six quality cases passed (finite error only; no PSNR threshold).
+
+| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
+|---|---|---:|---:|---:|
+| smooth | false | 0.00063067 | 32.002 | -73.48% |
+| smooth | true | 0.00034864 | 34.576 | -77.44% |
+| checker | false | 0.00087724 | 30.569 | -84.14% |
+| checker | true | 0.00049994 | 33.011 | -77.23% |
+| waves | false | 0.02306910 | 16.370 | -3.39% |
+| waves | true | 0.00032023 | 34.945 | -74.75% |
+
+## Reproduction and validation
+
+```sh
+node scripts/ntc-quality.mjs current
+NTC_BENCH_PHYSICAL=1 node scripts/ntc-quality.mjs physical-current
+NTC_BENCH_ITERATIONS=1260 node scripts/ntc-quality.mjs convergence-current
+NTC_BENCH_PE_PERIOD=8 node scripts/ntc-quality.mjs paper-pe-current
+node scripts/ntc-mip-quality.mjs
+pnpm test
+pnpm test:gpu
+pnpm -r build
+```
+
+The quality runner snapshots source files before running, so edits during a
+measurement cannot change its implementation. An optional third argument points
+to a separately prepared checkout; the original revision was measured that way
+with the same fixtures/readback harness. All raw per-case/per-mip results are
+committed here. The full paper training budget has **not** been run.
+
+Final validation: 32 unit tests and TypeScript pass. The complete GPU run passed
+56 cases; subsequent focused runs passed all 13 affected cases, including three
+new regressions (59 GPU cases in the final suite). All package, CLI, and website
+production builds pass. Lint exits successfully with pre-existing warnings;
+the website build retains its bundle-size warning.
+
+API changes: native grid textures are required by the raw decoder; G1 grids are
+independent and can have a different channel count; `iterations` includes frozen
+adaptation; `setInterpolation` filters decoded values; noise QAT is the default
+when a quantized mode is selected without an explicit range. Legacy loaded
+assets retain their former PE phase and shared-coarsest G1 fallback. The paper
+profile is an explicit, expensive configuration, not a claim of matching a
+published bitrate. Exact runtime trilinear filtering costs eight MLP evaluations.

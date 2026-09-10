@@ -3,7 +3,7 @@
 import { float, floor, sin, textureLevel, uv, vec4 } from 'three/tsl';
 import { expect, it } from 'vitest';
 import { commands } from 'vitest/browser';
-import { NTCLoader } from 'three-ntc';
+import { applyChannelActivation, NTCLoader } from 'three-ntc';
 import { NTCTrainer } from './NTCTrainer.js';
 import { encodeNTC } from './NTCManifest.js';
 import { bakeColorNodeToTexture } from './NTCTextureSource.js';
@@ -15,6 +15,8 @@ for (const fixture of ['smooth', 'checker', 'waves']) {
   for (const positionalEncoding of [false, true]) {
     it(`measures ${fixture}, positionalEncoding=${positionalEncoding}`, async () => {
       const renderer = await getRenderer();
+      const config = await (commands as any).benchmarkConfig();
+      const activations = Array(4).fill(config.physical ? 'sigmoid' : 'linear');
       const u = uv();
       const pattern = fixture === 'checker'
         ? floor(u.x.mul(8)).add(floor(u.y.mul(8))).mod(2)
@@ -25,7 +27,8 @@ for (const fixture of ['smooth', 'checker', 'waves']) {
         64, { generateMipmaps: true });
       const options = { gridChannels: 4, levels: 3, baseResolution: 16, mipsPerLevel: 2,
         hiddenSizes: [16,16], hiddenActivation: 'hgelu', outputChannels: 4,
-        positionalEncoding, dualGrid: true, batchSize: 2048, iterations: 420,
+        positionalEncoding, positionalEncodingPeriod:config.period, dualGrid: true, batchSize: 2048, iterations: config.iterations,
+        channelActivations:activations,
         seed: 7, quantization: { mode: 'uint4' } };
       const result = await new NTCTrainer(options).train({ renderer, sourceTexture: source.texture });
       const manifest = encodeNTC(result.cpuModel, {activeChannels: [{key:'albedo'}, {key:'roughness'}], constantValues:{}});
@@ -40,7 +43,7 @@ for (const fixture of ['smooth', 'checker', 'waves']) {
           const size = Math.max(1, 64 >> lod);
           const reference = await renderNodeToFloats(renderer, textureLevel(source.texture, uv(), lod), size);
           const values = evaluateNeuralTextureRaw(uv(), model, mip, null, float(lod), levels);
-          const decoded = await renderNodeToFloats(renderer, vec4(...values), size);
+          const decoded = await renderNodeToFloats(renderer, vec4(...values.map((v,i)=>applyChannelActivation(v,activations[i]))), size);
           let error = 0;
           for (let i = 0; i < reference.length; i++) error += (reference[i] - decoded[i]) ** 2;
           perMip.push(error / reference.length);
@@ -51,7 +54,7 @@ for (const fixture of ['smooth', 'checker', 'waves']) {
         mip?.dispose(); levels.forEach(t => t.dispose());
       }
       await (commands as any).recordMetric({fixture, positionalEncoding, seed:7,
-        iterations:result.iterations, batchSize:2048, sourceSize:64, ...metrics});
+        iterations:result.iterations, physicalActivations:config.physical, positionalEncodingPeriod:config.period, batchSize:2048, sourceSize:64, ...metrics});
       source.dispose();
     });
   }

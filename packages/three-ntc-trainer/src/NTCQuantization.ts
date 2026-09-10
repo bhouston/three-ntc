@@ -1,22 +1,8 @@
 import { float, min, max, round } from 'three/tsl';
 
-// Quantization-Aware Training (QAT) scheme registry, shared by every
-// neural-* trainer (texture, material, appearance). Because every trainer's
-// gradients are hand-derived (not autodiff - see NeuralGPUComputeTSL.js/
-// NeuralTextureGPUComputeTSL.js/NeuralAppearanceGPUComputeTSL.js) and
-// already treat a sampled latent as flowing through identity to the loss,
-// a Straight-Through Estimator only needs a *forward* quantize step
-// inserted where latents are sampled for MLP input - see the call sites in
-// NeuralGridModel.js/NeuralTextureGPUComputeTSL.js/
-// NeuralAppearanceGPUComputeTSL.js. The backward/gradient-accumulation
-// kernels are untouched.
-//
-// Each scheme has the same shape - `quantizeForwardCPU(x, min, max)` (a
-// plain JS function used by the CPU reference model/tests) and
-// `quantizeForwardTSL(xNode, minNode, maxNode)` (the GPU-side mirror, built
-// from the same 'three/tsl' node functions the rest of this codebase uses -
-// see NeuralGPUComputeTSL.js/NeuralMLPTSL.js) - so adding a new scheme later
-// is just adding another entry with both functions.
+// Uniform scalar codecs are shared by forward STE and the final hard-rounding
+// step. Noise QAT adds one bin-width of uniform noise to each stored feature,
+// uses identity gradients, and clips stored parameters after Adam updates.
 /**
  * Uniform `levels`-step scheme mirroring the matching `LATENT_CODECS` entry
  * in NTCBinaryCodec.ts (clamp to [min, max], round to the nearest level,

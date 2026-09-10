@@ -210,18 +210,9 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 		this.cpuModel = cpuModel;
 		this.activeChannels = activeChannels;
 		this.channels = channels;
-		// See setInterpolation below; false selects nearest decoded texels.
-		// Legacy comment: `false` swaps to nearest-neighbor sampling *within* each stored mip
-		// level (still blending *between* levels) so the trained feature
-		// grid's actual texels can be inspected without bilinear blur hiding
-		// them. Not part of the trained model or the `.ntc` format - a pure
-		// display-time sampler setting, so toggling it later (setInterpolation)
-		// never needs a reload/retrain.
+		// Filtering acts on decoded physical values; it is a display setting.
 		this.interpolation = options.interpolation !== false;
-		// `positionalEncoding` models (see NTCDecoderTSL.js's
-		// `evaluatePositionalEncodingFeatures`) fetch raw texels from one
-		// `DataTexture` per stored level instead of sampling the mip-chain
-		// texture - build only whichever this model actually needs.
+		// Both decoder modes read native grid arrays.
 		this.mipChainTexture = null;
 		this.levelTextures = buildLevelTextures( cpuModel );
 

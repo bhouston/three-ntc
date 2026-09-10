@@ -37,7 +37,7 @@ export interface NTCCpuModel {
 	// below.
 	positionalEncoding?: boolean;
 	// Optional (default false/absent) - the paper's G0/G1 pair, see
-	// `computeDecoderInputSize` and `sampleCoarsestLevelBilinear` below.
+	// `computeDecoderInputSize` and `sampleFeatures` below.
 	dualGrid?: boolean;
 }
 

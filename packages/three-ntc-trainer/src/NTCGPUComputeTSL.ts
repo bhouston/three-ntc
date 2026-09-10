@@ -85,14 +85,8 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 	} = gpuModel;
 	const { valuesStorage: weightsStorage, gradAtomic: gradWeightsAtomic } = gpuModel.weightsBuffers;
 	const { valuesStorage: latentsStorage, gradAtomic: gradLatentsAtomic } = gpuModel.latentsBuffers;
-	// QAT (see NeuralQuantization.js/NTCGPUModel.js): only latents
-	// are quantized (`target !== 'latents'` is rejected by
-	// resolveQuantizationConfig unless mode is 'none'), and only the forward
-	// pass - see the module doc comment in NeuralQuantization.js for why a
-	// forward-only Straight-Through-Estimator quantize is enough here. `mode
-	// === 'none'` is resolved to a plain passthrough at kernel-*build* time
-	// (not per-invocation), so the default training path's node graph is
-	// byte-for-byte what it was before QAT existed.
+	// Quantization is applied to stored taps before interpolation. Noise QAT
+	// uses fixed bounds; STE remains available with explicit or auto ranges.
 	const quantizeLatent = quantization.mode !== 'none' ?
 		QUANTIZATION_SCHEMES[ quantization.mode ].quantizeForwardTSL :
 		null;
@@ -122,7 +116,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 	// positional-encoding scalars.
 	//
 	// `dualGrid` appends one more `channels`-wide plain bilinear tap of the
-	// *coarsest* level (G1, always sampled regardless of LOD) after those.
+	// matching half-resolution G1 grid after those.
 	const g0Width = positionalEncoding ? channels * 4 + POSITIONAL_ENCODING_SIZE : channels;
 	const featureWidth = g0Width + ( dualGrid ? lowResChannels : 0 );
 
