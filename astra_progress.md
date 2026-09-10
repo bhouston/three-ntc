@@ -374,3 +374,17 @@ separate two-device profile trains five steps with updates at 1 and 5: no WebGPU
 errors, two shader modules total, loss 0.29954 -> 0.23010. SwiftShader completed in
 3.672 s (44.4 ms max heartbeat gap); Apple Metal completed in 1.066 s, with steady
 256px frames at 5.5–6.3 ms. The runtime-only viewer issue remains a separate task.
+
+## Small-network specialization and standalone brick profile (2026-09-10)
+
+Retained static matrix operations for layers no larger than four input/output
+vec4 blocks, avoiding indexed-array loops for the shipped 5–8–8–10 brick network.
+Large networks retain compact loops. Initial Chromium/Metal HDR sphere timings
+improved from 5.6–9.1 ms to 3.5–4.2 ms at 1024px; later runs varied to 9.9–11.3 ms.
+Raw CPU-reference MSE was 7.6800803e-6 for both the static and loop implementations.
+SwiftShader MSE was 1.7720459e-6. No training math or filtering semantics changed.
+
+64 Chromium/Metal GPU cases, 36 SwiftShader runtime cases, 32 unit cases, and
+production builds passed. The user confirmed the remaining ~6 fps is in **Safari**;
+Chromium results do not resolve that Safari regression. Conditional feature-level
+sampling did not consistently help and was discarded.

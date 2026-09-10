@@ -262,6 +262,18 @@ function evaluateLinearLayerMat4(
 
 	const inputVectorCount = Math.ceil(inputSize / 4);
 	const outputVectorCount = Math.ceil(outputSize / 4);
+	// Small layers need at most sixteen mat4 products. Keep their indices static
+	// so drivers can keep activations in registers instead of indexed arrays.
+	// The shipped 8-wide brick is faster with this path; large layers retain
+	// compact loops to avoid the measured compilation cliff.
+	if (inputVectorCount <= 4 && outputVectorCount <= 4) {
+		return Array.from({length:outputVectorCount}, (_, o) => {
+			let value=getBiasVec4 ? getBiasVec4(TSL.int(o)) : TSL.vec4(0);
+			for(let i=0;i<inputVectorCount;i++) value=value.add(getWeightMat4(TSL.int(o), TSL.int(i)).mul(inputs[i]));
+			return (activation === 'relu' ? value.max(0) : activation === 'hgelu' ? hardGeluTSL(value) : value).toVar();
+		});
+	}
+
 	const evaluated = TSL.Fn(() => {
 		const packedInputs = TSL.array(inputs).toVar();
 		const packedOutputs = TSL.array('vec4', outputVectorCount).toVar();

@@ -5,6 +5,11 @@ WebGPU device loss. The initial private-storage validation error and the subsequ
 severe slowdown are distinct symptoms. Fixing the validation error does **not**
 establish that the runtime is usable.
 
+The user has now identified the remaining approximately 6 fps behavior as
+**Safari-specific**: Chrome/Chromium is substantially faster. The measurements
+below are Chromium results unless explicitly labeled otherwise; they do not
+establish that Safari is fixed.
+
 ## Evidence in the original repository
 
 The available checkout is `../three.js-v2-basic-ntc` (the requested `v3` directory
@@ -90,7 +95,7 @@ The trainer reports progress at iterations 1, 5, 9, and so on. Previously each
 report rebuilt the neural material, replacing its graph, uniforms, and textures.
 That can repeat the expensive first-use work at exactly the observed pause cadence.
 
-The pending preview change updates weight uniforms and latent texture data in
+The preview change updates weight uniforms and latent texture data in
 place when model structure is unchanged. Its browser regression test checks that
 pixels change as expected while texture identities, material version, and shader
 module creation count remain unchanged. A new network shape still requires a new
@@ -158,8 +163,9 @@ acceptance result. Timing includes completed GPU work, with shader work and GPU
 execution not separated by timestamp queries.
 
 Further investigation must address steady rendering as well as startup latency.
-The current sampler fetches all feature levels and multiplies unwanted levels by
-zero; skipping those samples is a candidate, not yet a measured fix.
+A conditional feature-level sampling experiment preserved accuracy after explicitly
+materializing UV/LOD before the branches, but did not consistently improve steady
+frame time. It was discarded.
 
 The final regression should record:
 
@@ -181,6 +187,54 @@ training-preview profile then reports adapter `apple / metal-3`, completes in
 1.066 seconds, and renders steady 256 × 256 frames in 5.5–6.3 ms. This differs
 substantially from SwiftShader. A standalone 1024-pixel sphere using the shipped
 brick (5–8–8–10 MLP), two directional lights, and ambient light measured 5.2–9.3 ms
-steady frames on Metal. That initial standalone test omitted the viewer HDR map;
-the matching HDR workload is being tested. The user's approximately 6 fps is still
-unresolved and cannot be dismissed based on a smaller or incomplete test scene.
+steady frames on Metal. Adding the viewer HDR map measured 5.6–9.1 ms.
+These are completed offscreen frames with a 1024 × 1024 target, no MSAA, a sphere,
+and the viewer's two directional lights plus ambient light. They are not complete
+React-page frame timings at the user's viewport size or device pixel ratio.
+Safari's reported approximately 6 fps remains unresolved.
+
+
+## Small-network specialization
+
+The shipped brick has a 5–8–8–10 network, much smaller than the 33–32–32–7 training
+profile. Runtime-indexed activation arrays/loops add overhead for these small
+layers. Layers with at most four input and four output vec4 blocks now retain
+static matrix operations and materialized outputs (at most sixteen mat4 products).
+Larger layers use the bounded shader-loop implementation above. This limit is a
+performance heuristic, not a numerical acceptance threshold.
+
+The same HDR brick profile improved from 5.6–9.1 ms to 3.5–4.2 ms in the initial
+Metal comparison. Later runs varied to 9.9–11.3 ms, so these observations are not a
+guarantee of frame rate. Raw reconstruction MSE against the independent CPU oracle
+was **7.6800803e-6 on Metal**, identical in subsequent static-vs-loop comparisons.
+SwiftShader measured **1.7720459e-6** and 256–267 ms steady frames; different GPU
+backends have different floating-point and sampling behavior. The oracle samples
+all ten channels at 256 UV positions, including half-float latent/target conversion.
+
+Validation: 64 browser tests passed on Chromium/Metal, 36 runtime browser tests
+passed on SwiftShader, 32 unit tests passed, and all production builds passed.
+
+## Safari reproduction
+
+Safari's installed native driver is separate from Playwright's bundled WebKit.
+The shared Vitest GPU tests now have a WebdriverIO/Safari-driver launch path:
+
+```sh
+pnpm test:gpu:safari packages/three-ntc/src/NTCBrickProfile.gpu.test.ts
+pnpm test:gpu:safari packages/three-ntc-trainer/src/NTCPreviewProfile.gpu.test.ts
+# All GPU cases in installed Safari:
+pnpm test:gpu:safari
+
+# Comparison using Chromium with Apple hardware:
+NTC_GPU_BACKEND=metal pnpm test:gpu packages/three-ntc/src/NTCBrickProfile.gpu.test.ts
+```
+
+Safari runs visibly and serially. The first launch reached installed Safari 27's
+native driver, but it refused session creation because **Allow remote automation**
+was disabled in Safari Settings → Developer. No Safari GPU tests or timings have
+run yet. Enabling that setting is pending; this is a driver prerequisite, not a
+passing or skipped performance test. The failed launch is intentionally reported
+as an error.
+
+Provider setup follows [Vitest's WebdriverIO documentation](https://vitest.dev/config/browser/webdriverio).
+Safari's automation prerequisite is documented by [WebKit](https://webkit.org/blog/6900/webdriver-support-in-safari-10/).
