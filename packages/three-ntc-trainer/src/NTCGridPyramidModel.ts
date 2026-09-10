@@ -129,6 +129,7 @@ interface NTCGridPyramidModel {
 	maxLod: number;
 	uvTransform: any;
 	quantizationRange?: Array<[ number, number ]> | null;
+	quantization?: { mode: string };
 	positionalEncoding: boolean;
 }
 

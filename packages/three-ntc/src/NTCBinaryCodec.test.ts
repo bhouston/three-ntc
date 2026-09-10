@@ -7,8 +7,10 @@ import {
   base64FromBytes,
   bytesFromBase64,
   decodeFloat16Base64,
+  decodeUint4Base64,
   decodeUint8Base64,
   encodeFloat16Base64,
+  encodeUint4Base64,
   encodeUint8Base64,
   float16ToFloat32,
   float32ToFloat16,
@@ -46,5 +48,22 @@ describe('NTCBinaryCodec', () => {
     }
 
     expect(Array.from(decodeUint8Base64(encodeUint8Base64(new Float32Array([5, 5]), 5, 5), 5, 5, 2))).toEqual([5, 5]);
+  });
+
+  it('round-trips uint4 payloads for even and odd lengths', () => {
+    const min = -2;
+    const max = 3;
+    const step = (max - min) / 15;
+
+    for (const values of [new Float32Array([-2, -1, 0, 0.5, 1, 2.9, 3]), new Float32Array([-2, 3, 0.1, 2.2])]) {
+      const encoded = encodeUint4Base64(values, min, max);
+      expect(Buffer.from(encoded, 'base64').length).toBe((values.length + 1) >> 1);
+      const decoded = decodeUint4Base64(encoded, min, max, values.length);
+      for (let i = 0; i < values.length; i++) {
+        expect(Math.abs(decoded[i] - values[i])).toBeLessThanOrEqual(step / 2 + 1e-6);
+      }
+    }
+
+    expect(Array.from(decodeUint4Base64(encodeUint4Base64(new Float32Array([5, 5, 5]), 5, 5), 5, 5, 3))).toEqual([5, 5, 5]);
   });
 });

@@ -3,7 +3,7 @@
 // no training dependencies) needs them too.
 
 import { FORMAT, VERSION, encodeUvTransform, isIdentityUvTransform } from 'three-ntc';
-import { encodeUint8Base64, encodeMLPLayersBase64 } from 'three-ntc';
+import { encodeUint8Base64, encodeUint4Base64, encodeMLPLayersBase64 } from 'three-ntc';
 import { computeLatentRanges, type GridLevelLayout } from './NTCQuantization.js';
 
 /**
@@ -40,6 +40,10 @@ function encodeNTC( cpuModel: any, channelClassification: any, options: any = {}
 
 	const ranges = resolveQuantizationRanges( cpuModel, options );
 	const uvTransform = options.uvTransform || cpuModel.uvTransform;
+	// Latent bit depth follows the QAT mode the model was trained with;
+	// 'none' (no QAT) keeps the pre-existing uint8 default.
+	const dtype = cpuModel.quantization?.mode === 'uint4' ? 'uint4' : 'uint8';
+	const encodeLatents = dtype === 'uint4' ? encodeUint4Base64 : encodeUint8Base64;
 
 	const levels = cpuModel.grids.map( ( grid: any, index: number ) => {
 
@@ -50,10 +54,10 @@ function encodeNTC( cpuModel: any, channelClassification: any, options: any = {}
 			height: grid.height,
 			channels: grid.channels,
 			wrap: options.wrap || 'repeat',
-			dtype: 'uint8',
+			dtype,
 			min,
 			max,
-			dataBase64: encodeUint8Base64( grid.data, min, max )
+			dataBase64: encodeLatents( grid.data, min, max )
 		};
 
 	} );

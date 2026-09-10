@@ -48,6 +48,28 @@ const QUANTIZATION_SCHEMES: Record<string, {
 			return minNode.add( level.div( float( 255.0 ) ).mul( range ) );
 
 		}
+	},
+	uint4: {
+		// Same as uint8 with 16 levels - mirrors `encodeUint4Base64`/
+		// `decodeUint4Base64` (two nibbles per byte on disk).
+		quantizeForwardCPU: ( x, lo = 0, hi = 1 ) => {
+
+			const range = hi - lo;
+			const t = range !== 0 ? Math.min( 1, Math.max( 0, ( x - lo ) / range ) ) : 0;
+			const level = Math.round( t * 15 );
+
+			return lo + ( level / 15 ) * range;
+
+		},
+		quantizeForwardTSL: ( xNode, minNode, maxNode ) => {
+
+			const range = maxNode.sub( minNode );
+			const t = min( float( 1.0 ), max( float( 0.0 ), xNode.sub( minNode ).div( range ) ) );
+			const level = round( t.mul( float( 15.0 ) ) );
+
+			return minNode.add( level.div( float( 15.0 ) ).mul( range ) );
+
+		}
 	}
 };
 

@@ -1,6 +1,6 @@
 import { FileLoader, Loader } from 'three';
 import { FORMAT, VERSION, getChannel, layoutChannels, decodeUvTransform } from './NTCFormat.js';
-import { decodeUint8Base64, decodeMLPLayersBase64, MLPBlock } from './NTCBinaryCodec.js';
+import { decodeUint8Base64, decodeUint4Base64, decodeMLPLayersBase64, MLPBlock } from './NTCBinaryCodec.js';
 import { NTCCpuModel } from './NTCDecoderTSL.js';
 import { NTCChannelClassification } from './NTCNodeMaterial.js';
 
@@ -9,7 +9,7 @@ export interface NTCManifestLevel {
 	width: number;
 	height: number;
 	channels: number;
-	dtype: 'uint8';
+	dtype: 'uint8' | 'uint4';
 	min: number;
 	max: number;
 	dataBase64: string;
@@ -180,14 +180,15 @@ function decodeLevel( level: NTCManifestLevel, path: string ) {
 	assertInteger( level.height, `${ path }.height`, 1 );
 	assertInteger( level.channels, `${ path }.channels`, 1, 4 );
 
-	if ( level.dtype !== 'uint8' ) {
+	if ( level.dtype !== 'uint8' && level.dtype !== 'uint4' ) {
 
 		throw new Error( `THREE.NTCLoader: Unsupported ${ path }.dtype "${ level.dtype }".` );
 
 	}
 
 	const expectedLength = level.width * level.height * level.channels;
-	const data = decodeUint8Base64( level.dataBase64, level.min, level.max, expectedLength );
+	const decode = level.dtype === 'uint4' ? decodeUint4Base64 : decodeUint8Base64;
+	const data = decode( level.dataBase64, level.min, level.max, expectedLength );
 
 	return { width: level.width, height: level.height, channels: level.channels, data };
 

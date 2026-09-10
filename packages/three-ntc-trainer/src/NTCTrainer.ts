@@ -9,7 +9,7 @@ import {
 } from './NTCGPUComputeTSL.js';
 import { createResetGradientNormComputeNode } from './NTCGPUKernelsTSL.js';
 import { getLearningRate, createRandom, yieldToBrowser } from './NTCTrainingUtils.js';
-import { DEFAULT_QUANTIZATION_OPTIONS, resolveQuantizationConfig, refreshGPUQuantizationRange } from './NTCQuantization.js';
+import { DEFAULT_QUANTIZATION_OPTIONS, QUANTIZATION_SCHEMES, resolveQuantizationConfig, refreshGPUQuantizationRange } from './NTCQuantization.js';
 
 // How often (in training iterations) `quantization.range === 'auto'` is
 // re-measured from the live GPU latent buffer (see
@@ -84,7 +84,12 @@ const DEFAULT_OPTIONS = {
 	// Quantization-Aware Training (QAT) of the latent grid - see
 	// NeuralQuantization.js. Defaults to `mode: 'none'` (a byte-for-byte
 	// no-op vs. training without QAT at all).
-	quantization: DEFAULT_QUANTIZATION_OPTIONS
+	quantization: DEFAULT_QUANTIZATION_OPTIONS,
+	// Fraction of `iterations` run *after* training with the latent grid
+	// hard-quantized and frozen, so only the MLP keeps updating and learns to
+	// absorb the real rounding error (the paper's post-quantization retrain,
+	// 5%). Ignored when `quantization.mode` is 'none'.
+	retrainAfterQuantize: 0.05
 };
 
 interface NTCTrainerOptions {
@@ -104,6 +109,7 @@ interface NTCTrainerOptions {
 	seed?: number;
 	name?: string;
 	quantization?: typeof DEFAULT_QUANTIZATION_OPTIONS;
+	retrainAfterQuantize?: number;
 	textureResolution?: number;
 	channelActivations?: string[];
 	uvTransform?: any;
@@ -166,6 +172,33 @@ class NTCTrainer {
 
 	}
 
+	/**
+	 * Hard-rounds the live GPU latent grid to its quantization levels (the
+	 * same `quantizeForwardCPU` the export codec mirrors) against the final
+	 * `'auto'` range, and re-uploads it. The caller then stops running the
+	 * latent Adam step, so the grid is exactly what will be written to disk
+	 * while the MLP keeps training against it.
+	 */
+	private async _quantizeAndFreezeLatents( gpuModel: NTCGPUModel, renderer: any, quantization: ReturnType<typeof resolveQuantizationConfig> ): Promise<void> {
+
+		if ( quantization.range === 'auto' ) await refreshGPUQuantizationRange( gpuModel, renderer );
+
+		const ranges = gpuModel.getQuantizationRange();
+		const quantize = QUANTIZATION_SCHEMES[ quantization.mode ].quantizeForwardCPU;
+		const latents = new Float32Array( await renderer.getArrayBufferAsync( gpuModel.latentsBuffers.attribute ) );
+
+		gpuModel.layout.gridLevels.forEach( ( level: any, g: number ) => {
+
+			const [ lo, hi ] = ranges[ g ];
+			for ( let i = level.offset; i < level.offset + level.floatCount; i ++ ) latents[ i ] = quantize( latents[ i ], lo, hi );
+
+		} );
+
+		( gpuModel.latentsBuffers.attribute.array as Float32Array ).set( latents );
+		gpuModel.latentsBuffers.attribute.needsUpdate = true;
+
+	}
+
 	async train( { renderer, sourceTexture, sourceTextures, onProgress = null }: NTCTrainArgs ) {
 
 		const settings = this.options;
@@ -215,15 +248,32 @@ class NTCTrainer {
 			const adamWeightsNode = createTextureAdamWeightsComputeNode( gpuModel );
 			const adamLatentsNode = createTextureAdamLatentsComputeNode( gpuModel );
 
-			const iterations = settings.iterations as number;
+			const trainIterations = settings.iterations as number;
+			const retrainIterations = quantization.mode === 'none' ? 0 :
+				Math.round( trainIterations * ( settings.retrainAfterQuantize as number ) );
+			const iterations = trainIterations + retrainIterations;
+			// Retrain phase: its own short cosine schedule at a tenth of the
+			// base rate - a full-rate restart on the MLP alone would undo more
+			// than the frozen rounding error it's meant to absorb.
+			const retrainSettings = { ...settings, iterations: retrainIterations, learningRate: ( settings.learningRate as number ) * 0.1 };
 			let lastLoss = NaN;
 			let completedIterations = 0;
+			let latentsFrozen = false;
 
 			for ( let iteration = 0; iteration < iterations; iteration ++ ) {
 
 				if ( this._abortRequested ) break;
 
-				const learningRate = getLearningRate( settings as any, iteration );
+				if ( iteration === trainIterations ) {
+
+					await this._quantizeAndFreezeLatents( gpuModel, renderer, quantization );
+					latentsFrozen = true;
+
+				}
+
+				const learningRate = latentsFrozen ?
+					getLearningRate( retrainSettings as any, iteration - trainIterations ) :
+					getLearningRate( settings as any, iteration );
 				gpuModel.resetLoss();
 				gpuModel.learningRateUniform.value = learningRate;
 				gpuModel.stepUniform.value = iteration + 1;
@@ -233,7 +283,7 @@ class NTCTrainer {
 				renderer.compute( resetGradientNormNode );
 				renderer.compute( accumulateGradientNormNode );
 				renderer.compute( adamWeightsNode );
-				renderer.compute( adamLatentsNode );
+				if ( ! latentsFrozen ) renderer.compute( adamLatentsNode );
 
 				completedIterations = iteration + 1;
 
@@ -263,8 +313,8 @@ class NTCTrainer {
 				// `settings`, not `gpuModel.quantization`) so the default
 				// `mode: 'none'` path never touches `gpuModel` for this at
 				// all - a true no-op, not just a cheap early-return.
-				if ( quantization.mode !== 'none' && quantization.range === 'auto' &&
-					( iteration % QUANTIZATION_RANGE_REFRESH_INTERVAL === QUANTIZATION_RANGE_REFRESH_INTERVAL - 1 || iteration === iterations - 1 ) ) {
+				if ( quantization.mode !== 'none' && quantization.range === 'auto' && ! latentsFrozen &&
+					( iteration % QUANTIZATION_RANGE_REFRESH_INTERVAL === QUANTIZATION_RANGE_REFRESH_INTERVAL - 1 || iteration === trainIterations - 1 ) ) {
 
 					await refreshGPUQuantizationRange( gpuModel, renderer );
 
@@ -287,12 +337,14 @@ class NTCTrainer {
 			// disabled (`mode: 'none'`).
 			if ( quantization.mode !== 'none' ) {
 
-				if ( quantization.range === 'auto' ) await refreshGPUQuantizationRange( gpuModel, renderer );
+				if ( quantization.range === 'auto' && ! latentsFrozen ) await refreshGPUQuantizationRange( gpuModel, renderer );
 				this.quantizationRange = gpuModel.getQuantizationRange();
 
 			}
 
 			cpuModel.quantizationRange = this.quantizationRange;
+			// Read by NTCManifest.encodeNTC to pick the on-disk latent dtype.
+			cpuModel.quantization = quantization;
 
 			return {
 				cpuModel,

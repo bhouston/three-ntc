@@ -47,6 +47,8 @@ export {
 	decodeFloat16Base64,
 	encodeUint8Base64,
 	decodeUint8Base64,
+	encodeUint4Base64,
+	decodeUint4Base64,
 	encodeMLPLayersBase64,
 	decodeMLPLayersBase64
 } from './NTCBinaryCodec.js';

@@ -168,6 +168,44 @@ function decodeUint8Base64( str: string, min: number, max: number, length: numbe
 
 }
 
+/**
+ * Like `encodeUint8Base64` but 16 levels, packed two values per byte (low
+ * nibble first); odd lengths pad the last high nibble with 0.
+ */
+function encodeUint4Base64( data: Float32Array, min: number, max: number ): string {
+
+	const bytes = new Uint8Array( ( data.length + 1 ) >> 1 );
+	const range = max - min;
+
+	for ( let i = 0; i < data.length; i ++ ) {
+
+		const t = range !== 0 ? Math.min( 1, Math.max( 0, ( data[ i ] - min ) / range ) ) : 0;
+		bytes[ i >> 1 ] |= Math.round( t * 15 ) << ( ( i & 1 ) * 4 );
+
+	}
+
+	return base64FromBytes( bytes );
+
+}
+
+/** Inverse of `encodeUint4Base64`. */
+function decodeUint4Base64( str: string, min: number, max: number, length: number ): Float32Array {
+
+	const bytes = bytesFromBase64( str );
+	const out = new Float32Array( length );
+	const range = max - min;
+
+	for ( let i = 0; i < length; i ++ ) {
+
+		const level = ( bytes[ i >> 1 ] >> ( ( i & 1 ) * 4 ) ) & 15;
+		out[ i ] = min + ( level / 15 ) * range;
+
+	}
+
+	return out;
+
+}
+
 /** One fully-connected layer, in `createMLP`-shape (see NeuralMLP.js). */
 export interface MLPLayer {
 	inputSize: number;
@@ -285,6 +323,8 @@ export {
 	decodeFloat16Base64,
 	encodeUint8Base64,
 	decodeUint8Base64,
+	encodeUint4Base64,
+	decodeUint4Base64,
 	encodeMLPLayersBase64,
 	decodeMLPLayersBase64
 };
