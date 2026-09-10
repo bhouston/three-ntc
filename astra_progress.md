@@ -345,3 +345,22 @@ when a quantized mode is selected without an explicit range. Legacy loaded
 assets retain their former PE phase and shared-coarsest G1 fallback. The paper
 profile is an explicit, expensive configuration, not a claim of matching a
 published bitrate. Exact runtime trilinear filtering costs eight MLP evaluations.
+
+## Runtime shader expansion (2026-09-10)
+
+The eight reconstructed taps now share a shader loop, and dense layers use named
+shader loops over mat4/vec4 blocks with uniform bounds. Static expansion of the
+matrix sums contributed substantial first-use driver latency; `.toVar()` alone
+and a real function around the MLP did not resolve it in the measured workload.
+See [the investigation](tsl_performance_regression_cause_and_fix.md).
+
+On Chromium **SwiftShader**, 32-wide first render/completed readback decreased from
+11,113 ms to 663 ms; the 64-wide case completed in 736 ms. CPU-reference MSE stayed
+3.4234e-11 and 5.1345e-11 respectively. Conservative private storage is 4,388/4,900
+bytes. These are individual timing runs, not a guaranteed speed ratio. All 63 GPU
+tests, all 32 unit tests, TypeScript, and production builds passed with the pending
+preview update included. Runtime-only GPU coverage comprises 35 passing cases.
+
+This fixes the storage-limit/expansion problem but does **not** establish that the
+user's viewer slowdown is resolved: the user still reports about 6 fps even without
+training. Investigation continues against the shipped brick and viewer lighting.

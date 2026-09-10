@@ -12,7 +12,7 @@ import { selectFeatureLevelTSL } from './NTCMipBands.js';
 import { computeTiledPositionalEncodingTSL } from './NTCPositionalEncodingTSL.js';
 import { applyChannelActivation, NTCActivation } from './NTCOutputActivations.js';
 import { MLPLayer } from './NTCBinaryCodec.js';
-import { float, floor, int, pow, textureLevel, vec2 } from 'three/tsl';
+import { Fn, Loop, array, float, floor, int, pow, textureLevel, vec2 } from 'three/tsl';
 
 /**
  * A fully decoded `.ntc` CPU model - what `NTCLoader.parse()` produces and
@@ -113,15 +113,10 @@ function evaluateNeuralTextureRaw( uvNode: any, cpuModel: NTCCpuModel, mipChainT
 	// NTCGPUComputeTSL.js's training kernel already applies.
 	features.push( resolvedLodNode.div( Math.max( 1, cpuModel.maxLod ) ) );
 
-	// Shared mat4-packed MLP evaluator (see NTCMLPTSL.js). Packing weights
-	// into 4x4 blocks and evaluating each layer with a native mat4 * vec4
-	// multiply maps to one hardware FMA-chain instruction per input quad
-	// (instead of 4 separate dot() calls, one per output neuron), and
-	// evaluateLinearLayerMat4 materializes each layer's output with .toVar()
-	// before the next layer consumes it - see that function's doc comment
-	// for the "maximum parser recursive depth" WGSL failure this works
-	// around.
-	let activations = packVec4Inputs( features );
+	// Keep decoder inputs materialized before the dense-layer shader loops.
+	// Each layer uses mat4/vec4 blocks with runtime loop bounds to avoid a
+	// large statically expanded network in the eight-tap reconstruction loop.
+	let activations = packVec4Inputs( features ).map(value => value.toVar());
 
 	const parameters = packed ?? packDecoder(cpuModel);
 	for ( let l = 0; l < cpuModel.decoder.layers.length; l ++ ) {
@@ -133,8 +128,8 @@ function evaluateNeuralTextureRaw( uvNode: any, cpuModel: NTCCpuModel, mipChainT
 
 		activations = evaluateLinearLayerMat4(
 			activations, layer.inputSize, layer.outputSize, layer.activation,
-			( outputVector: number, inputVector: number ) => weights.node.element( outputVector * inputVectorCount + inputVector ),
-			( outputVector: number ) => biases.node.element( outputVector )
+			( outputVector: any, inputVector: any ) => weights.node.element( int(outputVector).mul(inputVectorCount).add(inputVector) ),
+			( outputVector: any ) => biases.node.element( outputVector )
 		);
 
 	}
@@ -157,28 +152,34 @@ function packDecoder(model: NTCCpuModel) {
  * for texel reconstruction and diagnostics. Output activations precede filtering.
  */
 function evaluateNeuralTextureFiltered(uv: any, model: NTCCpuModel, textures: any[], lod: any,
-	activations: NTCActivation[] = [], interpolation: any = float(1)): any[] {
-	const packed = packDecoder(model);
-	const resolved = lod.clamp(0, model.maxLod);
-	const lower = floor(resolved), upper = lower.add(1).min(model.maxLod);
-	const blend = resolved.sub(lower);
-	const enabled = interpolation.greaterThan(0);
-	const levels = [enabled.select(lower, floor(resolved.add(0.5))), upper];
-	const result = Array.from({length:model.outputChannels}, () => float(0));
-	for (let m=0; m<2; m++) {
-		const size = floor(float(model.textureResolution ?? 2 ** model.maxLod).div(pow(2,levels[m]))).max(1);
-		const pixel = uv.mul(size).sub(0.5);
-		const base = enabled.select(floor(pixel), floor(uv.mul(size)));
-		const fraction = enabled.select(pixel.sub(floor(pixel)), vec2(0));
-		const mipWeight = enabled.select(m === 0 ? blend.oneMinus() : blend, float(m === 0 ? 1 : 0));
-		for(let y=0;y<2;y++) for(let x=0;x<2;x++) {
-			const center = base.add(vec2(x+0.5,y+0.5)).div(size).fract();
-			const raw = evaluateNeuralTextureRaw(center,model,null,null,levels[m],textures,packed);
-			const weight = (x ? fraction.x : fraction.x.oneMinus()).mul(y ? fraction.y : fraction.y.oneMinus()).mul(mipWeight);
-			for(let c=0;c<result.length;c++) result[c] = result[c].add(applyChannelActivation(raw[c],activations[c]).mul(weight));
-		}
-	}
-	return result;
+	activations: NTCActivation[] = [], interpolation: any = float(1), packed = packDecoder(model)): any[] {
+	// A shader loop reuses the decoder's temporaries across all eight taps.
+	// Expanding eight JS calls makes Three emit eight sets of private variables,
+	// exceeding the 8 KB private-address-space limit on some WebGPU backends.
+	const filtered = Fn(() => {
+		const result = array(Array.from({length:model.outputChannels}, () => float(0))).toVar();
+		const resolved = lod.clamp(0, model.maxLod).toVar();
+		const lower = floor(resolved).toVar(), upper = lower.add(1).min(model.maxLod).toVar();
+		const blend = resolved.sub(lower).toVar();
+		const enabled = interpolation.greaterThan(0).toVar();
+		Loop(8, ({i}: {i:any}) => {
+			const firstMip = i.lessThan(4).toVar();
+			const level = firstMip.select(enabled.select(lower, floor(resolved.add(0.5))), upper).toVar();
+			const x = i.mod(2), y = i.div(2).mod(2);
+			const size = floor(float(model.textureResolution ?? 2 ** model.maxLod).div(pow(2,level))).max(1).toVar();
+			const pixel = uv.mul(size).sub(0.5).toVar();
+			const base = enabled.select(floor(pixel), floor(uv.mul(size))).toVar();
+			const fraction = enabled.select(pixel.sub(floor(pixel)), vec2(0)).toVar();
+			const mipWeight = enabled.select(firstMip.select(blend.oneMinus(), blend), firstMip.select(1,0)).toVar();
+			const center = base.add(vec2(float(x).add(0.5),float(y).add(0.5))).div(size).fract();
+			const raw = evaluateNeuralTextureRaw(center,model,null,null,level,textures,packed);
+			const weight = x.equal(1).select(fraction.x,fraction.x.oneMinus())
+				.mul(y.equal(1).select(fraction.y,fraction.y.oneMinus())).mul(mipWeight);
+			for(let c=0;c<model.outputChannels;c++) result.element(c).addAssign(applyChannelActivation(raw[c],activations[c]).mul(weight));
+		});
+		return result;
+	})();
+	return Array.from({length:model.outputChannels}, (_,c) => filtered.element(c));
 }
 
-export { evaluateNeuralTextureFiltered, evaluateNeuralTextureRaw, buildMipChainTexture, buildLevelTextures };
+export { packDecoder, evaluateNeuralTextureFiltered, evaluateNeuralTextureRaw, buildMipChainTexture, buildLevelTextures };

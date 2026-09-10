@@ -242,59 +242,41 @@ function packLayerBiasesVec4( biases: Float32Array | number[] ): any[] {
 
 }
 
-// Evaluates one fully-connected layer against vec4-packed inputs using
-// native `mat4 * vec4` multiplies. `getWeightMat4(outputVector, inputVector)`
-// must return the mat4 uniform holding the 4x4 weight block feeding outputs
-// `outputVector*4 .. outputVector*4+3` from inputs
-// `inputVector*4 .. inputVector*4+3` (see packLayerWeightsMat4 above for the
-// exact row/column layout) - a closure so callers can source it either from
-// one big shared uniform buffer with a per-layer offset (neural-appearance,
-// whose GPU training compute shaders separately need their own flat-buffer
-// layout - see NeuralAppearanceGPUComputeTSL.js) or from a plain per-layer
-// uniformArray (neural-texture, which has no such constraint). `getBiasVec4
-// (outputVector)` returns the vec4 holding
-// biases[outputVector*4 .. outputVector*4+3] (zero-padded past outputSize)
-// the same way, or pass `null` for a bias-free layer.
+// Evaluate a dense layer as runtime loops over mat4/vec4 blocks. The callbacks
+// receive TSL integer nodes, not JavaScript indices. Keep the bounds in uniforms:
+// a statically expanded MLP inside the eight-tap filter caused severe first-use
+// driver stalls. Materializing layer outputs alone did not fix that expansion.
+// See tsl_performance_regression_cause_and_fix.md for measured alternatives.
 //
-// Materializes each output vec4 with `.toVar()` before returning it.
-// Without this, each layer's output expression is consumed live by the next
-// layer's multiply, and for a multi-layer network built inline (not inside
-// its own TSL.Fn()) those per-layer expressions compound across layers into
-// a single, much larger generated shader - in the worst case (several such
-// networks evaluated side by side in one un-Fn'd scope) enough to exceed
-// WGSL's private-address-space budget and fail pipeline creation outright.
-// See NeuralAppearanceTSL.js's evaluateMLPViaFn for the Fn()-scoping half of
-// that fix, needed when a network is evaluated many times per pixel in the
-// same shader; this materialization is the other, always-needed half.
+// Distinct loop names are required: nested Loop(n) calls both default to `i`,
+// shadowing the outer index. The inline Fn registers assignments even when the
+// raw decoder is constructed outside another Fn; it is not a WGSL function.
 function evaluateLinearLayerMat4(
 	inputs: any[],
 	inputSize: number,
 	outputSize: number,
 	activation: string | undefined,
-	getWeightMat4: ( outputVector: number, inputVector: number ) => any,
-	getBiasVec4: ( ( outputVector: number ) => any ) | null
+	getWeightMat4: ( outputVector: any, inputVector: any ) => any,
+	getBiasVec4: ( ( outputVector: any ) => any ) | null
 ): any[] {
 
-	const outputs = [];
-	const inputVectorCount = Math.ceil( inputSize / 4 );
-	const outputVectorCount = Math.ceil( outputSize / 4 );
-
-	for ( let outputVector = 0; outputVector < outputVectorCount; outputVector ++ ) {
-
-		let value = getBiasVec4 ? getBiasVec4( outputVector ) : TSL.vec4( 0 );
-
-		for ( let inputVector = 0; inputVector < inputVectorCount; inputVector ++ ) {
-
-			value = value.add( getWeightMat4( outputVector, inputVector ).mul( inputs[ inputVector ] ) );
-
-		}
-
-		if ( activation === 'relu' ) value = value.max( 0 );
-		else if ( activation === 'hgelu' ) value = hardGeluTSL( value );
-
-		outputs.push( value.toVar() );
-
-	}
+	const inputVectorCount = Math.ceil(inputSize / 4);
+	const outputVectorCount = Math.ceil(outputSize / 4);
+	const evaluated = TSL.Fn(() => {
+		const packedInputs = TSL.array(inputs).toVar();
+		const packedOutputs = TSL.array('vec4', outputVectorCount).toVar();
+		const inputCount = TSL.uniform(inputVectorCount, 'int');
+		const outputCount = TSL.uniform(outputVectorCount, 'int');
+		TSL.Loop({end:outputCount, name:'ntcOutput'}, ({ntcOutput:outputVector}: {ntcOutput:any}) => {
+			const value = (getBiasVec4 ? getBiasVec4(outputVector) : TSL.vec4(0)).toVar();
+			TSL.Loop({end:inputCount, name:'ntcInput'}, ({ntcInput:inputVector}: {ntcInput:any}) => {
+				value.addAssign(getWeightMat4(outputVector, inputVector).mul(packedInputs.element(inputVector)));
+			});
+			packedOutputs.element(outputVector).assign(activation === 'relu' ? value.max(0) : activation === 'hgelu' ? hardGeluTSL(value) : value);
+		});
+		return packedOutputs;
+	})();
+	const outputs = Array.from({length:outputVectorCount}, (_, i) => evaluated.element(i));
 
 	return outputs;
 
