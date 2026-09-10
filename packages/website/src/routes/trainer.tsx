@@ -249,6 +249,10 @@ function TrainerPage() {
 
   const rebuildPreviewMaterial = useCallback((renderer: any, cpuModel: any, classification: any, lodBias: number) => {
     const previous = previewMaterialRef.current;
+    if (previous?.cpuModel === cpuModel) {
+      previous.updateFromModel(cpuModel);
+      return previous;
+    }
     const material = new NTCNodeMaterial(cpuModel, classification, {
       renderer,
       // lodBias is wrapped in a live uniform node by NTCNodeMaterial itself -

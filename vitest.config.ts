@@ -11,7 +11,7 @@ const root = fileURLToPath(new URL('.', import.meta.url));
 const chromiumWebGPUArgs = [
   '--headless=new',
   '--enable-unsafe-webgpu',
-  '--enable-features=Vulkan',
+  ...(process.env.NTC_GPU_BACKEND === 'metal' ? ['--use-angle=metal'] : ['--enable-features=Vulkan']),
   '--ignore-gpu-blocklist',
   ...(process.env.CI ? ['--use-angle=swiftshader', '--use-vulkan=swiftshader'] : []),
 ];

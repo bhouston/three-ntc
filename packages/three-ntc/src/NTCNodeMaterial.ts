@@ -1,9 +1,11 @@
+import { updateLevelTextures } from './NTCHalfFloatTexture.js';
+import { packLayerWeightsMat4, packLayerBiasesVec4 } from './NTCMLPTSL.js';
 import * as THREE from 'three';
 // `MeshPhysicalNodeMaterial` only exists in the WebGPU/node-material build,
 // not the base 'three' entrypoint - see `three-shims.d.ts`.
 import { MeshPhysicalNodeMaterial } from 'three/webgpu';
 import { bitangentWorld, fract, log, max, min, step, tangentWorld, uniform, uv, vec2, vec3, vec4 } from 'three/tsl';
-import { buildLevelTextures, evaluateNeuralTextureFiltered, NTCCpuModel } from './NTCDecoderTSL.js';
+import { buildLevelTextures, packDecoder, evaluateNeuralTextureFiltered, NTCCpuModel } from './NTCDecoderTSL.js';
 import { applyChannelActivation } from './NTCOutputActivations.js';
 import { CHANNELS, FRAME_VIEWS, getChannel, buildDebugViewColorNode, buildFrameViewColorNode, NTCChannel, NTCLayoutChannel } from './NTCFormat.js';
 import { constantToNode, reconstructFinalNormal } from './NTCOutputTypes.js';
@@ -149,6 +151,8 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 	private _shadedColorNode: any;
 	private _lodBiasUniform: any;
 	private _interpolationUniform: any;
+	private _decoderParameters: ReturnType<typeof packDecoder>;
+	private _modelShape: string;
 
 	/**
 	 * `channelClassification` is whatever `NTCSource.
@@ -208,6 +212,8 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 		}
 
 		this.cpuModel = cpuModel;
+		this._modelShape = modelShape(cpuModel);
+		this._decoderParameters = packDecoder(cpuModel);
 		this.activeChannels = activeChannels;
 		this.channels = channels;
 		// Filtering acts on decoded physical values; it is a display setting.
@@ -257,7 +263,7 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 
 		this._interpolationUniform = uniform(this.interpolation ? 1 : 0);
 		const activations = Array.from({length:cpuModel.outputChannels}, (_,i) => activeChannels.find(c=>i>=c.offset && i<c.offset+c.size)?.activation);
-		const outputs = evaluateNeuralTextureFiltered(tiledUV,cpuModel,this.levelTextures!,lodNode,activations,this._interpolationUniform);
+		const outputs = evaluateNeuralTextureFiltered(tiledUV,cpuModel,this.levelTextures!,lodNode,activations,this._interpolationUniform,this._decoderParameters);
 		const slices = sliceChannels( outputs, activeChannels, true );
 		this._slices = slices;
 		this._constantValues = constantValues;
@@ -416,6 +422,18 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 
 	}
 
+	/** Upload new values without changing textures, uniforms, or shader graphs. */
+	updateFromModel(cpuModel: NTCCpuModel = this.cpuModel): void {
+		if(modelShape(cpuModel)!==this._modelShape) throw new Error('NTC model shape changed; rebuild the material.');
+		updateLevelTextures(cpuModel,this.levelTextures!);
+		for(let i=0;i<cpuModel.decoder.layers.length;i++) {
+			const layer=cpuModel.decoder.layers[i];
+			this._decoderParameters[i].weights.update(packLayerWeightsMat4(layer.weights,layer.inputSize,layer.outputSize));
+			this._decoderParameters[i].biases.update(packLayerBiasesVec4(layer.biases));
+		}
+		this.cpuModel=cpuModel;
+	}
+
 	dispose(): void {
 
 		if ( this.mipChainTexture ) this.mipChainTexture.dispose();
@@ -434,3 +452,12 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 // inference-example-facing), with no training-side dependencies at all.
 
 export { NTCNodeMaterial, sliceChannels, reconstructFinalNormal };
+
+function modelShape(model: NTCCpuModel): string {
+	return JSON.stringify({channels:model.channels,levels:model.levels,mipsPerLevel:model.mipsPerLevel,
+		maxLod:model.maxLod,lodOffset:model.lodOffset,textureResolution:model.textureResolution,
+		positionalEncoding:model.positionalEncoding,positionalEncodingPeriod:model.positionalEncodingPeriod,
+		dualGrid:model.dualGrid,outputChannels:model.outputChannels,
+		grids:[...model.grids,...(model.lowResGrids || [])].map(g=>[g.width,g.height,g.channels]),
+		layers:model.decoder.layers.map(l=>[l.inputSize,l.outputSize,l.activation])});
+}

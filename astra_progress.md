@@ -364,3 +364,13 @@ preview update included. Runtime-only GPU coverage comprises 35 passing cases.
 This fixes the storage-limit/expansion problem but does **not** establish that the
 user's viewer slowdown is resolved: the user still reports about 6 fps even without
 training. Investigation continues against the shipped brick and viewer lighting.
+
+## Preserve the training preview material (2026-09-10)
+
+Progress updates upload existing latent textures and weight uniforms in place,
+without rebuilding the material. A browser test verifies changed pixel values,
+unchanged texture identities/material version, and no new shader modules. A
+separate two-device profile trains five steps with updates at 1 and 5: no WebGPU
+errors, two shader modules total, loss 0.29954 -> 0.23010. SwiftShader completed in
+3.672 s (44.4 ms max heartbeat gap); Apple Metal completed in 1.066 s, with steady
+256px frames at 5.5–6.3 ms. The runtime-only viewer issue remains a separate task.

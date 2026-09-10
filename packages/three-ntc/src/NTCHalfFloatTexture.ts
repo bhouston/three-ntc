@@ -77,21 +77,37 @@ function createHalfFloatLatentTexture( data: Float32Array | number[], width: num
  * training kernel's own `wrapIndexTSL` addressing without needing to
  * reproduce that index math here.
  */
-function buildLevelTextures( cpuModel: NTCMipChainModel ): any[] {
-	return [...cpuModel.grids, ...(cpuModel.lowResGrids || [])].map(grid => {
-		const depth = Math.ceil(grid.channels/4);
-		const packed = new Uint16Array(grid.width*grid.height*depth*4);
+function updateLevelTextures(cpuModel: NTCMipChainModel, textures: any[]): void {
+	const grids = [...cpuModel.grids, ...(cpuModel.lowResGrids || [])];
+	if (textures.length !== grids.length) throw new Error('NTC grid count changed; rebuild the material.');
+	for(let g=0;g<grids.length;g++) {
+		const grid=grids[g], texture=textures[g];
+		const depth=Math.ceil(grid.channels/4);
+		if(texture.image.width!==grid.width || texture.image.height!==grid.height || texture.image.depth!==depth)
+			throw new Error('NTC grid shape changed; rebuild the material.');
+		const packed=texture.image.data;
 		for(let p=0;p<grid.width*grid.height;p++) for(let c=0;c<grid.channels;c++) {
-			packed[(Math.floor(c/4)*grid.width*grid.height+p)*4+c%4] = DataUtils.toHalfFloat(grid.data[p*grid.channels+c]);
+			packed[(Math.floor(c/4)*grid.width*grid.height+p)*4+c%4]=DataUtils.toHalfFloat(grid.data[p*grid.channels+c]);
 		}
-		const texture = new DataArrayTexture(packed,grid.width,grid.height,depth);
-		texture.type=HalfFloatType; texture.format=RGBAFormat;
-		texture.wrapS=RepeatWrapping; texture.wrapT=RepeatWrapping;
+		texture.needsUpdate=true;
+	}
+}
+
+function buildLevelTextures(cpuModel: NTCMipChainModel): any[] {
+	const textures=[...cpuModel.grids,...(cpuModel.lowResGrids || [])].map(grid=>{
+		const depth=Math.ceil(grid.channels/4);
+		const texture=new DataArrayTexture(new Uint16Array(grid.width*grid.height*depth*4),grid.width,grid.height,depth);
+		texture.type=HalfFloatType;texture.format=RGBAFormat;
+		texture.wrapS=RepeatWrapping;texture.wrapT=RepeatWrapping;
 		texture.magFilter=NearestFilter;texture.minFilter=NearestFilter;
-		texture.generateMipmaps=false;texture.needsUpdate=true;
+		texture.generateMipmaps=false;
 		return texture;
 	});
+	updateLevelTextures(cpuModel,textures);
+	return textures;
 }
+
+export { updateLevelTextures };
 
 interface RawMip {
 	data: Float32Array;
