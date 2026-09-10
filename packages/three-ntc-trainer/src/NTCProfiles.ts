@@ -121,7 +121,7 @@ export function getNTCPaperProfile(textureResolution: number) {
 		!Number.isInteger(Math.log2(textureResolution))) throw new Error('Paper profile requires a power-of-two texture resolution >= 16.');
 	const baseResolution = textureResolution / 4;
 	return {textureResolution, baseResolution, levels:Math.max(1,Math.floor(Math.log(baseResolution)/Math.log(4))),
-		gridChannels:8, lowResChannels:12, mipsPerLevel:2, positionalEncoding:true, dualGrid:true,
+		gridChannels:8, lowResChannels:12, mipsPerLevel:2, positionalEncoding:true, positionalEncodingPeriod:8, dualGrid:true,
 		hiddenSizes:[64,64], hiddenActivation:'hgelu', batchSize:8*256*256,
 		iterations:250000, learningRate:0.01, weightsLearningRate:0.005, cosineAnnealingScale:0,
 		quantization:{mode:'uint4'}, retrainAfterQuantize:0.05};

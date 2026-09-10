@@ -47,6 +47,7 @@ interface NTCTextureModelLayout {
 	textureResolution: number;
 	maxLod: number;
 	lodOffset: number;
+	positionalEncodingPeriod: number;
 	inputSize: number;
 	positionalEncoding: boolean;
 	dualGrid: boolean;
@@ -204,6 +205,7 @@ function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextu
 		textureResolution: resolvedTextureResolution,
 		maxLod,
 		lodOffset,
+		positionalEncodingPeriod: options.positionalEncodingPeriod ?? 0,
 		inputSize,
 		positionalEncoding,
 		dualGrid,

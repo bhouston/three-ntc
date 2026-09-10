@@ -278,8 +278,10 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 		// the taps themselves).
 		if ( positionalEncoding ) {
 
-			const phase = uv.mul(sourceSize).div(8);
-			const pe = computeTiledPositionalEncodingTSL( phase.x, phase.y );
+			const phase = uv.mul(sourceSize).div(layout.positionalEncodingPeriod || 1);
+			const pe = computeTiledPositionalEncodingTSL(
+				layout.positionalEncodingPeriod ? phase.x : selTx!,
+				layout.positionalEncodingPeriod ? phase.y : selTy! );
 			for ( let k = 0; k < pe.length; k ++ ) a0Vars[ channels * 4 + k ].assign( pe[ k ] );
 
 		}

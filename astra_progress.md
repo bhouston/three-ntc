@@ -64,6 +64,10 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 10. Positional encoding: complete. GPU tests verify an eight-texel period at
    multiple target mips, distinguish the previous four-texel repetition, and
    preserve legacy assets. All 40 decoder/training/PE GPU tests pass.
+   The eight-texel option regressed aggregate MSE by 7.16% in step10a, so step10b
+   restores grid-cell PE as the default. `positionalEncodingPeriod: 8` remains
+   explicit and is selected by the paper profile. This is a measured reason
+   to retain the default deviation, rather than assuming paper fidelity wins.
 11. Lanczos source mip option and quantitative filter tests: in progress.
 12. Longer convergence measurements and final verification: pending.
 
@@ -82,6 +86,8 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 | step8: consistent presets and opt-in paper profile | 0.00621377 | 22.0665 | 0.00% |
 | step9: bounded noise QAT and in-budget frozen adaptation | 0.00613309 | 22.1232 | -1.30% |
 | step10a: eight-texel positional encoding | 0.00657211 | 21.8230 | 7.16% |
+
+| step10b: retain measured default; expose paper PE option | 0.00613309 | 22.1232 | -6.68% |
 
 ## Per-change details
 
@@ -201,3 +207,16 @@ Compared with step9. Six quality cases passed (finite error only; no PSNR thresh
 | checker | true | 0.00236230 | 26.267 | 7.59% |
 | waves | false | 0.02387866 | 16.220 | 0.00% |
 | waves | true | 0.00369953 | 24.319 | 191.76% |
+
+### step10b: retain measured default; expose paper PE option
+
+Compared with step10a. Six quality cases passed (finite error only; no PSNR threshold).
+
+| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
+|---|---|---:|---:|---:|
+| smooth | false | 0.00237807 | 26.238 | 0.00% |
+| smooth | true | 0.00154572 | 28.109 | -2.27% |
+| checker | false | 0.00553242 | 22.571 | 0.00% |
+| checker | true | 0.00219570 | 26.584 | -7.05% |
+| waves | false | 0.02387866 | 16.220 | 0.00% |
+| waves | true | 0.00126799 | 28.969 | -65.73% |
