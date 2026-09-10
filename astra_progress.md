@@ -473,3 +473,37 @@ new runner. Its session still timed out before tests executed; this is recorded 
 a failed launch with no timings. No new Safari settings were changed. Summary
 measurements are in [browser-profile-baseline.json](docs/metrics/browser-profile-baseline.json).
 TypeScript and all 34 unit tests passed, including percentile/tail-stall validation.
+
+## Correct the trainer's model-size estimate (2026-09-10)
+
+The size card ignored the quantization setting and always estimated uint8 storage.
+Positional encoding and dual grid were already included in its dependencies, but
+rounded byte totals did not clearly expose small decoder changes. Replaced the
+single summary line with encoded-payload and runtime estimates showing exact bytes,
+plus decoder input/parameter counts and work per decoder evaluation. The estimate
+reflects the current form settings, not the previously trained preview model.
+
+The packed payload now follows 8/4/2-bit export. The existing export behavior for
+training quantization `none` is still uint8; the card states this explicitly. Runtime
+storage does not shrink with export quantization because grids are expanded to FP16.
+Labels distinguish payload estimates from JSON/base64 file size and exclude GPU
+padding and training buffers.
+
+Tests build and export real CPU models for all 16 combinations of positional
+encoding, dual grid, and quantization mode. Estimated packed bytes match the decoded
+base64 payload lengths exactly (zero byte error in every case). For the small
+16px/two-level, 16-wide/one-hidden-layer, three-output fixture:
+
+| Setting (PE and dual on unless stated) | Payload bytes |
+| --- | --- |
+| 8-bit / training quantization off | 2,550 |
+| 4-bit | 1,870 |
+| 2-bit | 1,530 |
+| 8-bit, PE off | 1,782 |
+| 8-bit, dual grid off | 2,150 |
+
+Previously the 4-bit and 2-bit estimates overstated this fixture by 680 and 1,020
+bytes. Browser tests drive the same TanStack form subscription as the trainer and
+verify the visible card updates and restores its values. WebKit and Chromium tests,
+all 51 unit tests, TypeScript, and the website production build passed. This change
+only affects estimates and display; training and material reconstruction are unchanged.

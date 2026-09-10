@@ -1,27 +1,8 @@
 /**
- * Shared math/formatting for reporting a trained model's footprint: the
- * multiresolution latent grid, and one or more MLP heads decoding it (a
- * single decoder for neural-texture/neural-material, or a main decoder plus
- * extra IBL/indirect heads for neural-appearance). Every example built its
- * own copy of the MLP weight-count formula and byte formatter; this module
- * is the one place that math lives now.
- *
- * Every model has two distinct footprints, both worth reporting:
- *
- *  - "Memory" - what's actually resident in JS/GPU memory while rendering:
- *    latent grids as half-float (RGBA16F) textures (see
- *    NeuralHalfFloatTexture.js) and MLP weights as plain fp32 arrays/
- *    uniforms.
- *  - "Storage" - the on-disk/exported .neuralTexture/.neuralMaterial/
- *    .neuralAppearance manifest size after quantization-aware training:
- *    latent grids packed to uint8 and MLP weights float16-packed (see
- *    NeuralBinaryCodec.js's encodeUint8Base64/encodeMLPLayersBase64, and
- *    NeuralQuantization.js for the QAT scheme that makes the uint8 rounding
- *    "free" at inference time).
- *
- * Alongside those two byte counts, every example also reports the FLOPs
- * (floating-point operations) needed to evaluate the network for a single
- * texel/pixel - a cost the byte counts don't capture at all.
+ * Logical model payload estimates. Runtime uses FP16 grid values and FP32
+ * decoder parameters; excludes GPU alignment/padding, CPU copies, and training
+ * buffers. Storage counts packed latent values plus FP16 decoder parameters,
+ * before base64 expansion and JSON metadata (not the exported file size).
  */
 
 const GRID_MEMORY_BYTES_PER_CHANNEL = 2; // fp16 runtime latent texture (NeuralHalfFloatTexture.js)
@@ -144,12 +125,13 @@ function computeMLPLayoutStats( layout: MLPLayoutEntry[] ): { paramCount: number
 // Rolls up a model's total grid-latent scalar count (texels * channels,
 // summed across every level) and total MLP parameter count/FLOPs (summed
 // across every head) into the two byte footprints described above, plus the
-// FLOPs passed through unchanged.
-function computeModelFootprint( { gridParams, mlpParams, flops }: { gridParams: number; mlpParams: number; flops: number } ): { memoryBytes: number; storageBytes: number; flops: number } {
+// FLOPs passed through unchanged. Packed counts assume one stream or byte-aligned
+// grid boundaries (as with the website's four-channel grids).
+function computeModelFootprint( { gridParams, mlpParams, flops, gridStorageBits = 8 }: { gridParams: number; mlpParams: number; flops: number; gridStorageBits?: 2 | 4 | 8 } ): { memoryBytes: number; storageBytes: number; flops: number } {
 
 	return {
 		memoryBytes: gridParams * GRID_MEMORY_BYTES_PER_CHANNEL + mlpParams * MLP_MEMORY_BYTES_PER_PARAM,
-		storageBytes: gridParams * GRID_STORAGE_BYTES_PER_CHANNEL + mlpParams * MLP_STORAGE_BYTES_PER_PARAM,
+		storageBytes: Math.ceil( gridParams * gridStorageBits / 8 ) + mlpParams * MLP_STORAGE_BYTES_PER_PARAM,
 		flops
 	};
 

@@ -9,13 +9,6 @@ import { Chart } from '@tanstack/charts/react';
 import {
   bakeMaterialToTextures,
   classifyMaterialChannels,
-  computeDecoderInputSize,
-  computeGridLatentTexels,
-  computeGridLevels,
-  computeMLPFlops,
-  computeMLPParamCount,
-  computeModelFootprint,
-  formatModelSizeSummary,
   getMaterialXSampleUrl,
   GRID_BASE_RESOLUTION_OPTIONS,
   GRID_LEVELS_OPTIONS,
@@ -32,6 +25,7 @@ import {
 } from 'three-ntc-trainer';
 import { buildChannelActivations, MAX_TOTAL_CHANNELS, NTCNodeMaterial } from 'three-ntc';
 
+import { ModelSizeSummary } from '@/components/ModelSizeSummary';
 import { NTCViewer, type NTCViewerShape } from '@/components/NTCViewer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -452,20 +446,6 @@ function TrainerPage() {
     setStatus(`Saved ${safeName}.ntc.`);
   }, [sourceName]);
 
-  const modelSizeSummary = useMemo(() => {
-    const outputChannels = channelClassification ? channelClassification.totalChannels : MAX_TOTAL_CHANNELS;
-    const channels = 4;
-    const resolutions = computeGridLevels(Number(values.baseResolution), Number(values.levels));
-    const latentTexels = computeGridLatentTexels(resolutions);
-    const lowTexels = values.dualGrid ? resolutions.reduce((sum,r)=>sum+Math.max(1,Math.floor(r/2))**2,0) : 0;
-    const gridParams = (latentTexels + lowTexels) * channels;
-    const inputSize = computeDecoderInputSize(channels, values.positionalEncoding, values.dualGrid);
-    const mlpSpec = { inputSize, hiddenSize: Number(values.hiddenSize), hiddenLayers: Number(values.hiddenLayers), outputSize: outputChannels };
-    const mlpParams = computeMLPParamCount(mlpSpec);
-    const flops = computeMLPFlops(mlpSpec);
-    return formatModelSizeSummary(computeModelFootprint({ gridParams, mlpParams, flops }));
-  }, [channelClassification, values.baseResolution, values.levels, values.hiddenSize, values.hiddenLayers, values.positionalEncoding, values.dualGrid]);
-
   const applyPreset = useCallback((name: string) => {
     form.setFieldValue('preset', name);
     const profile = getNTCProfileControls(name);
@@ -759,7 +739,7 @@ function TrainerPage() {
               <CardTitle className="text-sm">Model size</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-muted-foreground">{modelSizeSummary}</p>
+              <ModelSizeSummary settings={values} outputChannels={channelClassification?.totalChannels ?? MAX_TOTAL_CHANNELS} />
             </CardContent>
           </Card>
 
