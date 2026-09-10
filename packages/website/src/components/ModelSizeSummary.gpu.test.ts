@@ -3,6 +3,7 @@ import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useForm, useStore } from '@tanstack/react-form';
 import { expect, it } from 'vitest';
+import { SamplingModeSelect } from './SamplingModeSelect.js';
 import { ModelSizeSummary } from './ModelSizeSummary.js';
 import type { ModelSizeSettings } from '../lib/model-size.js';
 
@@ -10,7 +11,7 @@ it('updates the visible card as the trainer form changes and restores values whe
   function Harness() {
     const form = useForm({defaultValues: {
       baseResolution: 16, levels: 2, hiddenSize: 16, hiddenLayers: 1,
-      positionalEncoding: true, dualGrid: true, quantization: 'uint8',
+      positionalEncoding: true, dualGrid: true, quantization: 'uint8', samplingMode: 'nearest',
     } as ModelSizeSettings});
     const settings = useStore(form.store, state => state.values);
     return createElement('div', null,
@@ -20,6 +21,7 @@ it('updates the visible card as the trainer form changes and restores values whe
       ...(['uint8', 'uint4', 'uint2', 'none'] as const).map(mode => createElement('button', {
         key: mode, onClick: () => form.setFieldValue('quantization', mode),
       }, mode)),
+      createElement(SamplingModeSelect, {value: settings.samplingMode, onChange: mode => form.setFieldValue('samplingMode', mode)}),
       createElement(ModelSizeSummary, { settings, outputChannels: 3 }),
     );
   }
@@ -31,6 +33,15 @@ it('updates the visible card as the trainer form changes and restores values whe
   try {
     root.render(createElement(Harness));
     await expect.poll(payload).toContain('2,550 bytes');
+    const work = () => [...fixture.querySelectorAll('dt')].find(term => term.textContent === 'MLP work per sample')?.nextElementSibling?.textContent;
+    await expect.poll(work).toBe('1.2K FLOP · 1 evaluation');
+    const select = fixture.querySelector('select')!;
+    for (const [mode, expected] of [['trilinear', '9.4K FLOP · 8 evaluations'], ['stochastic', '1.2K FLOP · 1 evaluation'], ['nearest', '1.2K FLOP · 1 evaluation']]) {
+      select.value = mode;
+      select.dispatchEvent(new Event('change', {bubbles: true}));
+      await expect.poll(work).toBe(expected);
+      expect(payload()).toContain('2,550 bytes');
+    }
     click('positionalEncoding');
     await expect.poll(payload).toContain('1,782 bytes');
     click('positionalEncoding');

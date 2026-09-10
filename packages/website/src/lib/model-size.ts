@@ -1,9 +1,11 @@
+import type { NTCSamplingMode } from 'three-ntc';
 import {
   computeDecoderInputSize, computeGridLevels, computeMLPFlops,
   computeMLPParamCount, computeModelFootprint,
 } from 'three-ntc-trainer';
 
 export interface ModelSizeSettings {
+  samplingMode: NTCSamplingMode;
   baseResolution: number;
   levels: number;
   hiddenSize: number;
@@ -21,10 +23,12 @@ export function estimateModelSize(settings: ModelSizeSettings, outputChannels: n
   const inputSize = computeDecoderInputSize(4, settings.positionalEncoding, settings.dualGrid);
   const shape = { inputSize, hiddenSize: settings.hiddenSize, hiddenLayers: settings.hiddenLayers, outputSize: outputChannels };
   const mlpParams = computeMLPParamCount(shape);
+  const flopsPerDecode = computeMLPFlops(shape);
+  const decoderEvaluations = settings.samplingMode === 'trilinear' ? 8 : 1;
   // NTCManifest exports uint8 even when QAT is off. Do not imply lossless storage.
   const gridStorageBits = settings.quantization === 'uint2' ? 2 : settings.quantization === 'uint4' ? 4 : 8;
   return {
-    ...computeModelFootprint({ gridParams, mlpParams, flops: computeMLPFlops(shape), gridStorageBits }),
-    gridParams, mlpParams, inputSize, gridStorageBits,
+    ...computeModelFootprint({ gridParams, mlpParams, flops: flopsPerDecode * decoderEvaluations, gridStorageBits }),
+    gridParams, mlpParams, inputSize, gridStorageBits, flopsPerDecode, decoderEvaluations,
   };
 }

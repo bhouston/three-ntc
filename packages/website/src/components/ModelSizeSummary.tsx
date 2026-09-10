@@ -9,8 +9,9 @@ export function ModelSizeSummary({ settings, outputChannels }: { settings: Model
       <dt>Encoded payload</dt><dd>{bytes(size.storageBytes)}</dd>
       <dt>Runtime estimate</dt><dd>{bytes(size.memoryBytes)}</dd>
       <dt>Decoder</dt><dd>{size.inputSize} inputs · {size.mlpParams.toLocaleString('en-US')} parameters</dd>
-      <dt>Work per decode</dt><dd>{formatFlops(size.flops)}</dd>
+      <dt>MLP work per sample</dt><dd>{formatFlops(size.flops)} · {size.decoderEvaluations} {size.decoderEvaluations === 1 ? 'evaluation' : 'evaluations'}</dd>
     </dl>
+    <p>FLOPs count dense-layer arithmetic, excluding feature sampling, activations, and shading.</p>
     <p>Estimate for the current settings. Excludes JSON/base64 overhead, GPU padding, and training buffers.</p>
     {settings.quantization === 'none' && <p>Training quantization is off; export still stores 8-bit grids.</p>}
   </div>;

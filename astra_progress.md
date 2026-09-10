@@ -598,3 +598,20 @@ delays include queueing and all rendering work; the timing differences are not a
 controlled estimate of branch cost. Generated shader inspection directly establishes
 that the unused sampling work is absent. Summaries are in
 [sampling-modes-specialized.json](docs/metrics/sampling-modes-specialized.json).
+
+## Sampling-aware FLOP estimate (2026-09-10)
+
+The Model size card previously reported work for one decode regardless of sampling
+mode. It now reports **MLP work per sample**, multiplying the logical dense-layer
+FLOPs by one for nearest/stochastic or eight for trilinear. The card also displays
+the evaluation count and clarifies that feature sampling, activations, and shading
+are excluded. Model parameter counts and storage/runtime payload estimates do not
+change when sampling mode changes.
+
+For the existing 33-input → 16-hidden → 3-output fixture, nearest and stochastic
+report 1,171 FLOPs per sample; trilinear reports 9,368. The previous one-decode value
+understated trilinear work by 8,197 FLOPs. Unit tests verify all three modes against
+manual layer arithmetic, and Chromium/WebKit browser tests drive the sampling
+selector and verify the displayed value changes and restores correctly. All 54 unit
+tests, TypeScript, and the website production build passed. Training and rendering
+math are unchanged.

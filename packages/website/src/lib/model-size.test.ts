@@ -4,7 +4,7 @@ import { estimateModelSize, type ModelSizeSettings } from './model-size.js';
 
 const defaults: ModelSizeSettings = {
   baseResolution: 16, levels: 2, hiddenSize: 16, hiddenLayers: 1,
-  positionalEncoding: true, dualGrid: true, quantization: 'uint8',
+  positionalEncoding: true, dualGrid: true, quantization: 'uint8', samplingMode: 'nearest',
 };
 
 for (const positionalEncoding of [false, true]) {
@@ -38,4 +38,18 @@ it('quantization changes packed storage, not the decoded runtime representation'
   expect(sizes.map(size => size.storageBytes)).toEqual([2550, 1870, 1530]);
   expect(new Set(sizes.map(size => size.memoryBytes)).size).toBe(1);
   expect(estimateModelSize({...defaults, quantization: 'none'}, 3)).toEqual(sizes[0]);
+});
+
+
+it.each(['nearest', 'stochastic', 'trilinear'] as const)('counts all MLP evaluations for %s without changing model size', samplingMode => {
+  const size = estimateModelSize({...defaults, samplingMode}, 3);
+  // Fixture: 33 inputs -> 16 hidden -> 3 outputs. Two FLOPs per weight plus each bias.
+  const singleDecode = 2 * (33 * 16 + 16 * 3) + 16 + 3;
+  expect(size.flopsPerDecode).toBe(1171);
+  expect(size.decoderEvaluations).toBe(samplingMode === 'trilinear' ? 8 : 1);
+  expect(size.flops).toBe(singleDecode * (samplingMode === 'trilinear' ? 8 : 1));
+  const nearest = estimateModelSize(defaults, 3);
+  expect(size.storageBytes).toBe(nearest.storageBytes);
+  expect(size.memoryBytes).toBe(nearest.memoryBytes);
+  expect(size.mlpParams).toBe(nearest.mlpParams);
 });
