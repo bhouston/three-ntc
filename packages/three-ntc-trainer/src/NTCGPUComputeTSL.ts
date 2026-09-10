@@ -70,7 +70,7 @@ import type { NTCGPUModel } from './NTCGPUModel.js';
  * softplus) instead of forcing every channel through the same unbounded
  * linear output.
  */
-function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextures: TSLNode[], samples: { uv?: TSLNode; lod?: TSLNode } = {} ): TSLNode {
+function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextures: TSLNode[], samples: { uv?: TSLNode; lod?: TSLNode; trainLatents?: boolean } = {} ): TSLNode {
 
 	const {
 		layout,
@@ -399,6 +399,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 		}
 
+		if ( samples.trainLatents !== false ) {
 		// 5. Scatter gradA0 back into the latent grids using the same taps
 		// computed in the forward pass, gated by the same one-hot selection
 		// `weight` (see step 1's comment - only `selectedLevel`'s latents
@@ -468,6 +469,8 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 		}
 
+		}
+
 	} )().compute( batchSize ).setName( 'NTCTrainBatch' );
 
 }
@@ -479,13 +482,13 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
  * before squaring - see createTextureTrainBatchComputeNode for why gradients
  * are deposited at raw, un-averaged magnitude.
  */
-function createAccumulateGradientNormComputeNode( gpuModel: NTCGPUModel ): TSLNode {
+function createAccumulateGradientNormComputeNode( gpuModel: NTCGPUModel, includeLatents = true ): TSLNode {
 
 	const { layout, gradNormAtomic, invBatchUniform } = gpuModel;
 	const { gradAtomic: gradWeightsAtomic } = gpuModel.weightsBuffers;
 	const { gradAtomic: gradLatentsAtomic } = gpuModel.latentsBuffers;
 	const { totalWeights, totalLatents } = layout;
-	const dispatchCount = totalWeights + totalLatents;
+	const dispatchCount = totalWeights + ( includeLatents ? totalLatents : 0 );
 
 	return Fn( () => {
 

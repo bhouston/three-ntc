@@ -249,6 +249,8 @@ class NTCTrainer {
 		try {
 
 			const trainBatchNode = createTextureTrainBatchComputeNode( gpuModel, textures );
+			const frozenBatchNode = createTextureTrainBatchComputeNode( gpuModel, textures, { trainLatents: false } );
+			const frozenNormNode = createAccumulateGradientNormComputeNode( gpuModel, false );
 			const resetGradientNormNode = createResetGradientNormComputeNode( gpuModel );
 			const accumulateGradientNormNode = createAccumulateGradientNormComputeNode( gpuModel );
 			const adamWeightsNode = createTextureAdamWeightsComputeNode( gpuModel );
@@ -285,9 +287,9 @@ class NTCTrainer {
 				gpuModel.stepUniform.value = iteration + 1;
 				gpuModel.maxGradientNormUniform.value = settings.maxGradientNorm;
 
-				renderer.compute( trainBatchNode );
+				renderer.compute( latentsFrozen ? frozenBatchNode : trainBatchNode );
 				renderer.compute( resetGradientNormNode );
-				renderer.compute( accumulateGradientNormNode );
+				renderer.compute( latentsFrozen ? frozenNormNode : accumulateGradientNormNode );
 				renderer.compute( adamWeightsNode );
 				if ( ! latentsFrozen ) renderer.compute( adamLatentsNode );
 

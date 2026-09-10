@@ -33,7 +33,10 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
    Fixed-coordinate uint2 test verifies both bilinear inputs remain 0.4.
 3. Independent and complete UV/LOD sampling: complete. Distribution test passed;
    CPU/GPU stream parity and training suite: 9 GPU tests passed.
-4. Frozen-gradient handling: pending.
+4. Frozen-gradient handling: complete. Frozen-gradient regression and 8 training
+   GPU tests pass. The benchmark is unchanged: clipping did not engage on these
+   short adaptation runs, so this fix prevents a failure rather than lowering
+   their measured error.
 5. G0/G1 pairs and feature capacity: pending.
 6. Resolution-aware mip bands: pending.
 7. Discrete targets and decoded-value filtering: pending.
@@ -50,6 +53,8 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 | step2: quantize taps before interpolation | 0.01153805 | 19.3787 | -1.95% |
 
 | step3: independent full-domain sampling | 0.01007776 | 19.9664 | -12.66% |
+
+| step4: exclude frozen latent gradients | 0.01007776 | 19.9664 | 0.00% |
 
 ## Per-change details
 
@@ -78,3 +83,16 @@ Compared with step2. Six quality cases passed (finite error only; no PSNR thresh
 | checker | true | 0.00949695 | 20.224 | -15.16% |
 | waves | false | 0.02396619 | 16.204 | -2.18% |
 | waves | true | 0.00349023 | 24.571 | -46.40% |
+
+### step4: exclude frozen latent gradients
+
+Compared with step3. Six quality cases passed (finite error only; no PSNR threshold).
+
+| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
+|---|---|---:|---:|---:|
+| smooth | false | 0.00360238 | 24.434 | 0.00% |
+| smooth | true | 0.00351545 | 24.540 | 0.00% |
+| checker | false | 0.01639537 | 17.853 | 0.00% |
+| checker | true | 0.00949695 | 20.224 | 0.00% |
+| waves | false | 0.02396619 | 16.204 | 0.00% |
+| waves | true | 0.00349023 | 24.571 | 0.00% |
