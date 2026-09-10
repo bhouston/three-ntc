@@ -1,9 +1,16 @@
 # Why the neural viewers were slow
 
+Runtime sampling is now configurable: **nearest (default)** and **stochastic**
+evaluate the decoder once; optional **trilinear** evaluates it eight times. The
+paper describes all three, and uses stochastic filtering with temporal reconstruction
+for its main rendering results. We have not added temporal reconstruction here.
+The eight-decode implementation below was an expensive choice, not a requirement
+for every NTC sample. See [runtime sampling](../packages/three-ntc/README.md#runtime-sampling).
+
 Two separate problems appeared during this investigation:
 
-1. **Shader expansion and repeated compilation.** The corrected texture filtering
-   evaluates the neural decoder eight times. Expanding those calls and the MLP
+1. **Shader expansion and repeated compilation.** The earlier runtime
+   used explicit trilinear filtering, evaluating the neural decoder eight times. Expanding those calls and the MLP
    arithmetic into a large shader caused excessive private storage and expensive
    compilation. Runtime loops for filtering and larger matrix layers reduced the
    shader size. Reusing the preview material during training also avoids compiling

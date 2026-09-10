@@ -58,3 +58,6 @@ export {
 export type { MLPLayer, MLPLayoutEntry, MLPBlock, LatentDtype } from './NTCBinaryCodec.js';
 
 export type { NTCCpuModel } from './NTCDecoderTSL.js';
+
+export { NTC_SAMPLING_MODES } from './NTCDecoderTSL.js';
+export type { NTCSamplingMode } from './NTCDecoderTSL.js';

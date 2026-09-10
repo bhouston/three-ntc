@@ -23,8 +23,9 @@ import {
   NTCExporter,
   NTCTrainer,
 } from 'three-ntc-trainer';
-import { buildChannelActivations, MAX_TOTAL_CHANNELS, NTCNodeMaterial } from 'three-ntc';
+import { buildChannelActivations, MAX_TOTAL_CHANNELS, NTCNodeMaterial, type NTCSamplingMode } from 'three-ntc';
 
+import { SamplingModeSelect } from '@/components/SamplingModeSelect';
 import { ModelSizeSummary } from '@/components/ModelSizeSummary';
 import { NTCViewer, type NTCViewerShape } from '@/components/NTCViewer';
 import { Button } from '@/components/ui/button';
@@ -81,7 +82,7 @@ type FormValues = {
   learningRate: number;
   quantization: 'none' | 'uint8' | 'uint4' | 'uint2';
   shape: NTCViewerShape;
-  interpolation: boolean;
+  samplingMode: NTCSamplingMode;
   lodBias: number;
 };
 
@@ -96,7 +97,7 @@ const DEFAULT_VALUES: FormValues = {
   learningRate: 0.01,
   quantization: 'uint8',
   shape: 'torus',
-  interpolation: true,
+  samplingMode: 'nearest',
   lodBias: DEFAULT_LOD_BIAS,
 };
 
@@ -253,7 +254,7 @@ function TrainerPage() {
       // this initial value only seeds it; further changes go through
       // material.setLodBias() (see the lodBias slider below) with no rebuild.
       lodBias,
-      interpolation: form.getFieldValue('interpolation'),
+      samplingMode: form.getFieldValue('samplingMode'),
     });
     previewMaterialRef.current = material;
     setPreviewMaterial(material);
@@ -683,22 +684,10 @@ function TrainerPage() {
         </Section>
 
         <Section title="View">
-              <form.Field name="interpolation">
-                {(field) => (
-                  <Field orientation="horizontal">
-                    <FieldLabel htmlFor={field.name}>Interpolation (feature grid)</FieldLabel>
-                    <Switch
-                      id={field.name}
-                      disabled={isTraining}
-                      checked={field.state.value}
-                      onCheckedChange={(checked) => {
-                        field.handleChange(checked);
-                        previewMaterialRef.current?.setInterpolation?.(checked);
-                      }}
-                    />
-                  </Field>
-                )}
-              </form.Field>
+              <SamplingModeSelect value={values.samplingMode} onChange={mode => {
+                form.setFieldValue('samplingMode', mode);
+                previewMaterialRef.current?.setSamplingMode(mode);
+              }} />
 
               <form.Field name="lodBias">
                 {(field) => (

@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useGoogleAnalytics } from 'tanstack-router-ga4';
 
+import type { NTCSamplingMode } from 'three-ntc';
+import { SamplingModeSelect } from '@/components/SamplingModeSelect';
 import { NTCViewer } from '@/components/NTCViewer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +38,7 @@ function ViewerPage() {
   const [loaded, setLoaded] = useState<LoadedMaterial | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [samplingMode, setSamplingMode] = useState<NTCSamplingMode>('nearest');
   const [lodBias, setLodBias] = useState(DEFAULT_LOD_BIAS);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,7 +46,6 @@ function ViewerPage() {
     setLoading(true);
     try {
       const result = await parseNtc(text);
-      result.material?.setLodBias?.(lodBias);
       setLoaded(result);
     } catch (err) {
       console.error(err);
@@ -51,7 +53,12 @@ function ViewerPage() {
     } finally {
       setLoading(false);
     }
-  }, [lodBias]);
+  }, []);
+
+  useEffect(() => {
+    loaded?.material?.setLodBias(lodBias);
+    loaded?.material?.setSamplingMode(samplingMode);
+  }, [loaded, lodBias, samplingMode]);
 
   const loadFromUrl = useCallback(
     async (url: string) => {
@@ -156,9 +163,10 @@ function ViewerPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>View</CardTitle>
+            <CardTitle>Runtime settings</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <SamplingModeSelect value={samplingMode} onChange={setSamplingMode} />
             <Field>
               <FieldLabel>LOD bias (force finer): {lodBias.toFixed(2)}</FieldLabel>
               <Slider
@@ -168,7 +176,6 @@ function ViewerPage() {
                 value={[lodBias]}
                 onValueChange={([v]) => {
                   setLodBias(v);
-                  loaded?.material?.setLodBias?.(v);
                 }}
               />
             </Field>

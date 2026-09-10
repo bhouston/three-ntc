@@ -40,3 +40,36 @@ const mesh = new THREE.Mesh(geometry, material);
 
 `NTCNodeMaterial` extends three.js's `MeshPhysicalNodeMaterial`, so it drops straight into an
 existing WebGPU renderer scene alongside ordinary materials.
+
+## Runtime sampling
+
+```ts
+const material = new NTCNodeMaterial(cpuModel, channelClassification, {
+  samplingMode: 'nearest', // default
+  lodBias: 0,
+});
+
+// Live uniform changes: no material or shader rebuild.
+material.setSamplingMode('stochastic'); // or 'nearest' / 'trilinear'
+material.samplingMode = 'nearest';     // equivalent property setter
+material.setLodBias(1);                // positive bias selects finer mips
+```
+
+| Mode | MLP evaluations per material sample | Behavior |
+| --- | --- | --- |
+| `nearest` | 1 | Reconstruct the nearest physical texel at the nearest mip. |
+| `stochastic` | 1 | Randomly select a texel and mip with trilinear sampling probabilities. Noise varies by screen pixel and frame. |
+| `trilinear` | 8 | Reconstruct and blend four texels at each of two mip levels. |
+
+Stochastic sampling follows the paper's UV/LOD jitter approach. It introduces noise;
+this library and the website currently apply no temporal reconstruction. Its expected
+material-channel values match trilinear filtering, but averaging shaded samples is
+not equivalent to shading averaged material channels. Add a temporal resolve in the
+renderer when using this mode for stable images.
+
+The old `interpolation` option and `setInterpolation()` have been replaced by
+`samplingMode` and `setSamplingMode()`. Sampling controls runtime reconstruction,
+not the training model or its learned G0/G1 feature interpolation. Settings are not
+stored in `.ntc` exports. `setLodBias()` affects automatic LOD only; an explicit
+constructor `lodNode` takes precedence. The website viewer and trainer preview both
+expose sampling and LOD bias controls and start with nearest sampling.

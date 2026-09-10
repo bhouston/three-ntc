@@ -1,6 +1,6 @@
 import { float, vec2, vec4 } from 'three/tsl';
 import { expect, it } from 'vitest';
-import { evaluateNeuralTextureFiltered } from './NTCDecoderTSL.js';
+import { evaluateNeuralTextureFiltered, evaluateNeuralTextureSampled } from './NTCDecoderTSL.js';
 import { buildLevelTextures } from './NTCHalfFloatTexture.js';
 import { getRenderer, makeModel, renderNodeToFloats } from '../../../test/gpu-helpers.js';
 
@@ -22,7 +22,7 @@ for (const mipBlend of [false, true]) {
     for (const v of result) expect(Math.abs(v-expected)).toBeLessThan(0.001);
     // Applying the activation after filtering would produce a different result.
     expect(Math.abs(expected-sigmoid(mipBlend ? 1 : -1))).toBeGreaterThan(0.03);
-    const nearest = evaluateNeuralTextureFiltered(vec2(0.5,0.25),model,textures,
+    const nearest = evaluateNeuralTextureSampled(vec2(0.5,0.25),model,textures,
       float(mipBlend ? 0.5 : 0),['sigmoid','sigmoid','sigmoid','sigmoid'],float(0));
     const raw = await renderNodeToFloats(renderer,vec4(...nearest),1);
     for(const v of raw) expect(Math.abs(v-sigmoid(mipBlend ? 4 : 0))).toBeLessThan(0.001);

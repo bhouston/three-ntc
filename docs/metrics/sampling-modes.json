@@ -1,0 +1,877 @@
+{
+  "note": "Sampling-mode comparison at DPR 2; 120-frame runs, first 20 frames excluded from steady summaries. MSAA disabled. GPU completion delays include queued work, not isolated execution. Native Safari was not measured.",
+  "runs": [
+    {
+      "browser": "webkit",
+      "testsPassed": 48,
+      "metrics": [
+        {
+          "kind": "stochastic-filter-oracle",
+          "mean": 0.51959228515625,
+          "expected": 0.519770570106793,
+          "absoluteError": 0.00017828495054295068
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "single",
+          "samplingMode": "nearest",
+          "cssSize": [
+            512,
+            384
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 474,
+          "adapter": "apple",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            1024,
+            768
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.83,
+              "p50Ms": 17,
+              "p95Ms": 18,
+              "p99Ms": 28,
+              "maxMs": 34
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 5.12,
+              "p50Ms": 5,
+              "p95Ms": 7,
+              "p99Ms": 27,
+              "maxMs": 33
+            },
+            "heartbeat": {
+              "count": 100,
+              "meanMs": 29.08,
+              "p50Ms": 20,
+              "p95Ms": 22,
+              "p99Ms": 424,
+              "maxMs": 504
+            }
+          },
+          "errors": []
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "single",
+          "samplingMode": "nearest",
+          "cssSize": [
+            1024,
+            768
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 459,
+          "adapter": "apple",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            2048,
+            1536
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.68,
+              "p50Ms": 17,
+              "p95Ms": 18,
+              "p99Ms": 18,
+              "maxMs": 19
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 10.6,
+              "p50Ms": 11,
+              "p95Ms": 13,
+              "p99Ms": 13,
+              "maxMs": 14
+            },
+            "heartbeat": {
+              "count": 101,
+              "meanMs": 28.871287128712872,
+              "p50Ms": 20,
+              "p95Ms": 22,
+              "p99Ms": 412,
+              "maxMs": 541
+            }
+          },
+          "errors": []
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "trainer",
+          "samplingMode": "nearest",
+          "cssSize": [
+            512,
+            384
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 106,
+          "adapter": "apple",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            1024,
+            768
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.65,
+              "p50Ms": 17,
+              "p95Ms": 18,
+              "p99Ms": 19,
+              "maxMs": 19
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 4.02,
+              "p50Ms": 4,
+              "p95Ms": 5,
+              "p99Ms": 11,
+              "maxMs": 19
+            },
+            "heartbeat": {
+              "count": 100,
+              "meanMs": 21.45,
+              "p50Ms": 20,
+              "p95Ms": 21,
+              "p99Ms": 86,
+              "maxMs": 106
+            }
+          },
+          "errors": []
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "trainer",
+          "samplingMode": "nearest",
+          "cssSize": [
+            1024,
+            768
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 114,
+          "adapter": "apple",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            2048,
+            1536
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.67,
+              "p50Ms": 17,
+              "p95Ms": 18,
+              "p99Ms": 18,
+              "maxMs": 29
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 8.08,
+              "p50Ms": 8,
+              "p95Ms": 10,
+              "p99Ms": 15,
+              "maxMs": 29
+            },
+            "heartbeat": {
+              "count": 100,
+              "meanMs": 21.64,
+              "p50Ms": 20,
+              "p95Ms": 22,
+              "p99Ms": 98,
+              "maxMs": 114
+            }
+          },
+          "errors": []
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "grid",
+          "samplingMode": "nearest",
+          "cssSize": [
+            512,
+            384
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 95,
+          "adapter": "apple",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            1024,
+            768
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.67,
+              "p50Ms": 17,
+              "p95Ms": 18,
+              "p99Ms": 18,
+              "maxMs": 18
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 4.11,
+              "p50Ms": 4,
+              "p95Ms": 5,
+              "p99Ms": 6,
+              "maxMs": 6
+            },
+            "heartbeat": {
+              "count": 100,
+              "meanMs": 21.13,
+              "p50Ms": 20,
+              "p95Ms": 21,
+              "p99Ms": 69,
+              "maxMs": 95
+            }
+          },
+          "errors": []
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "grid",
+          "samplingMode": "nearest",
+          "cssSize": [
+            1024,
+            768
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 96,
+          "adapter": "apple",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            2048,
+            1536
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.68,
+              "p50Ms": 17,
+              "p95Ms": 18,
+              "p99Ms": 18,
+              "maxMs": 33
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 6.32,
+              "p50Ms": 6,
+              "p95Ms": 7,
+              "p99Ms": 10,
+              "maxMs": 14
+            },
+            "heartbeat": {
+              "count": 100,
+              "meanMs": 21.28,
+              "p50Ms": 20,
+              "p95Ms": 21,
+              "p99Ms": 22,
+              "maxMs": 169
+            }
+          },
+          "errors": []
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "single",
+          "samplingMode": "stochastic",
+          "cssSize": [
+            1024,
+            768
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 91,
+          "adapter": "apple",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            2048,
+            1536
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.68,
+              "p50Ms": 17,
+              "p95Ms": 18,
+              "p99Ms": 18,
+              "maxMs": 22
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 11.1,
+              "p50Ms": 11,
+              "p95Ms": 13,
+              "p99Ms": 15,
+              "maxMs": 17
+            },
+            "heartbeat": {
+              "count": 100,
+              "meanMs": 21.25,
+              "p50Ms": 20,
+              "p95Ms": 22,
+              "p99Ms": 22,
+              "maxMs": 163
+            }
+          },
+          "errors": []
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "single",
+          "samplingMode": "trilinear",
+          "cssSize": [
+            1024,
+            768
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 99,
+          "adapter": "apple",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            2048,
+            1536
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.66,
+              "p50Ms": 17,
+              "p95Ms": 18,
+              "p99Ms": 18,
+              "maxMs": 20
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 13.63,
+              "p50Ms": 14,
+              "p95Ms": 17,
+              "p99Ms": 19,
+              "maxMs": 19
+            },
+            "heartbeat": {
+              "count": 101,
+              "meanMs": 21.257425742574256,
+              "p50Ms": 20,
+              "p95Ms": 21,
+              "p99Ms": 73,
+              "maxMs": 99
+            }
+          },
+          "errors": []
+        },
+        {
+          "times": {
+            "init": 1,
+            "compile": 472,
+            "renderRead": 118,
+            "oracleRenders": 512
+          },
+          "kind": "runtime-shader",
+          "hiddenSize": 32,
+          "privateBytesUpperBound": 4448,
+          "mse": 4.439103333357011e-11
+        },
+        {
+          "times": {
+            "init": 0,
+            "compile": 476,
+            "renderRead": 148,
+            "oracleRenders": 547
+          },
+          "kind": "runtime-shader",
+          "hiddenSize": 64,
+          "privateBytesUpperBound": 4960,
+          "mse": 2.2938438746060427e-10
+        },
+        {
+          "kind": "brick-viewer",
+          "adapter": {
+            "vendor": "apple",
+            "architecture": "apple",
+            "device": "apple",
+            "description": "apple"
+          },
+          "rawCpuMse": 7.680080261608108e-06,
+          "model": [
+            [
+              5,
+              8
+            ],
+            [
+              8,
+              8
+            ],
+            [
+              8,
+              10
+            ]
+          ],
+          "firstFrameMs": 73,
+          "steadyFrameMs": [
+            2,
+            2,
+            1,
+            2
+          ],
+          "errors": []
+        }
+      ]
+    },
+    {
+      "browser": "chromium",
+      "testsPassed": 48,
+      "metrics": [
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "single",
+          "samplingMode": "nearest",
+          "cssSize": [
+            512,
+            384
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 112.39999999850988,
+          "adapter": "",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            1024,
+            768
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.6689999999851,
+              "p50Ms": 16.69999999552965,
+              "p95Ms": 17.200000002980232,
+              "p99Ms": 17.600000001490116,
+              "maxMs": 17.600000001490116
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 5.052999999672174,
+              "p50Ms": 5,
+              "p95Ms": 5.600000001490116,
+              "p99Ms": 5.700000002980232,
+              "maxMs": 10
+            },
+            "heartbeat": {
+              "count": 148,
+              "meanMs": 16.649999999969793,
+              "p50Ms": 16,
+              "p95Ms": 17,
+              "p99Ms": 49.19999999552965,
+              "maxMs": 73.90000000596046
+            }
+          },
+          "errors": []
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "single",
+          "samplingMode": "nearest",
+          "cssSize": [
+            1024,
+            768
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 107.69999999552965,
+          "adapter": "",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            2048,
+            1536
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.6610000000149,
+              "p50Ms": 16.69999999552965,
+              "p95Ms": 17.299999997019768,
+              "p99Ms": 17.5,
+              "maxMs": 17.69999999552965
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 12.195999999716879,
+              "p50Ms": 12.300000004470348,
+              "p95Ms": 13,
+              "p99Ms": 13.300000004470348,
+              "maxMs": 13.399999998509884
+            },
+            "heartbeat": {
+              "count": 148,
+              "meanMs": 16.548648648618443,
+              "p50Ms": 16,
+              "p95Ms": 17,
+              "p99Ms": 34.29999999701977,
+              "maxMs": 89.20000000298023
+            }
+          },
+          "errors": []
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "trainer",
+          "samplingMode": "nearest",
+          "cssSize": [
+            512,
+            384
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 103.5,
+          "adapter": "",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            1024,
+            768
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.67,
+              "p50Ms": 16.69999999552965,
+              "p95Ms": 17.299999997019768,
+              "p99Ms": 17.5,
+              "maxMs": 17.700000002980232
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 4.467999999970198,
+              "p50Ms": 4.5,
+              "p95Ms": 4.800000004470348,
+              "p99Ms": 5,
+              "maxMs": 5.200000002980232
+            },
+            "heartbeat": {
+              "count": 125,
+              "meanMs": 16.912,
+              "p50Ms": 16.099999994039536,
+              "p95Ms": 16.899999998509884,
+              "p99Ms": 43.5,
+              "maxMs": 101.79999999701977
+            }
+          },
+          "errors": []
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "trainer",
+          "samplingMode": "nearest",
+          "cssSize": [
+            1024,
+            768
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 102,
+          "adapter": "",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            2048,
+            1536
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.665,
+              "p50Ms": 16.69999999552965,
+              "p95Ms": 17.30000000447035,
+              "p99Ms": 17.5,
+              "maxMs": 17.600000001490116
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 8.822000000327826,
+              "p50Ms": 8.899999998509884,
+              "p95Ms": 10.399999998509884,
+              "p99Ms": 10.5,
+              "maxMs": 10.600000001490116
+            },
+            "heartbeat": {
+              "count": 125,
+              "meanMs": 16.77280000001192,
+              "p50Ms": 16,
+              "p95Ms": 17.200000002980232,
+              "p99Ms": 43.600000001490116,
+              "maxMs": 82
+            }
+          },
+          "errors": []
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "grid",
+          "samplingMode": "nearest",
+          "cssSize": [
+            512,
+            384
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 114.19999999552965,
+          "adapter": "",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            1024,
+            768
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.6710000000149,
+              "p50Ms": 16.69999999552965,
+              "p95Ms": 17.5,
+              "p99Ms": 17.899999998509884,
+              "maxMs": 18.399999998509884
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 4.296000000089407,
+              "p50Ms": 4.399999998509884,
+              "p95Ms": 4.800000004470348,
+              "p99Ms": 5,
+              "maxMs": 7.899999998509884
+            },
+            "heartbeat": {
+              "count": 142,
+              "meanMs": 16.68661971830986,
+              "p50Ms": 16,
+              "p95Ms": 16.899999998509884,
+              "p99Ms": 18.600000001490116,
+              "maxMs": 124.09999999403954
+            }
+          },
+          "errors": []
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "grid",
+          "samplingMode": "nearest",
+          "cssSize": [
+            1024,
+            768
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 113.39999999850988,
+          "adapter": "",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            2048,
+            1536
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.6660000000149,
+              "p50Ms": 16.69999999552965,
+              "p95Ms": 17.399999998509884,
+              "p99Ms": 17.600000001490116,
+              "maxMs": 17.700000002980232
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 6.147999999448657,
+              "p50Ms": 6.200000002980232,
+              "p95Ms": 6.799999997019768,
+              "p99Ms": 7.200000002980232,
+              "maxMs": 7.299999997019768
+            },
+            "heartbeat": {
+              "count": 125,
+              "meanMs": 16.777599999964238,
+              "p50Ms": 16,
+              "p95Ms": 16.80000000447035,
+              "p99Ms": 22.299999997019768,
+              "maxMs": 119.20000000298023
+            }
+          },
+          "errors": []
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "single",
+          "samplingMode": "stochastic",
+          "cssSize": [
+            1024,
+            768
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 97.19999999552965,
+          "adapter": "",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            2048,
+            1536
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.6689999999851,
+              "p50Ms": 16.69999999552965,
+              "p95Ms": 17.5,
+              "p99Ms": 17.600000001490116,
+              "maxMs": 17.600000001490116
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 11.740999999120831,
+              "p50Ms": 12.299999997019768,
+              "p95Ms": 12.900000005960464,
+              "p99Ms": 13.199999995529652,
+              "maxMs": 13.199999995529652
+            },
+            "heartbeat": {
+              "count": 126,
+              "meanMs": 16.649999999988175,
+              "p50Ms": 15.900000005960464,
+              "p95Ms": 17.19999999552965,
+              "p99Ms": 32.29999999701977,
+              "maxMs": 75.39999999850988
+            }
+          },
+          "errors": []
+        },
+        {
+          "kind": "react-brick-viewer",
+          "viewer": "single",
+          "samplingMode": "trilinear",
+          "cssSize": [
+            1024,
+            768
+          ],
+          "warmupFrames": 20,
+          "firstFrameMs": 102.79999999701977,
+          "adapter": "",
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+          "samples": 0,
+          "pixelRatio": 2,
+          "canvas": [
+            2048,
+            1536
+          ],
+          "summary": {
+            "interval": {
+              "count": 100,
+              "meanMs": 16.6539999999851,
+              "p50Ms": 16.69999999552965,
+              "p95Ms": 17.399999998509884,
+              "p99Ms": 17.5,
+              "maxMs": 17.5
+            },
+            "completion": {
+              "count": 100,
+              "meanMs": 13.752000000327826,
+              "p50Ms": 13.600000001490116,
+              "p95Ms": 16.200000002980232,
+              "p99Ms": 16.600000001490116,
+              "maxMs": 17.700000002980232
+            },
+            "heartbeat": {
+              "count": 126,
+              "meanMs": 16.637301587277936,
+              "p50Ms": 16,
+              "p95Ms": 16.899999998509884,
+              "p99Ms": 32.100000001490116,
+              "maxMs": 78.39999999850988
+            }
+          },
+          "errors": []
+        },
+        {
+          "times": {
+            "init": 2.100000001490116,
+            "compile": 32.600000001490116,
+            "renderRead": 2.2999999970197678,
+            "oracleRenders": 39.099999994039536
+          },
+          "kind": "runtime-shader",
+          "hiddenSize": 32,
+          "privateBytesUpperBound": 4448,
+          "mse": 4.439103333357011e-11
+        },
+        {
+          "times": {
+            "init": 0,
+            "compile": 23.399999998509884,
+            "renderRead": 1.7999999970197678,
+            "oracleRenders": 39.20000000298023
+          },
+          "kind": "runtime-shader",
+          "hiddenSize": 64,
+          "privateBytesUpperBound": 4960,
+          "mse": 2.2938438746060427e-10
+        },
+        {
+          "kind": "brick-viewer",
+          "adapter": {
+            "vendor": "apple",
+            "architecture": "metal-3",
+            "device": "",
+            "description": ""
+          },
+          "rawCpuMse": 7.680080261625955e-06,
+          "model": [
+            [
+              5,
+              8
+            ],
+            [
+              8,
+              8
+            ],
+            [
+              8,
+              10
+            ]
+          ],
+          "firstFrameMs": 58.899999998509884,
+          "steadyFrameMs": [
+            2,
+            1.5,
+            1.3000000044703484,
+            1.0999999940395355
+          ],
+          "errors": []
+        },
+        {
+          "kind": "stochastic-filter-oracle",
+          "mean": 0.51959228515625,
+          "expected": 0.519770570106793,
+          "absoluteError": 0.00017828495054295068
+        }
+      ]
+    }
+  ]
+}

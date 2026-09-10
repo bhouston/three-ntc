@@ -29,6 +29,8 @@ executed. The runner reports this as a failure, not a skipped or passing profile
   brick gallery, each at 512×384 and 1024×768 CSS pixels. Each loads the actual HDR
   environment and completes 120 animation frames. The first 20 frames are excluded
   from steady-state timing summaries. At DPR 2 the larger canvas is 2048×1536.
+  These six cases default to nearest sampling. Two additional 1024px standalone
+  cases exercise stochastic and trilinear, with the mode recorded in each metric.
 - **Training with an animated preview:** five default-size training steps, two
   model updates, and a concurrently rendering physical preview on a separate GPU
   device. Records loss, update costs, animation intervals, browser heartbeat stalls,

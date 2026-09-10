@@ -507,3 +507,53 @@ bytes. Browser tests drive the same TanStack form subscription as the trainer an
 verify the visible card updates and restores its values. WebKit and Chromium tests,
 all 51 unit tests, TypeScript, and the website production build passed. This change
 only affects estimates and display; training and material reconstruction are unchanged.
+
+## Configurable runtime sampling, nearest by default (2026-09-10)
+
+Added `samplingMode: 'nearest' | 'stochastic' | 'trilinear'` to `NTCNodeMaterial`,
+plus `setSamplingMode()` and a live property setter. Nearest is the default throughout
+the website. Nearest and stochastic use one decoder iteration; trilinear uses eight.
+A uniform selects the loop bound and sampling behavior, so switches apply without
+rebuilding the material or compiling another shader. This replaces the old boolean
+`interpolation` API, whose disabled path still decoded eight taps and zeroed seven.
+
+Stochastic mode jitters physical UV and LOD with independent per-pixel/per-frame hash
+samples. All channels share the same selected texel. No temporal reconstruction is
+implemented. Nearest snaps to one physical texel and mip; trilinear blends decoded,
+activated channels. The viewer's Runtime settings panel and trainer preview expose
+the sampling selector and LOD bias. Viewer settings are reapplied when a model loads.
+
+Corrected the reports: eight-decode trilinear is an expensive optional method described
+by the paper, not its main rendering path or a universal NTC correctness requirement.
+The paper's primary rendering results use stochastic filtering with temporal resolve.
+
+Validation: 48 runtime/viewer GPU tests passed per engine in Chromium/Metal and
+Playwright WebKit. Pixel readbacks prove switching nearest → trilinear → stochastic
+→ nearest changes output and restores the original nearest image with unchanged
+shader-module count and material version. Generated WGSL tests check the 1/8 loop
+bound. Nearest matches an independent CPU oracle at wrapped UVs and clamped mips.
+A stratified stochastic mean differs from the independently filtered reference by
+0.000178285 (FP16 readback), while individual samples match decoded texels. Existing
+trilinear CPU-reference MSE remains 4.4391e-11 / 2.2938e-10 for 32/64-wide models.
+
+At 1024×768 CSS and DPR 2, 100 steady frames after 20 warmup frames:
+
+| Engine / mode | Median frame interval | Median GPU completion delay | p95 completion delay |
+| --- | --- | --- | --- |
+| WebKit / nearest | 17 ms | 11 ms | 13 ms |
+| WebKit / stochastic | 17 ms | 11 ms | 13 ms |
+| WebKit / trilinear | 17 ms | 14 ms | 17 ms |
+| Chromium / nearest | 16.7 ms | 12.3 ms | 13 ms |
+| Chromium / stochastic | 16.7 ms | 12.3 ms | 12.9 ms |
+| Chromium / trilinear | 16.7 ms | 13.6 ms | 16.2 ms |
+
+These completion delays include the renderer's other work and GPU queueing; the
+1-versus-8 decoder count does not imply an eightfold whole-frame speedup. Summary
+observations: [sampling-modes.json](docs/metrics/sampling-modes.json). These are
+WebKit results, not a new native Safari automation result. All 51 unit tests,
+TypeScript, and the website build passed.
+
+The five-step WebKit training/animated-preview regression also passed: loss
+0.299537 → 0.230104, two shader modules, no GPU errors, and 2 ms isolated preview
+frames. The final stochastic hash clamps FP32 rounding below 1 to keep jitter in its
+intended range; sampling and shader-budget checks were repeated after this guard.

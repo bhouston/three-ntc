@@ -10,7 +10,18 @@ The user has now identified the remaining approximately 6 fps behavior as
 below are Chromium results unless explicitly labeled otherwise; they do not
 establish that Safari is fixed.
 
-## Current mitigation: disable viewer MSAA
+## Current runtime sampling
+
+Nearest is now the default and executes one MLP evaluation. Stochastic also executes
+one evaluation, selecting a physical texel/mip using per-pixel, per-frame noise.
+Trilinear remains an explicit eight-evaluation option. All modes share one shader
+with a live uniform and a loop bounded to either one or eight iterations; turning
+filtering off no longer computes seven unused taps. No temporal reconstruction is
+implemented. The paper's §§5.3 and 6.4.4 identify eight-decode trilinear as expensive
+and use stochastic sampling for the main performance results. The historical MSAA
+measurements below were made with trilinear enabled, not the new nearest default.
+
+## MSAA mitigation
 
 The remaining sustained slowdown was reproduced in the **actual React viewer**
 on Playwright WebKit 26.6, using the shipped brick, its HDR environment, a
@@ -100,9 +111,10 @@ current slowdown has the same cause.
 ## Structural difference introduced here
 
 The original NTC runtime samples an interpolated feature texture and evaluates
-**one** MLP per pixel. Our paper-correct reconstruction decodes the four neighboring
-texels at each of two mip levels, applies output activations, and then blends:
-**eight** evaluations per pixel. Interpolating latent features before a nonlinear
+**one** MLP per pixel. The earlier explicit trilinear path introduced here decoded
+the four neighboring texels at each of two mip levels, applied output activations,
+and then blended: **eight** evaluations per pixel. This was an expensive filtering
+choice, not the paper's main stochastic rendering path. Interpolating latent features before a nonlinear
 MLP is not equivalent to interpolating its reconstructed outputs.
 
 The first implementation expanded those eight evaluations in JavaScript. Three

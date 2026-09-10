@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { DefaultLoadingManager, MeshStandardMaterial } from "three";
 import { WebGPURenderer } from "three/webgpu";
-import { NTCLoader, NTCNodeMaterial } from "three-ntc";
+import { NTCLoader, NTCNodeMaterial, type NTCSamplingMode } from "three-ntc";
 import { expect, it } from "vitest";
 import { commands } from "vitest/browser";
 import { summarizeTimings } from "../../../../test/performance-metrics.js";
@@ -15,11 +15,15 @@ import hdrUrl from "../../public/textures/equirectangular/san_giuseppe_bridge_2k
 const frameCount = 120;
 const warmupFrames = 20;
 const cases = (["single", "trainer", "grid"] as const).flatMap((viewer) =>
-  [512, 1024].map((width) => ({ viewer, width })),
+  [512, 1024].map((width) => ({ viewer, width, samplingMode: "nearest" as NTCSamplingMode })),
+);
+cases.push(
+  {viewer: 'single', width: 1024, samplingMode: 'stochastic'},
+  {viewer: 'single', width: 1024, samplingMode: 'trilinear'},
 );
 it.each(cases)(
-  "profiles the $viewer brick viewer at $width CSS pixels after HDR loading",
-  async ({ viewer, width }) => {
+  "profiles the $viewer brick viewer ($samplingMode) at $width CSS pixels after HDR loading",
+  async ({ viewer, width, samplingMode }) => {
     const fixture = document.createElement("div");
     fixture.style.cssText = `width:${width}px;height:${width * 0.75}px;position:relative`;
     document.body.append(fixture);
@@ -30,7 +34,7 @@ it.each(cases)(
       },
     });
     const { cpuModel, channelClassification } = new NTCLoader().parse(brick);
-    const material = new NTCNodeMaterial(cpuModel, channelClassification);
+    const material = new NTCNodeMaterial(cpuModel, channelClassification, {samplingMode});
     const teacherMaterial = new MeshStandardMaterial({ color: 0x995533 });
     DefaultLoadingManager.setURLModifier((url) => (url.startsWith("/textures/") ? hdrUrl : url));
     const prototype = WebGPURenderer.prototype as any,
@@ -113,6 +117,7 @@ it.each(cases)(
       await (commands as any).recordMetric({
         kind: "react-brick-viewer",
         viewer,
+        samplingMode,
         cssSize: [width, width * 0.75],
         warmupFrames,
         firstFrameMs, // Includes HDR loading and initial pipeline work.

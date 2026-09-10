@@ -4,8 +4,8 @@ import * as THREE from 'three';
 // `MeshPhysicalNodeMaterial` only exists in the WebGPU/node-material build,
 // not the base 'three' entrypoint - see `three-shims.d.ts`.
 import { MeshPhysicalNodeMaterial } from 'three/webgpu';
-import { bitangentWorld, fract, log, max, min, step, tangentWorld, uniform, uv, vec2, vec3, vec4 } from 'three/tsl';
-import { buildLevelTextures, packDecoder, evaluateNeuralTextureFiltered, NTCCpuModel } from './NTCDecoderTSL.js';
+import { bitangentWorld, frameId, hash, screenCoordinate, uint, fract, log, max, min, step, tangentWorld, uniform, uv, vec2, vec3, vec4 } from 'three/tsl';
+import { buildLevelTextures, packDecoder, evaluateNeuralTextureSampled, NTC_SAMPLING_MODES, type NTCSamplingMode, NTCCpuModel } from './NTCDecoderTSL.js';
 import { applyChannelActivation } from './NTCOutputActivations.js';
 import { CHANNELS, FRAME_VIEWS, getChannel, buildDebugViewColorNode, buildFrameViewColorNode, NTCChannel, NTCLayoutChannel } from './NTCFormat.js';
 import { constantToNode, reconstructFinalNormal } from './NTCOutputTypes.js';
@@ -23,7 +23,8 @@ export interface NTCChannelClassification {
 export interface NTCNodeMaterialOptions {
 	channels?: NTCChannel[];
 	renderer?: any | null;
-	interpolation?: boolean;
+	/** Defaults to nearest; stochastic requires temporal reconstruction for a stable image. */
+	samplingMode?: NTCSamplingMode;
 	uvTransform?: any;
 	lodNode?: any;
 	lodBias?: number | any;
@@ -140,7 +141,7 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 	cpuModel: NTCCpuModel;
 	activeChannels: NTCLayoutChannel[];
 	channels: NTCChannel[];
-	interpolation: boolean;
+	private _samplingMode: NTCSamplingMode;
 	mipChainTexture: any;
 	levelTextures: any[] | null;
 	uvTransform: any;
@@ -150,7 +151,7 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 	private _constantValues: Record<string, any>;
 	private _shadedColorNode: any;
 	private _lodBiasUniform: any;
-	private _interpolationUniform: any;
+	private _samplingModeUniform: any;
 	private _decoderParameters: ReturnType<typeof packDecoder>;
 	private _modelShape: string;
 
@@ -217,8 +218,9 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 		this.activeChannels = activeChannels;
 		this.channels = channels;
 		// Filtering acts on decoded physical values; it is a display setting.
-		this.interpolation = options.interpolation !== false;
-		// Both decoder modes read native grid arrays.
+		this._samplingMode = options.samplingMode ?? 'nearest';
+		if (!NTC_SAMPLING_MODES.includes(this._samplingMode)) throw new Error(`Unknown NTC sampling mode: ${this._samplingMode}`);
+		// All sampling modes read native grid arrays.
 		this.mipChainTexture = null;
 		this.levelTextures = buildLevelTextures( cpuModel );
 
@@ -261,9 +263,14 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 
 		const lodNode = options.lodNode || computeAutoLodNode( coord, cpuModel.maxLod, this._lodBiasUniform, cpuModel.textureResolution );
 
-		this._interpolationUniform = uniform(this.interpolation ? 1 : 0);
+		this._samplingModeUniform = uniform(NTC_SAMPLING_MODES.indexOf(this._samplingMode), 'int');
 		const activations = Array.from({length:cpuModel.outputChannels}, (_,i) => activeChannels.find(c=>i>=c.offset && i<c.offset+c.size)?.activation);
-		const outputs = evaluateNeuralTextureFiltered(tiledUV,cpuModel,this.levelTextures!,lodNode,activations,this._interpolationUniform,this._decoderParameters);
+		// Integer hashing varies samples by screen pixel and rendered frame. A future
+		// temporal resolve can accumulate this noise; none is applied here.
+		const seed = uint(screenCoordinate.x).mul(1973).add(uint(screenCoordinate.y).mul(9277)).add(uint(frameId).mul(26699));
+		// FP32 conversion can round the hash's largest values to 1. Keep jitter below 1.
+		const random = vec3(hash(seed), hash(seed.add(104729)), hash(seed.add(224737))).min(1 - 2 ** -24);
+		const outputs = evaluateNeuralTextureSampled(tiledUV,cpuModel,this.levelTextures!,lodNode,activations,this._samplingModeUniform,random,this._decoderParameters);
 		const slices = sliceChannels( outputs, activeChannels, true );
 		this._slices = slices;
 		this._constantValues = constantValues;
@@ -401,11 +408,16 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 
 	}
 
-	/** Toggle decoded-value trilinear filtering versus nearest decoded texel. */
-	setInterpolation(enabled: boolean): void {
-		this.interpolation = Boolean(enabled);
-		this._interpolationUniform.value = this.interpolation ? 1 : 0;
+	get samplingMode(): NTCSamplingMode { return this._samplingMode; }
+
+	set samplingMode(mode: NTCSamplingMode) {
+		if (!NTC_SAMPLING_MODES.includes(mode)) throw new Error(`Unknown NTC sampling mode: ${mode}`);
+		this._samplingMode = mode;
+		this._samplingModeUniform.value = NTC_SAMPLING_MODES.indexOf(mode);
 	}
+
+	/** Changes sampling on the next frame without rebuilding the shader. */
+	setSamplingMode(mode: NTCSamplingMode): void { this.samplingMode = mode; }
 
 	/**
 	 * Retunes the auto-LOD bias (see `computeAutoLodNode`'s doc comment) after
