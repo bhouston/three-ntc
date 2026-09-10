@@ -13,18 +13,21 @@
     "format": "oxfmt .",
     "lint": "oxlint .",
     "make-release:three-ntc": "node scripts/make-release.mjs packages/three-ntc",
-    "make-release:three-ntc-trainer": "node scripts/make-release.mjs packages/three-ntc-trainer"
+    "make-release:three-ntc-trainer": "node scripts/make-release.mjs packages/three-ntc-trainer",
+    "test:gpu:safari": "NTC_BROWSER=safari vitest run --project gpu --fileParallelism=false"
   },
   "devDependencies": {
     "@types/node": "^22.20.0",
     "@vitest/browser-playwright": "^4.1.11",
+    "@vitest/browser-webdriverio": "4.1.11",
     "oxfmt": "^0.58.0",
     "oxlint": "^1.73.0",
     "playwright": "^1.63.0",
     "three": "0.186.0",
     "typescript": "^5.7.0",
     "vite": "^8.1.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "webdriverio": "^9.31.7"
   },
   "engines": {
     "node": ">=20.0.0"

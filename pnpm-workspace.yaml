@@ -2,7 +2,9 @@ packages:
   - packages/*
 
 allowBuilds:
+  edgedriver: false
   esbuild: true
+  geckodriver: false
 
 link-workspace-packages: true
 

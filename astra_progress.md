@@ -388,3 +388,16 @@ SwiftShader MSE was 1.7720459e-6. No training math or filtering semantics change
 production builds passed. The user confirmed the remaining ~6 fps is in **Safari**;
 Chromium results do not resolve that Safari regression. Conditional feature-level
 sampling did not consistently help and was discarded.
+
+## Installed Safari test runner (2026-09-10)
+
+Added `pnpm test:gpu:safari` using Vitest's WebdriverIO provider and Apple's native
+`safaridriver`, with visible, serial browser execution. It runs the same GPU tests
+as Chromium, including the standalone brick and two-update trainer profiles.
+
+The Safari 27 driver was reached, but session creation failed with its explicit
+requirement to enable **Safari Settings → Developer → Allow remote automation**.
+No Safari shader test has executed yet; this is a blocked launch, not a pass.
+The setting is pending user action. After installing the provider, TypeScript,
+32 unit tests, and the Chromium/Metal brick profile passed. The latter reported
+raw CPU-reference MSE 7.6800803e-6 and no WebGPU errors.
