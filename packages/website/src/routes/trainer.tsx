@@ -63,10 +63,11 @@ export const Route = createFileRoute('/trainer')({
 
 const BAKE_RESOLUTION_OPTIONS = [128, 256, 512, 1024, 2048, 4096];
 const BATCH_SIZE_OPTIONS = [1024, 2048, 4096, 8192, 16384];
-const QUANTIZATION_OPTIONS: Array<{ value: 'none' | 'uint8' | 'uint4'; label: string }> = [
+const QUANTIZATION_OPTIONS: Array<{ value: 'none' | 'uint8' | 'uint4' | 'uint2'; label: string }> = [
   { value: 'none', label: 'Off' },
   { value: 'uint8', label: '8-bit' },
   { value: 'uint4', label: '4-bit' },
+  { value: 'uint2', label: '2-bit' },
 ];
 const SHAPE_OPTIONS: NTCViewerShape[] = ['torus', 'sphere', 'plane'];
 const DEFAULT_MATERIALX_KEY = 'brick';
@@ -83,7 +84,7 @@ type FormValues = {
   batchSize: number;
   iterations: number;
   learningRate: number;
-  quantization: 'none' | 'uint8' | 'uint4';
+  quantization: 'none' | 'uint8' | 'uint4' | 'uint2';
   shape: NTCViewerShape;
   interpolation: boolean;
   lodBias: number;
@@ -666,7 +667,7 @@ function TrainerPage() {
                 <FieldLabel>Quantization</FieldLabel>
                 <Select
                   value={values.quantization}
-                  onValueChange={(v) => form.setFieldValue('quantization', v as 'none' | 'uint8' | 'uint4')}
+                  onValueChange={(v) => form.setFieldValue('quantization', v as 'none' | 'uint8' | 'uint4' | 'uint2')}
                 >
                   <SelectTrigger size="sm">
                     <SelectValue />
@@ -752,6 +753,9 @@ function TrainerPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm">Training loss</CardTitle>
+                <span className="text-xs font-mono tabular-nums">
+                  {lossPoints.length > 0 ? lossPoints[lossPoints.length - 1].loss.toExponential(3) : ''}
+                </span>
                 <span className="text-xs text-muted-foreground">{lossIps}</span>
               </div>
             </CardHeader>

@@ -169,18 +169,21 @@ function decodeUint8Base64( str: string, min: number, max: number, length: numbe
 }
 
 /**
- * Like `encodeUint8Base64` but 16 levels, packed two values per byte (low
- * nibble first); odd lengths pad the last high nibble with 0.
+ * Like `encodeUint8Base64` but with `bits` (2 or 4) per value, packed
+ * little-end-first into bytes (low bits first); the last byte's unused bits
+ * are padded with 0.
  */
-function encodeUint4Base64( data: Float32Array, min: number, max: number ): string {
+function encodePackedBase64( data: Float32Array, min: number, max: number, bits: number ): string {
 
-	const bytes = new Uint8Array( ( data.length + 1 ) >> 1 );
+	const perByte = 8 / bits;
+	const maxLevel = ( 1 << bits ) - 1;
+	const bytes = new Uint8Array( Math.ceil( data.length / perByte ) );
 	const range = max - min;
 
 	for ( let i = 0; i < data.length; i ++ ) {
 
 		const t = range !== 0 ? Math.min( 1, Math.max( 0, ( data[ i ] - min ) / range ) ) : 0;
-		bytes[ i >> 1 ] |= Math.round( t * 15 ) << ( ( i & 1 ) * 4 );
+		bytes[ Math.floor( i / perByte ) ] |= Math.round( t * maxLevel ) << ( ( i % perByte ) * bits );
 
 	}
 
@@ -188,23 +191,39 @@ function encodeUint4Base64( data: Float32Array, min: number, max: number ): stri
 
 }
 
-/** Inverse of `encodeUint4Base64`. */
-function decodeUint4Base64( str: string, min: number, max: number, length: number ): Float32Array {
+/** Inverse of `encodePackedBase64`. */
+function decodePackedBase64( str: string, min: number, max: number, length: number, bits: number ): Float32Array {
 
+	const perByte = 8 / bits;
+	const maxLevel = ( 1 << bits ) - 1;
 	const bytes = bytesFromBase64( str );
 	const out = new Float32Array( length );
 	const range = max - min;
 
 	for ( let i = 0; i < length; i ++ ) {
 
-		const level = ( bytes[ i >> 1 ] >> ( ( i & 1 ) * 4 ) ) & 15;
-		out[ i ] = min + ( level / 15 ) * range;
+		const level = ( bytes[ Math.floor( i / perByte ) ] >> ( ( i % perByte ) * bits ) ) & maxLevel;
+		out[ i ] = min + ( level / maxLevel ) * range;
 
 	}
 
 	return out;
 
 }
+
+const encodeUint4Base64 = ( data: Float32Array, min: number, max: number ) => encodePackedBase64( data, min, max, 4 );
+const decodeUint4Base64 = ( str: string, min: number, max: number, length: number ) => decodePackedBase64( str, min, max, length, 4 );
+const encodeUint2Base64 = ( data: Float32Array, min: number, max: number ) => encodePackedBase64( data, min, max, 2 );
+const decodeUint2Base64 = ( str: string, min: number, max: number, length: number ) => decodePackedBase64( str, min, max, length, 2 );
+
+/** Latent-grid codecs keyed by the manifest level `dtype`. */
+const LATENT_CODECS = {
+	uint8: { encode: encodeUint8Base64, decode: decodeUint8Base64 },
+	uint4: { encode: encodeUint4Base64, decode: decodeUint4Base64 },
+	uint2: { encode: encodeUint2Base64, decode: decodeUint2Base64 }
+};
+
+type LatentDtype = keyof typeof LATENT_CODECS;
 
 /** One fully-connected layer, in `createMLP`-shape (see NeuralMLP.js). */
 export interface MLPLayer {
@@ -325,6 +344,10 @@ export {
 	decodeUint8Base64,
 	encodeUint4Base64,
 	decodeUint4Base64,
+	encodeUint2Base64,
+	decodeUint2Base64,
+	LATENT_CODECS,
 	encodeMLPLayersBase64,
 	decodeMLPLayersBase64
 };
+export type { LatentDtype };

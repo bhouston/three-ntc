@@ -17,6 +17,37 @@ import { float, min, max, round } from 'three/tsl';
 // from the same 'three/tsl' node functions the rest of this codebase uses -
 // see NeuralGPUComputeTSL.js/NeuralMLPTSL.js) - so adding a new scheme later
 // is just adding another entry with both functions.
+/**
+ * Uniform `levels`-step scheme mirroring the matching `LATENT_CODECS` entry
+ * in NTCBinaryCodec.ts (clamp to [min, max], round to the nearest level,
+ * decode back) - the exact "simulated quantization" a Straight-Through
+ * Estimator forward pass needs.
+ */
+function createUniformScheme( bits: number ) {
+
+	const maxLevel = ( 1 << bits ) - 1;
+
+	return {
+		quantizeForwardCPU: ( x: number, lo = 0, hi = 1 ) => {
+
+			const range = hi - lo;
+			const t = range !== 0 ? Math.min( 1, Math.max( 0, ( x - lo ) / range ) ) : 0;
+
+			return lo + ( Math.round( t * maxLevel ) / maxLevel ) * range;
+
+		},
+		quantizeForwardTSL: ( xNode: any, minNode: any, maxNode: any ) => {
+
+			const range = maxNode.sub( minNode );
+			const t = min( float( 1.0 ), max( float( 0.0 ), xNode.sub( minNode ).div( range ) ) );
+
+			return minNode.add( round( t.mul( float( maxLevel ) ) ).div( float( maxLevel ) ).mul( range ) );
+
+		}
+	};
+
+}
+
 const QUANTIZATION_SCHEMES: Record<string, {
 	quantizeForwardCPU: ( x: number, lo?: number, hi?: number ) => number;
 	quantizeForwardTSL: ( xNode: any, minNode?: any, maxNode?: any ) => any;
@@ -25,52 +56,9 @@ const QUANTIZATION_SCHEMES: Record<string, {
 		quantizeForwardCPU: ( x ) => x,
 		quantizeForwardTSL: ( xNode ) => xNode
 	},
-	uint8: {
-		// Mirrors `encodeUint8Base64`/`decodeUint8Base64` composed together:
-		// clamp to [min, max], quantize to one of 256 levels, decode back to
-		// float - the exact "simulated quantization" a Straight-Through
-		// Estimator forward pass needs.
-		quantizeForwardCPU: ( x, lo = 0, hi = 1 ) => {
-
-			const range = hi - lo;
-			const t = range !== 0 ? Math.min( 1, Math.max( 0, ( x - lo ) / range ) ) : 0;
-			const level = Math.round( t * 255 );
-
-			return lo + ( level / 255 ) * range;
-
-		},
-		quantizeForwardTSL: ( xNode, minNode, maxNode ) => {
-
-			const range = maxNode.sub( minNode );
-			const t = min( float( 1.0 ), max( float( 0.0 ), xNode.sub( minNode ).div( range ) ) );
-			const level = round( t.mul( float( 255.0 ) ) );
-
-			return minNode.add( level.div( float( 255.0 ) ).mul( range ) );
-
-		}
-	},
-	uint4: {
-		// Same as uint8 with 16 levels - mirrors `encodeUint4Base64`/
-		// `decodeUint4Base64` (two nibbles per byte on disk).
-		quantizeForwardCPU: ( x, lo = 0, hi = 1 ) => {
-
-			const range = hi - lo;
-			const t = range !== 0 ? Math.min( 1, Math.max( 0, ( x - lo ) / range ) ) : 0;
-			const level = Math.round( t * 15 );
-
-			return lo + ( level / 15 ) * range;
-
-		},
-		quantizeForwardTSL: ( xNode, minNode, maxNode ) => {
-
-			const range = maxNode.sub( minNode );
-			const t = min( float( 1.0 ), max( float( 0.0 ), xNode.sub( minNode ).div( range ) ) );
-			const level = round( t.mul( float( 15.0 ) ) );
-
-			return minNode.add( level.div( float( 15.0 ) ).mul( range ) );
-
-		}
-	}
+	uint8: createUniformScheme( 8 ),
+	uint4: createUniformScheme( 4 ),
+	uint2: createUniformScheme( 2 )
 };
 
 const VALID_MODES = Object.keys( QUANTIZATION_SCHEMES );

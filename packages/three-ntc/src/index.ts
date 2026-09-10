@@ -49,9 +49,12 @@ export {
 	decodeUint8Base64,
 	encodeUint4Base64,
 	decodeUint4Base64,
+	encodeUint2Base64,
+	decodeUint2Base64,
+	LATENT_CODECS,
 	encodeMLPLayersBase64,
 	decodeMLPLayersBase64
 } from './NTCBinaryCodec.js';
-export type { MLPLayer, MLPLayoutEntry, MLPBlock } from './NTCBinaryCodec.js';
+export type { MLPLayer, MLPLayoutEntry, MLPBlock, LatentDtype } from './NTCBinaryCodec.js';
 
 export type { NTCCpuModel } from './NTCDecoderTSL.js';
