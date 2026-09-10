@@ -200,8 +200,8 @@ export function runtimeFeaturesCpu(cpuModel: any, u: number, v: number, lod: num
     features = bilinearWrap(grid.data, grid.width, grid.height, channels, u, v, roundHalf);
   }
   if (cpuModel.dualGrid) {
-    const last = grids[grids.length - 1];
-    features.push(...bilinearWrap(last.data, last.width, last.height, channels, u, v, roundHalf));
+    const last = cpuModel.lowResGrids?.[selectFeatureLevel(lod,grids.length,mipsPerLevel)] ?? grids[grids.length - 1];
+    features.push(...bilinearWrap(last.data, last.width, last.height, last.channels, u, v, roundHalf));
   }
   features.push(lod / Math.max(1, maxLod));
   return features;

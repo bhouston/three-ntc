@@ -3,7 +3,7 @@ import * as THREE from 'three';
 // not the base 'three' entrypoint - see `three-shims.d.ts`.
 import { MeshPhysicalNodeMaterial } from 'three/webgpu';
 import { bitangentWorld, fract, log, max, min, step, tangentWorld, uniform, uv, vec2, vec3, vec4 } from 'three/tsl';
-import { buildMipChainTexture, buildLevelTextures, evaluateNeuralTextureRaw, NTCCpuModel } from './NTCDecoderTSL.js';
+import { buildLevelTextures, evaluateNeuralTextureRaw, NTCCpuModel } from './NTCDecoderTSL.js';
 import { applyChannelActivation } from './NTCOutputActivations.js';
 import { CHANNELS, FRAME_VIEWS, getChannel, buildDebugViewColorNode, buildFrameViewColorNode, NTCChannel, NTCLayoutChannel } from './NTCFormat.js';
 import { constantToNode, reconstructFinalNormal } from './NTCOutputTypes.js';
@@ -238,8 +238,8 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 		// `evaluatePositionalEncodingFeatures`) fetch raw texels from one
 		// `DataTexture` per stored level instead of sampling the mip-chain
 		// texture - build only whichever this model actually needs.
-		this.mipChainTexture = cpuModel.positionalEncoding ? null : buildMipChainTexture( cpuModel, { interpolation: this.interpolation } );
-		this.levelTextures = cpuModel.positionalEncoding ? buildLevelTextures( cpuModel ) : null;
+		this.mipChainTexture = null;
+		this.levelTextures = buildLevelTextures( cpuModel );
 
 		// Maps mesh/query UV into the local space this model's grids + MLP
 		// were actually fit against - `options.uvTransform` overrides

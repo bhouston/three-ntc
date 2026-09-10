@@ -27,7 +27,7 @@ beforeAll(async () => {
 /** Renders the raw decoder outputs (first 4 channels) at a fixed LOD. */
 async function renderDecoder(cpuModel: any, lod: number): Promise<Float32Array> {
   const mipChain = cpuModel.positionalEncoding ? null : buildMipChainTexture(cpuModel);
-  const levelTextures = cpuModel.positionalEncoding ? buildLevelTextures(cpuModel) : null;
+  const levelTextures = buildLevelTextures(cpuModel);
   const outputs = evaluateNeuralTextureRaw(
     uv(),
     cpuModel,
@@ -71,6 +71,7 @@ describe('evaluateNeuralTextureRaw matches the CPU reference decoder', () => {
     expect(Math.max(...a.map((v, i) => Math.abs(v - b[i])))).toBeLessThan(0.002);
   });
   const configs = [
+    { positionalEncoding: true, dualGrid: true, hiddenActivation: 'hgelu', mipsPerLevel: 2, gridChannels: 8, lowResChannels: 12 },
     { positionalEncoding: false, dualGrid: false, hiddenActivation: 'relu', mipsPerLevel: 1 },
     { positionalEncoding: false, dualGrid: true, hiddenActivation: 'hgelu', mipsPerLevel: 2 },
     { positionalEncoding: true, dualGrid: false, hiddenActivation: 'relu', mipsPerLevel: 2 },
@@ -83,7 +84,7 @@ describe('evaluateNeuralTextureRaw matches the CPU reference decoder', () => {
       it(`${JSON.stringify(config)} lod=${lod}`, async () => {
         const cpuModel = makeModel(7, {
           ...config,
-          gridChannels: 4,
+          gridChannels: config.gridChannels ?? 4,
           levels: 3,
           baseResolution: 16,
           hiddenSizes: [16, 16],

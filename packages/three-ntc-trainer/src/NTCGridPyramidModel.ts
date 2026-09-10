@@ -10,6 +10,7 @@ interface NTCGridPyramidOptions {
 	// count) and from the PBR channel *vocabulary* `fitNTCMaterial`/
 	// `NTCNodeMaterial` call `channels`.
 	gridChannels?: number;
+	lowResChannels?: number;
 	levels?: number;
 	baseResolution?: number;
 	mipsPerLevel?: number;
@@ -25,6 +26,7 @@ interface NTCGridPyramidOptions {
 
 interface ResolvedNTCGridPyramidOptions {
 	channels: number;
+	lowResChannels: number;
 	levels: number;
 	baseResolution: number;
 	mipsPerLevel: number;
@@ -37,36 +39,12 @@ interface ResolvedNTCGridPyramidOptions {
 	dualGrid: boolean;
 }
 
-/**
- * The decoder's input width for one selected grid level's tap(s) plus the
- * normalized LOD scalar - shared by the CPU model and the GPU training
- * layout so they can never disagree (see resolveNTCGridPyramidOptions's own
- * doc comment for why those two already share one options resolver).
- *
- * `positionalEncoding: false` (default): one bilinear-interpolated
- * `channels`-wide tap - this addon's original, simpler decoder input.
- *
- * `positionalEncoding: true`: the NVIDIA neural texture compression paper's
- * Section 4.3 decoder input, adapted to this addon's single-selected-level
- * design (see NTCGridPyramidModel's module doc comment) - the 4 raw
- * neighboring texel taps ("learned interpolation", `4 * channels` wide,
- * concatenated rather than bilinearly blended) plus `POSITIONAL_ENCODING_
- * SIZE` (12) tiled positional-encoding scalars (see
- * NTCPositionalEncodingTSL.js) that supply the sub-texel phase information
- * the learned interpolation needs to reconstruct detail sharper than the
- * grid's own resolution.
- *
- * `dualGrid: true` (default off, orthogonal to `positionalEncoding`): the
- * paper's Section 4.1 G0/G1 pair, adapted to this addon's pyramid - G0 is
- * whatever level the LOD selects (as above, either mode), G1 is the
- * *coarsest* stored level, always sampled with one plain bilinear
- * `channels`-wide tap regardless of LOD, concatenated after G0's taps (and
- * positional encoding, if any) and before the LOD scalar. No second
- * resolution ladder: G1 reuses the last pyramid level as-is.
+/** Four G0 taps (with positional encoding), a bilinear G1 vector, and LOD.
+ * Every feature level has its own independently trained half-resolution G1.
  */
-function computeDecoderInputSize( channels: number, positionalEncoding: boolean, dualGrid: boolean = false ): number {
+function computeDecoderInputSize( channels: number, positionalEncoding: boolean, dualGrid: boolean = false, lowResChannels = channels ): number {
 
-	return ( positionalEncoding ? channels * 4 + POSITIONAL_ENCODING_SIZE : channels ) + ( dualGrid ? channels : 0 ) + 1;
+	return ( positionalEncoding ? channels * 4 + POSITIONAL_ENCODING_SIZE : channels ) + ( dualGrid ? lowResChannels : 0 ) + 1;
 
 }
 
@@ -105,6 +83,7 @@ function resolveNTCGridPyramidOptions( options: NTCGridPyramidOptions = {} ): Re
 
 	return {
 		channels: options.gridChannels || 4,
+		lowResChannels: options.lowResChannels || options.gridChannels || 4,
 		levels: options.levels || 4,
 		baseResolution: options.baseResolution || ( textureResolution ? Math.min( textureResolution, MAX_GRID_RESOLUTION ) : 128 ),
 		mipsPerLevel: options.mipsPerLevel || DEFAULT_MIPS_PER_LEVEL,
@@ -133,10 +112,12 @@ function resolveNTCGridPyramidOptions( options: NTCGridPyramidOptions = {} ): Re
 
 interface NTCGridPyramidModel {
 	channels: number;
+	lowResChannels: number;
 	levels: number;
 	mipsPerLevel: number;
 	resolutions: number[];
 	grids: LatentGrid[];
+	lowResGrids: LatentGrid[];
 	decoder: MLP;
 	hiddenSizes: number[];
 	hiddenActivation: string;
@@ -167,7 +148,7 @@ interface NTCGridPyramidModel {
  */
 function createNTCGridPyramidModel( options: NTCGridPyramidOptions, random: () => number ): NTCGridPyramidModel {
 
-	const { channels, levels: requestedLevels, baseResolution, mipsPerLevel, hiddenSizes, hiddenActivation, outputChannels, textureResolution, uvTransform, positionalEncoding, dualGrid } = resolveNTCGridPyramidOptions( options );
+	const { channels, lowResChannels, levels: requestedLevels, baseResolution, mipsPerLevel, hiddenSizes, hiddenActivation, outputChannels, textureResolution, uvTransform, positionalEncoding, dualGrid } = resolveNTCGridPyramidOptions( options );
 
 	const resolutions = computeGridLevels( baseResolution, requestedLevels, mipsPerLevel );
 	const levels = resolutions.length;
@@ -176,10 +157,12 @@ function createNTCGridPyramidModel( options: NTCGridPyramidOptions, random: () =
 	const resolvedTextureResolution = textureResolution || resolutions[ 0 ];
 	const maxLod = Math.ceil( Math.log2( Math.max( 1, resolvedTextureResolution ) ) );
 
-	const inputSize = computeDecoderInputSize( channels, positionalEncoding, dualGrid );
+	const inputSize = computeDecoderInputSize( channels, positionalEncoding, dualGrid, lowResChannels );
 	const decoder = createMLP( inputSize, hiddenSizes, outputChannels, random, hiddenActivation, 'linear' );
 
-	return { channels, levels, mipsPerLevel, resolutions, grids, decoder, hiddenSizes, hiddenActivation, outputChannels, textureResolution: resolvedTextureResolution, maxLod, uvTransform, positionalEncoding, dualGrid };
+	const lowResGrids = dualGrid ? resolutions.map(r => createLatentGrid(Math.max(1, Math.floor(r/2)), Math.max(1, Math.floor(r/2)), lowResChannels, random)) : [];
+
+	return { channels, lowResChannels, lowResGrids, levels, mipsPerLevel, resolutions, grids, decoder, hiddenSizes, hiddenActivation, outputChannels, textureResolution: resolvedTextureResolution, maxLod, uvTransform, positionalEncoding, dualGrid };
 
 }
 

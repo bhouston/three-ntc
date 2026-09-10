@@ -98,6 +98,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 	const {
 		gridLevels,
 		channels,
+		lowResChannels,
 		mlpLayers,
 		a0Offset,
 		layerActs,
@@ -121,7 +122,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 	// `dualGrid` appends one more `channels`-wide plain bilinear tap of the
 	// *coarsest* level (G1, always sampled regardless of LOD) after those.
 	const g0Width = positionalEncoding ? channels * 4 + POSITIONAL_ENCODING_SIZE : channels;
-	const featureWidth = g0Width + ( dualGrid ? channels : 0 );
+	const featureWidth = g0Width + ( dualGrid ? lowResChannels : 0 );
 
 
 	return Fn( () => {
@@ -135,7 +136,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 		// sampleTrainingLod's doc comment - and the *stored* grid level it
 		// maps onto (see this function's doc comment and NTCMipBands.js).
 		const lod = samples.lod ?? trainingLodTSL( sampleIdx, stepUniform, maxLod );
-		const selectedLevel = selectFeatureLevelTSL( lod, gridLevels.length, mipsPerLevel );
+		const selectedLevel = selectFeatureLevelTSL( lod, layout.levels, mipsPerLevel );
 
 		const targetComponents: TSLNode[] = [];
 
@@ -204,12 +205,12 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 			const tapX3 = wrapIndexTSL( x0.add( 1 ), level.width );
 			const tapY3 = wrapIndexTSL( y0.add( 1 ), level.height );
 
-			const off0 = int( level.offset ).add( tapY0.mul( level.width ).add( tapX0 ).mul( channels ) );
-			const off1 = int( level.offset ).add( tapY1.mul( level.width ).add( tapX1 ).mul( channels ) );
-			const off2 = int( level.offset ).add( tapY2.mul( level.width ).add( tapX2 ).mul( channels ) );
-			const off3 = int( level.offset ).add( tapY3.mul( level.width ).add( tapX3 ).mul( channels ) );
+			const off0 = int( level.offset ).add( tapY0.mul( level.width ).add( tapX0 ).mul( level.channels ) );
+			const off1 = int( level.offset ).add( tapY1.mul( level.width ).add( tapX1 ).mul( level.channels ) );
+			const off2 = int( level.offset ).add( tapY2.mul( level.width ).add( tapX2 ).mul( level.channels ) );
+			const off3 = int( level.offset ).add( tapY3.mul( level.width ).add( tapX3 ).mul( level.channels ) );
 
-			const weight = selectedLevel.equal( int( g ) ).select( float( 1 ), float( 0 ) );
+			const weight = selectedLevel.equal( int( level.featureLevel ) ).select( float( 1 ), float( 0 ) );
 
 			levelTaps.push( { off0, off1, off2, off3, w0, w1, w2, w3, weight } );
 
@@ -221,12 +222,9 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 			const readBilinear = ( c: number ): TSLNode => readTap(off0,c).mul(w0)
 				.add(readTap(off1,c).mul(w1)).add(readTap(off2,c).mul(w2)).add(readTap(off3,c).mul(w3));
 
-			// G1 (dualGrid): the coarsest level's bilinear tap, unconditionally
-			// (no `weight` gate - it's LOD-independent by design).
-			if ( dualGrid && g === gridLevels.length - 1 ) {
-
-				for ( let c = 0; c < channels; c ++ ) a0Vars[ g0Width + c ].addAssign( readBilinear( c ) );
-
+			if ( level.isLowRes ) {
+				for (let c=0;c<lowResChannels;c++) a0Vars[g0Width+c].addAssign(readBilinear(c).mul(weight));
+				continue;
 			}
 
 			if ( positionalEncoding ) {
@@ -434,16 +432,14 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 		};
 
-		if ( dualGrid ) {
-
-			const taps = levelTaps[ gridLevels.length - 1 ];
-			for ( let c = 0; c < channels; c ++ ) scatterBilinear( taps, c, activationsStorage.element( gradA0Base.add( g0Width + c ) ) );
-
-		}
-
 		for ( let g = 0; g < gridLevels.length; g ++ ) {
 
 			const taps = levelTaps[ g ];
+
+			if (gridLevels[g].isLowRes) {
+				for(let c=0;c<lowResChannels;c++) scatterBilinear(taps,c,activationsStorage.element(gradA0Base.add(g0Width+c)).mul(taps.weight));
+				continue;
+			}
 
 			if ( positionalEncoding ) {
 

@@ -46,7 +46,8 @@ function encodeNTC( cpuModel: any, channelClassification: any, options: any = {}
 	const dtype: LatentDtype = mode in LATENT_CODECS ? mode : 'uint8';
 	const encodeLatents = LATENT_CODECS[ dtype ].encode;
 
-	const levels = cpuModel.grids.map( ( grid: any, index: number ) => {
+	const allGrids = [...cpuModel.grids, ...(cpuModel.lowResGrids || [])];
+	const encodedGrids = allGrids.map( ( grid: any, index: number ) => {
 
 		const [ min, max ] = ranges[ index ];
 
@@ -71,7 +72,8 @@ function encodeNTC( cpuModel: any, channelClassification: any, options: any = {}
 		latents: {
 			channelsPerLevel: cpuModel.channels,
 			wrap: options.wrap || 'repeat',
-			levels,
+			levels: encodedGrids.slice(0,cpuModel.grids.length),
+			lowResLevels: cpuModel.lowResGrids?.length ? encodedGrids.slice(cpuModel.grids.length) : undefined,
 			// Required mip-pyramid metadata (see NTCGridPyramidModel.js /
 			// NTCMipBands.js) - `mipsPerLevel` + the stored level count
 			// (`levels.length`) determine which physical mip a given LOD maps
@@ -135,7 +137,7 @@ function resolveQuantizationRanges( cpuModel: any, options: any ): Array<[ numbe
 	if ( options.quantizationRanges ) return options.quantizationRanges;
 	if ( cpuModel.quantizationRange ) return cpuModel.quantizationRange;
 
-	const { flat, gridLevels } = concatenateGridData( cpuModel.grids );
+	const { flat, gridLevels } = concatenateGridData( [...cpuModel.grids, ...(cpuModel.lowResGrids || [])] );
 
 	return computeLatentRanges( flat, gridLevels, true );
 

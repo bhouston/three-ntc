@@ -7,6 +7,9 @@ import { resolveNTCGridPyramidOptions, computeDecoderInputSize, type NTCGridPyra
 import { resolveQuantizationConfig, type ResolvedNTCQuantizationConfig, type NTCQuantizationOptions } from './NTCQuantization.js';
 
 interface GridLevelLayout {
+	channels: number;
+	featureLevel: number;
+	isLowRes: boolean;
 	width: number;
 	height: number;
 	offset: number;
@@ -31,6 +34,7 @@ interface LayerActs {
 }
 
 interface NTCTextureModelLayout {
+	lowResChannels: number;
 	channels: number;
 	levels: number;
 	mipsPerLevel: number;
@@ -75,7 +79,7 @@ interface NTCGPUModelOptions extends NTCGridPyramidOptions {
  */
 function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextureModelLayout {
 
-	const { channels, levels: requestedLevels, baseResolution, mipsPerLevel, hiddenSizes, hiddenActivation, outputChannels, textureResolution, positionalEncoding, dualGrid } = resolveNTCGridPyramidOptions( options );
+	const { channels, lowResChannels, levels: requestedLevels, baseResolution, mipsPerLevel, hiddenSizes, hiddenActivation, outputChannels, textureResolution, positionalEncoding, dualGrid } = resolveNTCGridPyramidOptions( options );
 	// One entry per output channel naming its output nonlinearity (see
 	// ./NTCOutputActivations.js); undefined/omitted entries (the
 	// default, `options.channelActivations` unset) mean plain linear, i.e.
@@ -94,13 +98,15 @@ function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextu
 	const gridLevels: GridLevelLayout[] = [];
 	let latentOffset = 0;
 
-	for ( const resolution of resolutions ) {
-
-		const texelCount = resolution * resolution;
-		const floatCount = texelCount * channels;
-		gridLevels.push( { width: resolution, height: resolution, offset: latentOffset, texelCount, floatCount } );
-		latentOffset += floatCount;
-
+	for ( const isLowRes of (dualGrid ? [false,true] : [false]) ) {
+		resolutions.forEach((r,featureLevel) => {
+			const resolution = isLowRes ? Math.max(1,Math.floor(r/2)) : r;
+			const width = isLowRes ? lowResChannels : channels;
+			const texelCount = resolution * resolution;
+			const floatCount = texelCount * width;
+			gridLevels.push({width:resolution,height:resolution,channels:width,featureLevel,isLowRes,offset:latentOffset,texelCount,floatCount});
+			latentOffset += floatCount;
+		});
 	}
 
 	const totalLatents = latentOffset;
@@ -112,7 +118,7 @@ function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextu
 	// doc comment for the two widths: plain bilinear tap, or - when
 	// `positionalEncoding` is on - 4 concatenated raw taps + positional
 	// encoding).
-	const inputSize = computeDecoderInputSize( channels, positionalEncoding, dualGrid );
+	const inputSize = computeDecoderInputSize( channels, positionalEncoding, dualGrid, lowResChannels );
 	const sizes = [ inputSize, ...hiddenSizes, outputChannels ];
 	const mlpLayers: MLPLayerLayout[] = [];
 	let weightOffset = 0;
@@ -183,6 +189,7 @@ function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextu
 
 	return {
 		channels,
+		lowResChannels,
 		levels,
 		mipsPerLevel,
 		resolutions,
@@ -236,9 +243,10 @@ function copyModel( cpuModel: any, layout: NTCTextureModelLayout, weights: Float
 
 	}
 
-	for ( let g = 0; g < cpuModel.grids.length; g ++ ) {
+	const grids = [...cpuModel.grids, ...(cpuModel.lowResGrids || [])];
+	for ( let g = 0; g < grids.length; g ++ ) {
 
-		const grid = cpuModel.grids[ g ];
+		const grid = grids[ g ];
 		const level = layout.gridLevels[ g ];
 
 		if ( direction === 'toGPU' ) {

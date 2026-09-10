@@ -37,7 +37,9 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
    GPU tests pass. The benchmark is unchanged: clipping did not engage on these
    short adaptation runs, so this fix prevents a failure rather than lowering
    their measured error.
-5. G0/G1 pairs and feature capacity: pending.
+5. G0/G1 pairs and feature capacity: complete. Independent half-resolution G1
+   grids and 8/12-channel support pass CPU layout/roundtrip and GPU decoder tests.
+   This adds latent capacity; the comparison is not at equal bitrate.
 6. Resolution-aware mip bands: pending.
 7. Discrete targets and decoded-value filtering: pending.
 8. Preset consistency and paper baseline: pending.
@@ -55,6 +57,8 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 | step3: independent full-domain sampling | 0.01007776 | 19.9664 | -12.66% |
 
 | step4: exclude frozen latent gradients | 0.01007776 | 19.9664 | 0.00% |
+
+| step5: independent G0/G1 pairs | 0.01003036 | 19.9868 | -0.47% |
 
 ## Per-change details
 
@@ -96,3 +100,16 @@ Compared with step3. Six quality cases passed (finite error only; no PSNR thresh
 | checker | true | 0.00949695 | 20.224 | 0.00% |
 | waves | false | 0.02396619 | 16.204 | 0.00% |
 | waves | true | 0.00349023 | 24.571 | 0.00% |
+
+### step5: independent G0/G1 pairs
+
+Compared with step4. Six quality cases passed (finite error only; no PSNR threshold).
+
+| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
+|---|---|---:|---:|---:|
+| smooth | false | 0.00369585 | 24.323 | 2.59% |
+| smooth | true | 0.00223058 | 26.516 | -36.55% |
+| checker | false | 0.01713714 | 17.661 | 4.52% |
+| checker | true | 0.00987279 | 20.056 | 3.96% |
+| waves | false | 0.02407228 | 16.185 | 0.44% |
+| waves | true | 0.00317351 | 24.985 | -9.07% |

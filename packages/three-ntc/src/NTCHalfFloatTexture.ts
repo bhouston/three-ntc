@@ -1,4 +1,4 @@
-import { DataTexture, DataUtils, HalfFloatType, LinearFilter, LinearMipmapLinearFilter, NearestFilter, NearestMipmapLinearFilter, RepeatWrapping, RGBAFormat } from 'three';
+import { DataArrayTexture, DataTexture, DataUtils, HalfFloatType, LinearFilter, LinearMipmapLinearFilter, NearestFilter, NearestMipmapLinearFilter, RepeatWrapping, RGBAFormat } from 'three';
 import { selectFeatureLevel } from './NTCMipBands.js';
 
 /** One decoded stored feature-grid level (see NTCLoader.ts's `decodeLevel`). */
@@ -12,6 +12,7 @@ export interface NTCGrid {
 /** The subset of a decoded NTC CPU model `buildMipChainTexture` needs. */
 export interface NTCMipChainModel {
 	grids: NTCGrid[];
+	lowResGrids?: NTCGrid[];
 	mipsPerLevel: number;
 }
 
@@ -77,13 +78,19 @@ function createHalfFloatLatentTexture( data: Float32Array | number[], width: num
  * reproduce that index math here.
  */
 function buildLevelTextures( cpuModel: NTCMipChainModel ): any[] {
-
-	return cpuModel.grids.map( ( grid ) => createHalfFloatLatentTexture( grid.data, grid.width, grid.height, {
-		channels: grid.channels,
-		wrap: RepeatWrapping,
-		filter: NearestFilter
-	} ) );
-
+	return [...cpuModel.grids, ...(cpuModel.lowResGrids || [])].map(grid => {
+		const depth = Math.ceil(grid.channels/4);
+		const packed = new Uint16Array(grid.width*grid.height*depth*4);
+		for(let p=0;p<grid.width*grid.height;p++) for(let c=0;c<grid.channels;c++) {
+			packed[(Math.floor(c/4)*grid.width*grid.height+p)*4+c%4] = DataUtils.toHalfFloat(grid.data[p*grid.channels+c]);
+		}
+		const texture = new DataArrayTexture(packed,grid.width,grid.height,depth);
+		texture.type=HalfFloatType; texture.format=RGBAFormat;
+		texture.wrapS=RepeatWrapping; texture.wrapT=RepeatWrapping;
+		texture.magFilter=NearestFilter;texture.minFilter=NearestFilter;
+		texture.generateMipmaps=false;texture.needsUpdate=true;
+		return texture;
+	});
 }
 
 interface RawMip {

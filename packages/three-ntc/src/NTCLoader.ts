@@ -22,6 +22,7 @@ export interface NTCManifest {
 	name?: string;
 	latents: {
 		levels: NTCManifestLevel[];
+		lowResLevels?: NTCManifestLevel[];
 		channelsPerLevel: number;
 		mipsPerLevel: number;
 		maxLod: number;
@@ -144,6 +145,7 @@ class NTCLoader extends Loader {
 			mipsPerLevel: manifest.latents.mipsPerLevel,
 			maxLod: manifest.latents.maxLod,
 			grids,
+			lowResGrids: manifest.latents.lowResLevels?.map((level,index)=>decodeLevel(level, `latents.lowResLevels[${index}]`)),
 			decoder: { layers: decoderLayers },
 			outputChannels: manifest.outputChannels !== undefined ?
 				manifest.outputChannels : decoderLayers[ decoderLayers.length - 1 ].outputSize,
@@ -180,7 +182,7 @@ function decodeLevel( level: NTCManifestLevel, path: string ) {
 
 	assertInteger( level.width, `${ path }.width`, 1 );
 	assertInteger( level.height, `${ path }.height`, 1 );
-	assertInteger( level.channels, `${ path }.channels`, 1, 4 );
+	assertInteger( level.channels, `${ path }.channels`, 1, 64 );
 
 	const codec = LATENT_CODECS[ level.dtype ];
 

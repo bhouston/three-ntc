@@ -71,16 +71,16 @@ async function readGrad(attribute: any): Promise<Float32Array> {
 describe('train-batch kernel', () => {
   it('interpolates quantized stored taps without re-quantizing the result', async () => {
     const texture = await constantTexture();
-    const {gpuModel} = setup({gridChannels:1, levels:1, baseResolution:2,
+    const {gpuModel} = setup({gridChannels:1, levels:1, baseResolution:4,
       hiddenSizes:[4], outputChannels:4, dualGrid:true, batchSize:1,
       quantization:{mode:'uint2', range:[0,1]}});
-    gpuModel.latentsBuffers.attribute.array.set([0,1,0,1]);
+    gpuModel.latentsBuffers.attribute.array.set([...Array.from({length:16},(_,i)=>i%2),0,1,0,1]);
     gpuModel.latentsBuffers.attribute.needsUpdate = true;
     renderer.compute(createTextureTrainBatchComputeNode(gpuModel,[texture],
-      {uv:vec2(0.45,0.5), lod:float(0)}));
+      {uv:vec2(0.225,0.5), lod:float(0)}));
     const act = await readF32(gpuModel.activationsAttribute);
     expect(act[0]).toBeCloseTo(0.4,5);
-    expect(act[1]).toBeCloseTo(0.4,5); // G1 must use the same ordering.
+    expect(act[1]).toBeCloseTo(0.05,5); // G1's half-resolution grid also stays continuous.
     texture.dispose(); gpuModel.dispose();
   });
   const options = {

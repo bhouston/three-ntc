@@ -2,8 +2,26 @@ import { describe, expect, it } from 'vitest';
 
 import { createNTCGridPyramidModel, computeDecoderInputSize } from './NTCGridPyramidModel.js';
 import { computeTextureModelLayout } from './NTCGPUModel.js';
+import { encodeNTC } from './NTCManifest.js';
+import { NTCLoader } from 'three-ntc';
 
 describe('NTCGridPyramidModel', () => {
+  it('allocates independent half-resolution G1 grids and round-trips wide features', () => {
+    const options={gridChannels:8,lowResChannels:12,levels:3,baseResolution:16,
+      dualGrid:true,positionalEncoding:true,outputChannels:3,textureResolution:64};
+    const model=createNTCGridPyramidModel(options,()=>0.6);
+    expect(model.grids.map(g=>g.width)).toEqual([16,4,1]);
+    expect(model.lowResGrids.map(g=>g.width)).toEqual([8,2,1]);
+    expect(model.lowResGrids.every(g=>g.channels===12)).toBe(true);
+    expect(model.lowResGrids[2].data).not.toBe(model.grids[2].data);
+    const layout=computeTextureModelLayout(options);
+    expect(layout.inputSize).toBe(4*8+12+12+1);
+    expect(layout.totalLatents).toBe([...model.grids,...model.lowResGrids].reduce((s,g)=>s+g.data.length,0));
+    const manifest=encodeNTC(model,{activeChannels:[{key:'albedo'}],constantValues:{}});
+    const loaded=new NTCLoader().parse(manifest).cpuModel;
+    expect(loaded.lowResGrids?.map(g=>[g.width,g.channels])).toEqual([[8,12],[2,12],[1,12]]);
+    expect(loaded.decoder.layers[0].inputSize).toBe(layout.inputSize);
+  });
   it('defaults to the plain bilinear-tap decoder input width', () => {
     expect(computeDecoderInputSize(4, false)).toBe(5); // channels + LOD
     expect(computeDecoderInputSize(2, false)).toBe(3);
