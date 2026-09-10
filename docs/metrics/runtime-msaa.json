@@ -1,0 +1,843 @@
+{
+  "webkit_msaa_4x": {
+    "kind": "react-brick-viewer",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+    "pixelRatio": 2,
+    "canvas": [
+      2048,
+      1536
+    ],
+    "steadyFrames": [
+      {
+        "intervalMs": 16,
+        "completedMs": 205
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 239
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 274
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 309
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 343
+      },
+      {
+        "intervalMs": 18,
+        "completedMs": 375
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 419
+      },
+      {
+        "intervalMs": 23,
+        "completedMs": 437
+      },
+      {
+        "intervalMs": 10,
+        "completedMs": 477
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 512
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 545
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 579
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 615
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 649
+      },
+      {
+        "intervalMs": 40,
+        "completedMs": 658
+      },
+      {
+        "intervalMs": 52,
+        "completedMs": 656
+      },
+      {
+        "intervalMs": 50,
+        "completedMs": 657
+      },
+      {
+        "intervalMs": 50,
+        "completedMs": 656
+      },
+      {
+        "intervalMs": 51,
+        "completedMs": 656
+      },
+      {
+        "intervalMs": 60,
+        "completedMs": 650
+      }
+    ],
+    "errors": []
+  },
+  "chromium_msaa_4x": {
+    "kind": "react-brick-viewer",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "pixelRatio": 2,
+    "canvas": [
+      2048,
+      1536
+    ],
+    "steadyFrames": [
+      {
+        "intervalMs": 0.6999999955296516,
+        "completedMs": 65.90000000596046
+      },
+      {
+        "intervalMs": 11,
+        "completedMs": 67.40000000596046
+      },
+      {
+        "intervalMs": 16.700000002980232,
+        "completedMs": 63.5
+      },
+      {
+        "intervalMs": 16.799999997019768,
+        "completedMs": 58.400000005960464
+      },
+      {
+        "intervalMs": 16.600000001490116,
+        "completedMs": 52.70000000298023
+      },
+      {
+        "intervalMs": 16.80000000447035,
+        "completedMs": 45.5
+      },
+      {
+        "intervalMs": 15.899999998509884,
+        "completedMs": 40.19999999552965
+      },
+      {
+        "intervalMs": 16.399999998509884,
+        "completedMs": 33.899999998509884
+      },
+      {
+        "intervalMs": 17.5,
+        "completedMs": 25.600000001490116
+      },
+      {
+        "intervalMs": 15.899999998509884,
+        "completedMs": 19.600000001490116
+      },
+      {
+        "intervalMs": 16.80000000447035,
+        "completedMs": 12.099999994039536
+      },
+      {
+        "intervalMs": 17.399999998509884,
+        "completedMs": 10.699999995529652
+      },
+      {
+        "intervalMs": 16.69999999552965,
+        "completedMs": 10.800000004470348
+      },
+      {
+        "intervalMs": 16.700000002980232,
+        "completedMs": 11.399999998509884
+      },
+      {
+        "intervalMs": 16.700000002980232,
+        "completedMs": 11.199999995529652
+      },
+      {
+        "intervalMs": 16.399999998509884,
+        "completedMs": 10.799999997019768
+      },
+      {
+        "intervalMs": 16.899999998509884,
+        "completedMs": 11.799999997019768
+      },
+      {
+        "intervalMs": 16.899999998509884,
+        "completedMs": 12
+      },
+      {
+        "intervalMs": 16.700000002980232,
+        "completedMs": 12
+      },
+      {
+        "intervalMs": 16.600000001490116,
+        "completedMs": 12.299999997019768
+      }
+    ],
+    "errors": []
+  },
+  "webkit_msaa_disabled": {
+    "kind": "react-brick-viewer",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+    "samples": 0,
+    "pixelRatio": 2,
+    "canvas": [
+      2048,
+      1536
+    ],
+    "steadyFrames": [
+      {
+        "intervalMs": 17,
+        "completedMs": 15
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 12
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 10
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 10
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 10
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 10
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 9
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 10
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 10
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 11
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 11
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 11
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 9
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 10
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 11
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 10
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 10
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 11
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 11
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 11
+      }
+    ],
+    "errors": []
+  },
+  "webkit_no_msaa_single": {
+    "kind": "react-brick-viewer",
+    "viewer": "single",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+    "samples": 0,
+    "pixelRatio": 2,
+    "canvas": [
+      2048,
+      1536
+    ],
+    "steadyFrames": [
+      {
+        "intervalMs": 21,
+        "completedMs": 71
+      },
+      {
+        "intervalMs": 12,
+        "completedMs": 64
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 60
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 52
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 47
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 38
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 31
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 23
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 18
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 11
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 10
+      },
+      {
+        "intervalMs": 15,
+        "completedMs": 11
+      },
+      {
+        "intervalMs": 18,
+        "completedMs": 11
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 11
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 11
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 11
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 10
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 10
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 11
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 10
+      }
+    ],
+    "errors": []
+  },
+  "webkit_no_msaa_trainer": {
+    "kind": "react-brick-viewer",
+    "viewer": "trainer",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+    "samples": 0,
+    "pixelRatio": 2,
+    "canvas": [
+      2048,
+      1536
+    ],
+    "steadyFrames": [
+      {
+        "intervalMs": 17,
+        "completedMs": 6
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 6
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 6
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 6
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 7
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 6
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 7
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 7
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 7
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 8
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 8
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 8
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 8
+      },
+      {
+        "intervalMs": 15,
+        "completedMs": 9
+      },
+      {
+        "intervalMs": 18,
+        "completedMs": 8
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 9
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 23
+      },
+      {
+        "intervalMs": 22,
+        "completedMs": 12
+      },
+      {
+        "intervalMs": 11,
+        "completedMs": 11
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 10
+      }
+    ],
+    "errors": []
+  },
+  "webkit_no_msaa_grid": {
+    "kind": "react-brick-viewer",
+    "viewer": "grid",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+    "samples": 0,
+    "pixelRatio": 2,
+    "canvas": [
+      2048,
+      1536
+    ],
+    "steadyFrames": [
+      {
+        "intervalMs": 16,
+        "completedMs": 5
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 5
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 5
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 5
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 5
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 5
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 5
+      },
+      {
+        "intervalMs": 18,
+        "completedMs": 4
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 4
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 6
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 5
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 6
+      },
+      {
+        "intervalMs": 19,
+        "completedMs": 8
+      },
+      {
+        "intervalMs": 15,
+        "completedMs": 7
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 6
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 7
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 7
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 7
+      },
+      {
+        "intervalMs": 18,
+        "completedMs": 7
+      },
+      {
+        "intervalMs": 16,
+        "completedMs": 8
+      }
+    ],
+    "errors": []
+  },
+  "chromium_no_msaa_single": {
+    "kind": "react-brick-viewer",
+    "viewer": "single",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "samples": 0,
+    "pixelRatio": 2,
+    "canvas": [
+      2048,
+      1536
+    ],
+    "steadyFrames": [
+      {
+        "intervalMs": 47.5,
+        "completedMs": 135.70000000298023
+      },
+      {
+        "intervalMs": 27.5,
+        "completedMs": 150
+      },
+      {
+        "intervalMs": 21.30000000447035,
+        "completedMs": 148.09999999403954
+      },
+      {
+        "intervalMs": 34.599999994039536,
+        "completedMs": 142.90000000596046
+      },
+      {
+        "intervalMs": 12.800000004470348,
+        "completedMs": 165.39999999850988
+      },
+      {
+        "intervalMs": 39.79999999701977,
+        "completedMs": 157.5
+      },
+      {
+        "intervalMs": 40.80000000447035,
+        "completedMs": 140.5
+      },
+      {
+        "intervalMs": 20.19999999552965,
+        "completedMs": 164.39999999850988
+      },
+      {
+        "intervalMs": 29.600000001490116,
+        "completedMs": 159.5
+      },
+      {
+        "intervalMs": 35.100000001490116,
+        "completedMs": 151.60000000149012
+      },
+      {
+        "intervalMs": 32,
+        "completedMs": 152.39999999850988
+      },
+      {
+        "intervalMs": 23.69999999552965,
+        "completedMs": 148.90000000596046
+      },
+      {
+        "intervalMs": 44.100000001490116,
+        "completedMs": 139.30000000447035
+      },
+      {
+        "intervalMs": 24.80000000447035,
+        "completedMs": 160.59999999403954
+      },
+      {
+        "intervalMs": 27.099999994039536,
+        "completedMs": 168.80000000447035
+      },
+      {
+        "intervalMs": 32.80000000447035,
+        "completedMs": 150.79999999701977
+      },
+      {
+        "intervalMs": 19.5,
+        "completedMs": 164.19999999552965
+      },
+      {
+        "intervalMs": 37,
+        "completedMs": 142.60000000149012
+      },
+      {
+        "intervalMs": 44.29999999701977,
+        "completedMs": 135.39999999850988
+      },
+      {
+        "intervalMs": 34.20000000298023,
+        "completedMs": 114.69999999552965
+      }
+    ],
+    "errors": []
+  },
+  "chromium_no_msaa_trainer": {
+    "kind": "react-brick-viewer",
+    "viewer": "trainer",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "samples": 0,
+    "pixelRatio": 2,
+    "canvas": [
+      2048,
+      1536
+    ],
+    "steadyFrames": [
+      {
+        "intervalMs": 25.80000000447035,
+        "completedMs": 87
+      },
+      {
+        "intervalMs": 18.399999998509884,
+        "completedMs": 76.70000000298023
+      },
+      {
+        "intervalMs": 24.799999997019768,
+        "completedMs": 56.5
+      },
+      {
+        "intervalMs": 17.80000000447035,
+        "completedMs": 44.5
+      },
+      {
+        "intervalMs": 16.69999999552965,
+        "completedMs": 31.700000002980232
+      },
+      {
+        "intervalMs": 16.600000001490116,
+        "completedMs": 20.200000002980232
+      },
+      {
+        "intervalMs": 16.100000001490116,
+        "completedMs": 9.5
+      },
+      {
+        "intervalMs": 16.899999998509884,
+        "completedMs": 6.800000004470348
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 7
+      },
+      {
+        "intervalMs": 16.80000000447035,
+        "completedMs": 6.5999999940395355
+      },
+      {
+        "intervalMs": 16.5,
+        "completedMs": 6.399999998509884
+      },
+      {
+        "intervalMs": 16.69999999552965,
+        "completedMs": 6.600000001490116
+      },
+      {
+        "intervalMs": 16.700000002980232,
+        "completedMs": 6.600000001490116
+      },
+      {
+        "intervalMs": 16.19999999552965,
+        "completedMs": 6.4000000059604645
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 6.4000000059604645
+      },
+      {
+        "intervalMs": 16.700000002980232,
+        "completedMs": 6.399999998509884
+      },
+      {
+        "intervalMs": 16.700000002980232,
+        "completedMs": 6.5
+      },
+      {
+        "intervalMs": 16.19999999552965,
+        "completedMs": 6.100000001490116
+      },
+      {
+        "intervalMs": 17.200000002980232,
+        "completedMs": 6.899999998509884
+      },
+      {
+        "intervalMs": 16.600000001490116,
+        "completedMs": 7.0999999940395355
+      }
+    ],
+    "errors": []
+  },
+  "chromium_no_msaa_grid": {
+    "kind": "react-brick-viewer",
+    "viewer": "grid",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "samples": 0,
+    "pixelRatio": 2,
+    "canvas": [
+      2048,
+      1536
+    ],
+    "steadyFrames": [
+      {
+        "intervalMs": 24.700000002980232,
+        "completedMs": 17.5
+      },
+      {
+        "intervalMs": 4.399999998509884,
+        "completedMs": 16.600000001490116
+      },
+      {
+        "intervalMs": 14.300000004470348,
+        "completedMs": 5.799999997019768
+      },
+      {
+        "intervalMs": 17,
+        "completedMs": 5
+      },
+      {
+        "intervalMs": 16.599999994039536,
+        "completedMs": 4.700000002980232
+      },
+      {
+        "intervalMs": 16.80000000447035,
+        "completedMs": 5.100000001490116
+      },
+      {
+        "intervalMs": 16.600000001490116,
+        "completedMs": 4.799999997019768
+      },
+      {
+        "intervalMs": 15.799999997019768,
+        "completedMs": 4.5
+      },
+      {
+        "intervalMs": 17.5,
+        "completedMs": 4.899999998509884
+      },
+      {
+        "intervalMs": 16.700000002980232,
+        "completedMs": 4.699999995529652
+      },
+      {
+        "intervalMs": 16.599999994039536,
+        "completedMs": 4.9000000059604645
+      },
+      {
+        "intervalMs": 16.700000002980232,
+        "completedMs": 4.899999998509884
+      },
+      {
+        "intervalMs": 16.799999997019768,
+        "completedMs": 5.600000001490116
+      },
+      {
+        "intervalMs": 16.700000002980232,
+        "completedMs": 5.700000002980232
+      },
+      {
+        "intervalMs": 16.700000002980232,
+        "completedMs": 5.399999998509884
+      },
+      {
+        "intervalMs": 16.5,
+        "completedMs": 5.5
+      },
+      {
+        "intervalMs": 16.799999997019768,
+        "completedMs": 5.600000001490116
+      },
+      {
+        "intervalMs": 16.600000001490116,
+        "completedMs": 5.699999995529652
+      },
+      {
+        "intervalMs": 16.600000001490116,
+        "completedMs": 5.699999995529652
+      },
+      {
+        "intervalMs": 16.799999997019768,
+        "completedMs": 5.799999997019768
+      }
+    ],
+    "errors": []
+  }
+}

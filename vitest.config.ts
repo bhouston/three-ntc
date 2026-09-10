@@ -4,6 +4,7 @@ import { playwright } from '@vitest/browser-playwright';
 import { webdriverio } from '@vitest/browser-webdriverio';
 
 const safari = process.env.NTC_BROWSER === 'safari';
+const webkit = process.env.NTC_BROWSER === 'webkit';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -20,10 +21,12 @@ const chromiumWebGPUArgs = [
 ];
 
 export default defineConfig({
-  optimizeDeps: { include: ['three/addons/loaders/HDRLoader.js'] },
+  optimizeDeps: { include: ['three/addons/loaders/HDRLoader.js', 'three/addons/controls/OrbitControls.js', 'react', 'react-dom/client', 'react/jsx-runtime'] },
   resolve: {
     // Tests (both projects) run against package sources, not dist builds.
     alias: {
+      'react-dom': `${root}packages/website/node_modules/react-dom`,
+      'react': `${root}packages/website/node_modules/react`,
       'three-ntc-trainer': `${root}packages/three-ntc-trainer/src/index.ts`,
       'three-ntc': `${root}packages/three-ntc/src/index.ts`,
     },
@@ -53,9 +56,12 @@ export default defineConfig({
             headless: !safari,
             screenshotFailures: false,
             provider: safari
-              ? webdriverio({ logLevel: 'error', connectionRetryCount: 0, connectionRetryTimeout: 10_000 })
-              : playwright({ launchOptions: { args: chromiumWebGPUArgs } }),
-            instances: [{ browser: safari ? 'safari' : 'chromium' }],
+              ? webdriverio({ logLevel: 'error', connectionRetryCount: 0, connectionRetryTimeout: 60_000 })
+              : playwright({
+                  launchOptions: { args: webkit ? [] : chromiumWebGPUArgs },
+                  contextOptions: { deviceScaleFactor: Number(process.env.NTC_DEVICE_SCALE_FACTOR || 1) },
+                }),
+            instances: [{ browser: safari ? 'safari' : webkit ? 'webkit' : 'chromium' }],
           },
         },
       },

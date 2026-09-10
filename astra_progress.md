@@ -401,3 +401,39 @@ No Safari shader test has executed yet; this is a blocked launch, not a pass.
 The setting is pending user action. After installing the provider, TypeScript,
 32 unit tests, and the Chromium/Metal brick profile passed. The latter reported
 raw CPU-reference MSE 7.6800803e-6 and no WebGPU errors.
+
+## Disable MSAA across website viewers (2026-09-10)
+
+The actual `NTCViewer` component reproduces a sustained WebKit slowdown with 4×
+MSAA that the offscreen tests omitted. At 1024×768 CSS pixels and DPR 2, the final
+five measured animation intervals were 50–60 ms and GPU completion delays were
+650–657 ms (including accumulated queued work). Chromium/Metal with MSAA stayed
+at 16.4–16.9 ms intervals and 10.8–12.3 ms completion delays.
+
+Per user instruction, disabled MSAA without adding FXAA in the standalone viewer,
+trainer comparison preview, and gallery; the shared training/baking renderer also
+explicitly disables it. The same WebKit Retina
+viewer now reports 16–17 ms intervals and 10–11 ms completion delays. Its test
+verifies disabled MSAA, 25 completed frames, and no WebGPU errors for standalone,
+trainer comparison, and six-sphere gallery cases. The trainer case uses a simple
+teacher material and does not run training concurrently. Raw measurements:
+[docs/metrics/runtime-msaa.json](docs/metrics/runtime-msaa.json). The model decoder
+was not changed by this mitigation. All 32 unit tests and TypeScript passed.
+
+Native Safari automation remains distinct: the user enabled the required setting,
+but Safari 27's driver subsequently timed out creating a session, even with a
+direct WebDriver request. A browser restart was requested. The successful Retina
+measurements are Playwright WebKit 26.6, not a claim of a completed Safari 27 test.
+
+
+WebKit verification after applying this across the website (medians of 20 frames
+after five warmup frames):
+
+| Component case | Frame interval | Submit-to-completion delay |
+| --- | --- | --- |
+| single | 17 ms | 11 ms |
+| trainer | 17 ms | 8 ms |
+| grid | 16.5 ms | 5.5 ms |
+
+All three cases passed in both WebKit and Chromium/Metal at DPR 2. TypeScript,
+all 32 unit tests, and the website production build passed.

@@ -38,7 +38,8 @@ export function NTCGridViewer({ slots }: { slots: NTCGridSlot[] }) {
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
     camera.position.set(0, 0, SPACING * Math.max(COLUMNS, rows) * 1.3);
 
-    const renderer = new WebGPURenderer({ canvas, antialias: true });
+    // Match NTCViewer: MSAA causes severe WebKit slowdowns at Retina resolutions.
+    const renderer = new WebGPURenderer({ canvas, antialias: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     const controls = new OrbitControls(camera, canvas);

@@ -8,7 +8,7 @@ let sharedRendererInit: Promise<any> | null = null;
 
 export function getSharedRenderer(): Promise<any> {
   sharedRendererInit ??= (async () => {
-    const renderer = new WebGPURenderer();
+    const renderer = new WebGPURenderer({ antialias: false });
     await renderer.init();
     return renderer;
   })();

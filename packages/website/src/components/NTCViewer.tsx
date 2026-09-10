@@ -110,7 +110,10 @@ export function NTCViewer({
     const camera = new THREE.PerspectiveCamera(BASE_FOV_DEG, 1, 0.1, 100);
     camera.position.set(0, 0, cameraDistance);
 
-    const renderer = new WebGPURenderer({ canvas, antialias: true });
+    // MSAA makes the neural-material viewer markedly slower in WebKit at
+    // Retina resolutions. Keep native resolution and disable MSAA; see the
+    // runtime performance report and NTCViewer.gpu.test.ts.
+    const renderer = new WebGPURenderer({ canvas, antialias: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
     const controls = new OrbitControls(camera, canvas);

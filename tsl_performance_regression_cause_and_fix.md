@@ -10,6 +10,67 @@ The user has now identified the remaining approximately 6 fps behavior as
 below are Chromium results unless explicitly labeled otherwise; they do not
 establish that Safari is fixed.
 
+## Current mitigation: disable viewer MSAA
+
+The remaining sustained slowdown was reproduced in the **actual React viewer**
+on Playwright WebKit 26.6, using the shipped brick, its HDR environment, a
+1024 × 768 CSS viewport, and device pixel ratio 2 (2048 × 1536 canvas). It depends
+strongly on **4× MSAA**. The original offscreen test omitted MSAA and missed this
+path. This is separate from the shader-expansion startup issue below.
+
+| Viewer configuration | Last five frame intervals | Last five submit-to-GPU-completion delays |
+| --- | --- | --- |
+| WebKit, 4× MSAA | 50–60 ms | 650–657 ms |
+| Chromium/Metal, 4× MSAA | 16.4–16.9 ms | 10.8–12.3 ms |
+| WebKit, MSAA disabled | 16–17 ms | 10–11 ms |
+
+Completion delays include queued GPU work; 650 ms is **not** the execution time
+of one isolated frame. The growing queue explains why the viewer can feel worse
+than its eventual frame rate alone suggests. These are short local runs; exact
+rates depend on viewport size, hardware, and other GPU work.
+
+Per the user's chosen mitigation, every website renderer explicitly uses
+`antialias: false`: `NTCViewer` (standalone and trainer comparison previews),
+`NTCGridViewer` (gallery), and the shared training/baking renderer.
+**No FXAA is enabled.** The tests keep the same Retina canvas
+size and verifies that MSAA is disabled, 25 frames complete, and no WebGPU errors
+occur in each of three cases: standalone brick, trainer comparison with a simple
+teacher material, and a six-sphere brick gallery. This profiles the trainer preview
+component, not concurrent training work. Shader interpolation annotations did not remove the MSAA slowdown in an
+experiment. We have not established the underlying WebKit/Metal compiler cause;
+this change avoids the demonstrated expensive path.
+
+
+
+WebKit verification after applying this across the website (medians of 20 frames
+after five warmup frames):
+
+| Component case | Frame interval | Submit-to-completion delay |
+| --- | --- | --- |
+| single | 17 ms | 11 ms |
+| trainer | 17 ms | 8 ms |
+| grid | 16.5 ms | 5.5 ms |
+
+All three cases passed in both WebKit and Chromium/Metal at DPR 2. TypeScript,
+all 32 unit tests, and the website production build passed.
+
+Raw observations are in [runtime-msaa.json](docs/metrics/runtime-msaa.json).
+Reproduce the actual component workload with:
+
+```sh
+pnpm exec playwright install webkit
+NTC_BROWSER=webkit NTC_DEVICE_SCALE_FACTOR=2 pnpm test:gpu packages/website/src/components/NTCViewer.gpu.test.ts
+NTC_GPU_BACKEND=metal NTC_DEVICE_SCALE_FACTOR=2 pnpm test:gpu packages/website/src/components/NTCViewer.gpu.test.ts
+pnpm test:gpu:safari packages/website/src/components/NTCViewer.gpu.test.ts
+```
+
+Installed Safari 27 is distinct from this Playwright WebKit build. After the user
+enabled remote automation, its driver advanced past the setting check but timed
+out requesting a new automation session, including on a direct WebDriver request
+outside Vitest. A Safari restart was requested. No installed-Safari frame timings
+have been obtained; the successful measurements above are explicitly WebKit and
+Chromium results.
+
 ## Evidence in the original repository
 
 The available checkout is `../three.js-v2-basic-ntc` (the requested `v3` directory
@@ -231,10 +292,10 @@ NTC_GPU_BACKEND=metal pnpm test:gpu packages/three-ntc/src/NTCBrickProfile.gpu.t
 
 Safari runs visibly and serially. The first launch reached installed Safari 27's
 native driver, but it refused session creation because **Allow remote automation**
-was disabled in Safari Settings → Developer. No Safari GPU tests or timings have
-run yet. Enabling that setting is pending; this is a driver prerequisite, not a
-passing or skipped performance test. The failed launch is intentionally reported
-as an error.
+was disabled in Safari Settings → Developer. That initial setting blocker was subsequently cleared by the user. Session creation
+then timed out inside the native driver; see the current mitigation section above.
+The failed launch is intentionally reported as an error, not a passing or skipped
+performance test.
 
 Provider setup follows [Vitest's WebdriverIO documentation](https://vitest.dev/config/browser/webdriverio).
 Safari's automation prerequisite is documented by [WebKit](https://webkit.org/blog/6900/webdriver-support-in-safari-10/).
