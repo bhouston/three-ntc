@@ -12,11 +12,12 @@ import { abs, fract } from 'three/tsl';
 // This addon applies it to the sub-texel fractional offset (tx, ty) within
 // whichever single stored grid level a given LOD selects (see
 // NTCMipBands.js) - the paper instead splits that offset across two grids
-// (a "learned interpolation" high-res G0 + bilinear low-res G1); this addon
-// has no G0/G1 split (see NTCGridPyramidModel.js's doc comment), so the
-// encoding here pairs with this addon's own 4-neighbor-tap "learned
-// interpolation" of that one selected level instead (see
-// NTCDecoderTSL.js/NTCGPUComputeTSL.js's `positionalEncoding` branch).
+// (a "learned interpolation" high-res G0 + bilinear low-res G1); here the
+// encoding pairs with the 4-neighbor-tap "learned interpolation" of the one
+// selected level (see NTCDecoderTSL.js/NTCGPUComputeTSL.js's
+// `positionalEncoding` branch). The optional `dualGrid` G1 tap (see
+// NTCGridPyramidModel.js's `computeDecoderInputSize`) is plain bilinear and
+// contributes nothing to this encoding, matching the paper.
 const POSITIONAL_ENCODING_OCTAVES = 3;
 const POSITIONAL_ENCODING_SIZE = POSITIONAL_ENCODING_OCTAVES * 2 * 2; // 12
 

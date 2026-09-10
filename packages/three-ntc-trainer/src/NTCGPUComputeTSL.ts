@@ -163,7 +163,8 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 		channelActivations,
 		mipsPerLevel,
 		maxLod,
-		positionalEncoding
+		positionalEncoding,
+		dualGrid
 	} = layout;
 
 	// See NTCGridPyramidModel.js's `computeDecoderInputSize` doc comment - the
@@ -171,7 +172,11 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 	// scalar: a plain `channels`-wide bilinear tap, or (positionalEncoding)
 	// `4 * channels` raw neighbor taps + `POSITIONAL_ENCODING_SIZE` (12) tiled
 	// positional-encoding scalars.
-	const featureWidth = positionalEncoding ? channels * 4 + POSITIONAL_ENCODING_SIZE : channels;
+	//
+	// `dualGrid` appends one more `channels`-wide plain bilinear tap of the
+	// *coarsest* level (G1, always sampled regardless of LOD) after those.
+	const g0Width = positionalEncoding ? channels * 4 + POSITIONAL_ENCODING_SIZE : channels;
+	const featureWidth = g0Width + ( dualGrid ? channels : 0 );
 
 	const gridSize = Math.max( 1, Math.ceil( Math.sqrt( batchSize ) ) );
 
@@ -264,6 +269,31 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 			levelTaps.push( { off0, off1, off2, off3, w0, w1, w2, w3, weight } );
 
+			// Bilinear blend of the 4 taps, QAT forward-quantized (STE) - the
+			// backward scatter in step 5 below still targets the *raw*
+			// latentsStorage taps untouched, exactly as it did before QAT:
+			// only this forward-read value changes.
+			const readBilinear = ( c: number ): TSLNode => {
+
+				const z_c = latentsStorage.element( off0.add( c ) ).mul( w0 )
+					.add( latentsStorage.element( off1.add( c ) ).mul( w1 ) )
+					.add( latentsStorage.element( off2.add( c ) ).mul( w2 ) )
+					.add( latentsStorage.element( off3.add( c ) ).mul( w3 ) );
+
+				return quantizeLatent !== null ?
+					quantizeLatent( z_c, quantizationRangeUniforms[ g ].min, quantizationRangeUniforms[ g ].max ) :
+					z_c;
+
+			};
+
+			// G1 (dualGrid): the coarsest level's bilinear tap, unconditionally
+			// (no `weight` gate - it's LOD-independent by design).
+			if ( dualGrid && g === gridLevels.length - 1 ) {
+
+				for ( let c = 0; c < channels; c ++ ) a0Vars[ g0Width + c ].addAssign( readBilinear( c ) );
+
+			}
+
 			if ( positionalEncoding ) {
 
 				const offs = [ off0, off1, off2, off3 ];
@@ -290,24 +320,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 			} else {
 
-				for ( let c = 0; c < channels; c ++ ) {
-
-					const z_c = latentsStorage.element( off0.add( c ) ).mul( w0 )
-						.add( latentsStorage.element( off1.add( c ) ).mul( w1 ) )
-						.add( latentsStorage.element( off2.add( c ) ).mul( w2 ) )
-						.add( latentsStorage.element( off3.add( c ) ).mul( w3 ) );
-
-					// QAT forward quantize (STE) - the backward scatter in step 5
-					// below still targets the *raw* latentsStorage taps untouched,
-					// exactly as it did before QAT: only this forward-read value
-					// changes.
-					const quantized_c = quantizeLatent !== null ?
-						quantizeLatent( z_c, quantizationRangeUniforms[ g ].min, quantizationRangeUniforms[ g ].max ) :
-						z_c;
-
-					a0Vars[ c ].addAssign( quantized_c.mul( weight ) );
-
-				}
+				for ( let c = 0; c < channels; c ++ ) a0Vars[ c ].addAssign( readBilinear( c ).mul( weight ) );
 
 			}
 
@@ -468,7 +481,29 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 		// 12 positional-encoding slots need no scatter at all: they're a pure
 		// function of `uv` (via `selTx`/`selTy`), not of any trainable
 		// latent, so gradA0 there simply isn't read here.
+		//
+		// `dualGrid`: G1's `channels` slots scatter bilinearly into the
+		// coarsest level with no `weight` gate (forward read it
+		// unconditionally). When that level is also the selected G0, both
+		// slots' gradients land on the same texels - correct, the chain rule
+		// sums them.
 		const gradA0Base = actBase.add( int( gradA0Offset ) );
+
+		const scatterBilinear = ( taps: typeof levelTaps[ number ], c: number, gradZ_c: TSLNode ) => {
+
+			atomicAdd( gradLatentsAtomic.element( taps.off0.add( c ) ), int( gradZ_c.mul( taps.w0 ).mul( float( FIXED_POINT_SCALE ) ) ) );
+			atomicAdd( gradLatentsAtomic.element( taps.off1.add( c ) ), int( gradZ_c.mul( taps.w1 ).mul( float( FIXED_POINT_SCALE ) ) ) );
+			atomicAdd( gradLatentsAtomic.element( taps.off2.add( c ) ), int( gradZ_c.mul( taps.w2 ).mul( float( FIXED_POINT_SCALE ) ) ) );
+			atomicAdd( gradLatentsAtomic.element( taps.off3.add( c ) ), int( gradZ_c.mul( taps.w3 ).mul( float( FIXED_POINT_SCALE ) ) ) );
+
+		};
+
+		if ( dualGrid ) {
+
+			const taps = levelTaps[ gridLevels.length - 1 ];
+			for ( let c = 0; c < channels; c ++ ) scatterBilinear( taps, c, activationsStorage.element( gradA0Base.add( g0Width + c ) ) );
+
+		}
 
 		for ( let g = 0; g < gridLevels.length; g ++ ) {
 
@@ -492,16 +527,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 			} else {
 
-				for ( let c = 0; c < channels; c ++ ) {
-
-					const gradZ_c = activationsStorage.element( gradA0Base.add( c ) ).mul( taps.weight );
-
-					atomicAdd( gradLatentsAtomic.element( taps.off0.add( c ) ), int( gradZ_c.mul( taps.w0 ).mul( float( FIXED_POINT_SCALE ) ) ) );
-					atomicAdd( gradLatentsAtomic.element( taps.off1.add( c ) ), int( gradZ_c.mul( taps.w1 ).mul( float( FIXED_POINT_SCALE ) ) ) );
-					atomicAdd( gradLatentsAtomic.element( taps.off2.add( c ) ), int( gradZ_c.mul( taps.w2 ).mul( float( FIXED_POINT_SCALE ) ) ) );
-					atomicAdd( gradLatentsAtomic.element( taps.off3.add( c ) ), int( gradZ_c.mul( taps.w3 ).mul( float( FIXED_POINT_SCALE ) ) ) );
-
-				}
+				for ( let c = 0; c < channels; c ++ ) scatterBilinear( taps, c, activationsStorage.element( gradA0Base.add( c ) ).mul( taps.weight ) );
 
 			}
 

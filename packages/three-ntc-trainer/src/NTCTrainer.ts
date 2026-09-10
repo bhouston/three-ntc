@@ -66,6 +66,9 @@ const DEFAULT_OPTIONS = {
 	// addon's original plain bilinear tap. Larger/slower decoder input, may
 	// reconstruct sharper sub-grid-resolution detail.
 	positionalEncoding: false,
+	// Optional (default off) - the paper's G0/G1 grid pair, see
+	// NTCGridPyramidModel.js's `computeDecoderInputSize` doc comment.
+	dualGrid: false,
 	outputChannels: 3,
 	batchSize: 4096,
 	learningRate: 0.01,
@@ -100,6 +103,7 @@ interface NTCTrainerOptions {
 	hiddenSizes?: number[];
 	hiddenActivation?: string;
 	positionalEncoding?: boolean;
+	dualGrid?: boolean;
 	outputChannels?: number;
 	batchSize?: number;
 	learningRate?: number;

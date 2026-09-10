@@ -86,7 +86,9 @@ function encodeNTC( cpuModel: any, channelClassification: any, options: any = {}
 			// NTCGridPyramidModel.js's `computeDecoderInputSize` doc comment.
 			// Only written when true, since false is the default a loader
 			// already falls back to.
-			positionalEncoding: cpuModel.positionalEncoding || undefined
+			positionalEncoding: cpuModel.positionalEncoding || undefined,
+			// Same optional/additive pattern as `positionalEncoding`.
+			dualGrid: cpuModel.dualGrid || undefined
 		},
 		outputChannels: cpuModel.outputChannels,
 		// Omitted entirely (rather than always written as the 6-number

@@ -43,6 +43,7 @@ interface NTCTextureModelLayout {
 	maxLod: number;
 	inputSize: number;
 	positionalEncoding: boolean;
+	dualGrid: boolean;
 	gridLevels: GridLevelLayout[];
 	totalLatents: number;
 	mlpLayers: MLPLayerLayout[];
@@ -74,7 +75,7 @@ interface NTCGPUModelOptions extends NTCGridPyramidOptions {
  */
 function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextureModelLayout {
 
-	const { channels, levels: requestedLevels, baseResolution, mipsPerLevel, hiddenSizes, hiddenActivation, outputChannels, textureResolution, positionalEncoding } = resolveNTCGridPyramidOptions( options );
+	const { channels, levels: requestedLevels, baseResolution, mipsPerLevel, hiddenSizes, hiddenActivation, outputChannels, textureResolution, positionalEncoding, dualGrid } = resolveNTCGridPyramidOptions( options );
 	// One entry per output channel naming its output nonlinearity (see
 	// ./NTCOutputActivations.js); undefined/omitted entries (the
 	// default, `options.channelActivations` unset) mean plain linear, i.e.
@@ -111,7 +112,7 @@ function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextu
 	// doc comment for the two widths: plain bilinear tap, or - when
 	// `positionalEncoding` is on - 4 concatenated raw taps + positional
 	// encoding).
-	const inputSize = computeDecoderInputSize( channels, positionalEncoding );
+	const inputSize = computeDecoderInputSize( channels, positionalEncoding, dualGrid );
 	const sizes = [ inputSize, ...hiddenSizes, outputChannels ];
 	const mlpLayers: MLPLayerLayout[] = [];
 	let weightOffset = 0;
@@ -193,6 +194,7 @@ function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextu
 		maxLod,
 		inputSize,
 		positionalEncoding,
+		dualGrid,
 		gridLevels,
 		totalLatents,
 		mlpLayers,

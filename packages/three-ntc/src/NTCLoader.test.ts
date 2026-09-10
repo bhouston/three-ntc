@@ -8,9 +8,9 @@ import { encodeUint8Base64, encodeMLPLayersBase64 } from './NTCBinaryCodec.js';
 // level, a single-layer linear decoder, one active channel - just enough to
 // exercise the `latents.positionalEncoding` round-trip (see
 // NTCGridPyramidModel.js/NTCDecoderTSL.js, three-ntc-trainer).
-function buildManifest(positionalEncoding?: boolean) {
+function buildManifest(positionalEncoding?: boolean, dualGrid?: boolean) {
   const channels = 1;
-  const inputSize = positionalEncoding ? 4 * channels + 12 + 1 : channels + 1;
+  const inputSize = (positionalEncoding ? 4 * channels + 12 : channels) + (dualGrid ? channels : 0) + 1;
 
   return {
     format: FORMAT,
@@ -31,6 +31,7 @@ function buildManifest(positionalEncoding?: boolean) {
         },
       ],
       ...(positionalEncoding !== undefined ? { positionalEncoding } : {}),
+      ...(dualGrid !== undefined ? { dualGrid } : {}),
     },
     mlp: encodeMLPLayersBase64([
       { inputSize, outputSize: 1, activation: 'linear', weights: new Float32Array(inputSize).fill(0), biases: new Float32Array(1) },
@@ -43,6 +44,13 @@ describe('NTCLoader positionalEncoding flag', () => {
   it('defaults to false when the manifest predates the field', () => {
     const { cpuModel } = new NTCLoader().parse(buildManifest(undefined) as any);
     expect(cpuModel.positionalEncoding).toBe(false);
+    expect(cpuModel.dualGrid).toBe(false);
+  });
+
+  it('round-trips dualGrid, sized for the extra G1 tap', () => {
+    const { cpuModel } = new NTCLoader().parse(buildManifest(false, true) as any);
+    expect(cpuModel.dualGrid).toBe(true);
+    expect(cpuModel.decoder.layers[0].inputSize).toBe(1 + 1 + 1);
   });
 
   it('round-trips an explicit true, sized for the 4-tap + posenc decoder input', () => {

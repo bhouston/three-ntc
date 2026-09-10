@@ -31,6 +31,9 @@ export interface NTCCpuModel {
 	// `computeDecoderInputSize` doc comment and `evaluateNeuralTextureRaw`
 	// below.
 	positionalEncoding?: boolean;
+	// Optional (default false/absent) - the paper's G0/G1 pair, see
+	// `computeDecoderInputSize` and `sampleCoarsestLevelBilinear` below.
+	dualGrid?: boolean;
 }
 
 /**
@@ -114,6 +117,47 @@ function evaluatePositionalEncodingFeatures( uvNode: any, cpuModel: NTCCpuModel,
 }
 
 /**
+ * The `dualGrid` G1 tap (see NTCGridPyramidModel.js's
+ * `computeDecoderInputSize`): one plain bilinear, LOD-independent sample of
+ * the *coarsest* stored level. Reads the mip-chain texture at that level's
+ * own native physical mip (band start, see NTCHalfFloatTexture.js's
+ * `buildMipChainLevels`) when available, else - the `positionalEncoding`
+ * path, which has only raw `NearestFilter` per-level textures - blends the
+ * 4 neighbor texels manually, exactly as NTCGPUComputeTSL.js's training
+ * kernel does.
+ */
+function sampleCoarsestLevelBilinear( uvNode: any, cpuModel: NTCCpuModel, mipChainTexture: any, levelTextures: any[] | null ): any[] {
+
+	const channels = cpuModel.channels;
+	const last = cpuModel.grids.length - 1;
+
+	if ( mipChainTexture ) {
+
+		const sample = textureLevel( mipChainTexture, uvNode, float( last * cpuModel.mipsPerLevel ) );
+		return [ sample.x, sample.y, sample.z, sample.w ].slice( 0, channels );
+
+	}
+
+	const { width, height } = cpuModel.grids[ last ];
+	const x = uvNode.x.mul( width ).sub( 0.5 );
+	const y = uvNode.y.mul( height ).sub( 0.5 );
+	const x0 = floor( x );
+	const y0 = floor( y );
+	const tx = x.sub( x0 );
+	const ty = y.sub( y0 );
+
+	const tap = ( dx: number, dy: number ) => textureLevel( levelTextures![ last ], vec2( x0.add( dx + 0.5 ).div( width ), y0.add( dy + 0.5 ).div( height ) ), 0 );
+	const s00 = tap( 0, 0 ), s10 = tap( 1, 0 ), s01 = tap( 0, 1 ), s11 = tap( 1, 1 );
+	const blended = s00.mul( float( 1 ).sub( tx ).mul( float( 1 ).sub( ty ) ) )
+		.add( s10.mul( tx.mul( float( 1 ).sub( ty ) ) ) )
+		.add( s01.mul( float( 1 ).sub( tx ).mul( ty ) ) )
+		.add( s11.mul( tx.mul( ty ) ) );
+
+	return [ blended.x, blended.y, blended.z, blended.w ].slice( 0, channels );
+
+}
+
+/**
  * Builds the TSL expression that evaluates the trained mip pyramid + MLP
  * decoder at `uvNode`, returning the raw array of `outputChannels` scalar
  * nodes (one per trained channel - callers slice/decode these into whatever
@@ -166,6 +210,10 @@ function evaluateNeuralTextureRaw( uvNode: any, cpuModel: NTCCpuModel, mipChainT
 		features = [ sample.x, sample.y, sample.z, sample.w ].slice( 0, channels );
 
 	}
+
+	// G1 (dualGrid) - concatenated after G0's taps, before the LOD scalar,
+	// matching NTCGPUComputeTSL.js's input layout exactly.
+	if ( cpuModel.dualGrid ) features.push( ...sampleCoarsestLevelBilinear( uvNode, cpuModel, mipChainTexture, levelTextures ) );
 
 	// Append the normalized LOD value as the decoder's final input component
 	// - must match NTCGridPyramidModel.js's `computeDecoderInputSize` /

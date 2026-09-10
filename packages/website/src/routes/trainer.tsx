@@ -79,6 +79,7 @@ type FormValues = {
   hiddenSize: number;
   hiddenActivation: string;
   positionalEncoding: boolean;
+  dualGrid: boolean;
   batchSize: number;
   iterations: number;
   learningRate: number;
@@ -95,7 +96,8 @@ const DEFAULT_VALUES: FormValues = {
   baseResolution: 256,
   hiddenSize: 8,
   hiddenActivation: 'relu',
-  positionalEncoding: false,
+  positionalEncoding: true,
+  dualGrid: true,
   batchSize: 8192,
   iterations: 10000,
   learningRate: 0.01,
@@ -393,6 +395,7 @@ function TrainerPage() {
         hiddenSizes: [Number(values.hiddenSize), Number(values.hiddenSize)],
         hiddenActivation: values.hiddenActivation,
         positionalEncoding: values.positionalEncoding,
+        dualGrid: values.dualGrid,
         outputChannels: channelClassification.totalChannels,
         channelActivations: buildChannelActivations(channelClassification.activeChannels) as string[],
         batchSize: Number(values.batchSize),
@@ -452,12 +455,12 @@ function TrainerPage() {
     const resolutions = computeGridLevels(Number(values.baseResolution), Number(values.levels));
     const latentTexels = computeGridLatentTexels(resolutions);
     const gridParams = latentTexels * channels;
-    const inputSize = computeDecoderInputSize(channels, values.positionalEncoding);
+    const inputSize = computeDecoderInputSize(channels, values.positionalEncoding, values.dualGrid);
     const mlpSpec = { inputSize, hiddenSize: Number(values.hiddenSize), hiddenLayers: 2, outputSize: outputChannels };
     const mlpParams = computeMLPParamCount(mlpSpec);
     const flops = computeMLPFlops(mlpSpec);
     return formatModelSizeSummary(computeModelFootprint({ gridParams, mlpParams, flops }));
-  }, [channelClassification, values.baseResolution, values.levels, values.hiddenSize, values.positionalEncoding]);
+  }, [channelClassification, values.baseResolution, values.levels, values.hiddenSize, values.positionalEncoding, values.dualGrid]);
 
   const applyPreset = useCallback((name: string) => {
     form.setFieldValue('preset', name);
@@ -609,7 +612,15 @@ function TrainerPage() {
               <form.Field name="positionalEncoding">
                 {(field) => (
                   <Field orientation="horizontal">
-                    <FieldLabel htmlFor={field.name}>Positional encoding (NTC paper §4.3)</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Positional encoding</FieldLabel>
+                    <Switch id={field.name} checked={field.state.value} onCheckedChange={(checked) => field.handleChange(checked)} />
+                  </Field>
+                )}
+              </form.Field>
+              <form.Field name="dualGrid">
+                {(field) => (
+                  <Field orientation="horizontal">
+                    <FieldLabel htmlFor={field.name}>Dual grid G0/G1</FieldLabel>
                     <Switch id={field.name} checked={field.state.value} onCheckedChange={(checked) => field.handleChange(checked)} />
                   </Field>
                 )}
