@@ -40,7 +40,10 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 5. G0/G1 pairs and feature capacity: complete. Independent half-resolution G1
    grids and 8/12-channel support pass CPU layout/roundtrip and GPU decoder tests.
    This adds latent capacity; the comparison is not at equal bitrate.
-6. Resolution-aware mip bands: pending.
+6. Resolution-aware mip bands: complete. Unit tests cover the paper's
+   1024/256 mapping, boundaries, and other resolution ratios. All 25 unit tests
+   and TypeScript checks pass. The waves/learned case regresses at this budget;
+   the aggregate improves because coarse checker mips now use the right grids.
 7. Discrete targets and decoded-value filtering: pending.
 8. Preset consistency and paper baseline: pending.
 9. Bounded noise quantization: pending.
@@ -53,12 +56,10 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 | baseline | 0.01294998 | 18.8773 | — |
 | step1: native features | 0.01176782 | 19.2930 | -9.13% |
 | step2: quantize taps before interpolation | 0.01153805 | 19.3787 | -1.95% |
-
 | step3: independent full-domain sampling | 0.01007776 | 19.9664 | -12.66% |
-
 | step4: exclude frozen latent gradients | 0.01007776 | 19.9664 | 0.00% |
-
 | step5: independent G0/G1 pairs | 0.01003036 | 19.9868 | -0.47% |
+| step6: resolution-aware feature mip bands | 0.00852505 | 20.6930 | -15.01% |
 
 ## Per-change details
 
@@ -113,3 +114,16 @@ Compared with step4. Six quality cases passed (finite error only; no PSNR thresh
 | checker | true | 0.00987279 | 20.056 | 3.96% |
 | waves | false | 0.02407228 | 16.185 | 0.44% |
 | waves | true | 0.00317351 | 24.985 | -9.07% |
+
+### step6: resolution-aware feature mip bands
+
+Compared with step5. Six quality cases passed (finite error only; no PSNR threshold).
+
+| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
+|---|---|---:|---:|---:|
+| smooth | false | 0.00257973 | 25.884 | -30.20% |
+| smooth | true | 0.00230994 | 26.364 | 3.56% |
+| checker | false | 0.00915303 | 20.384 | -46.59% |
+| checker | true | 0.00909203 | 20.413 | -7.91% |
+| waves | false | 0.02384627 | 16.226 | -0.94% |
+| waves | true | 0.00416928 | 23.799 | 31.38% |

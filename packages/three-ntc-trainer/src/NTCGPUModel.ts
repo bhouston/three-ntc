@@ -1,3 +1,4 @@
+import { computeFeatureLodOffset } from 'three-ntc';
 import { StorageBufferAttribute } from 'three/webgpu';
 import { storage, uniform } from 'three/tsl';
 import { FIXED_POINT_SCALE } from './NTCGPUTrainingConstants.js';
@@ -45,6 +46,7 @@ interface NTCTextureModelLayout {
 	channelActivations: string[] | null;
 	textureResolution: number;
 	maxLod: number;
+	lodOffset: number;
 	inputSize: number;
 	positionalEncoding: boolean;
 	dualGrid: boolean;
@@ -93,6 +95,7 @@ function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextu
 	// Mirrors NTCGridPyramidModel.js's `maxLod` derivation exactly - see its
 	// doc comment.
 	const resolvedTextureResolution = textureResolution || resolutions[ 0 ];
+	const lodOffset = computeFeatureLodOffset(resolvedTextureResolution,resolutions[0]);
 	const maxLod = Math.ceil( Math.log2( Math.max( 1, resolvedTextureResolution ) ) );
 
 	const gridLevels: GridLevelLayout[] = [];
@@ -199,6 +202,7 @@ function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextu
 		channelActivations,
 		textureResolution: resolvedTextureResolution,
 		maxLod,
+		lodOffset,
 		inputSize,
 		positionalEncoding,
 		dualGrid,

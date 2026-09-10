@@ -178,7 +178,7 @@ export function runtimeFeaturesCpu(cpuModel: any, u: number, v: number, lod: num
   const { channels, grids, mipsPerLevel, maxLod } = cpuModel;
   let features: number[];
   if (cpuModel.positionalEncoding) {
-    const g = selectFeatureLevel(lod, grids.length, mipsPerLevel);
+    const g = selectFeatureLevel(lod, grids.length, mipsPerLevel, cpuModel.lodOffset);
     const grid = grids[g];
     const x = u * grid.width - 0.5;
     const y = v * grid.height - 0.5;
@@ -196,11 +196,11 @@ export function runtimeFeaturesCpu(cpuModel: any, u: number, v: number, lod: num
     }
     features.push(...positionalEncoding(x - x0, y - y0));
   } else {
-    const grid = grids[selectFeatureLevel(lod, grids.length, mipsPerLevel)];
+    const grid = grids[selectFeatureLevel(lod, grids.length, mipsPerLevel, cpuModel.lodOffset)];
     features = bilinearWrap(grid.data, grid.width, grid.height, channels, u, v, roundHalf);
   }
   if (cpuModel.dualGrid) {
-    const last = cpuModel.lowResGrids?.[selectFeatureLevel(lod,grids.length,mipsPerLevel)] ?? grids[grids.length - 1];
+    const last = cpuModel.lowResGrids?.[selectFeatureLevel(lod,grids.length,mipsPerLevel,cpuModel.lodOffset)] ?? grids[grids.length - 1];
     features.push(...bilinearWrap(last.data, last.width, last.height, last.channels, u, v, roundHalf));
   }
   features.push(lod / Math.max(1, maxLod));

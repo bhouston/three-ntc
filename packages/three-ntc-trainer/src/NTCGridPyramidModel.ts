@@ -1,3 +1,4 @@
+import { computeFeatureLodOffset } from 'three-ntc';
 import { Matrix3 } from 'three';
 import { POSITIONAL_ENCODING_SIZE } from 'three-ntc';
 import { createMLP, type MLP } from './NTCMLP.js';
@@ -124,6 +125,7 @@ interface NTCGridPyramidModel {
 	outputChannels: number;
 	textureResolution: number;
 	maxLod: number;
+	lodOffset: number;
 	uvTransform: any;
 	quantizationRange?: Array<[ number, number ]> | null;
 	quantization?: { mode: string };
@@ -155,6 +157,7 @@ function createNTCGridPyramidModel( options: NTCGridPyramidOptions, random: () =
 	const grids = resolutions.map( ( resolution ) => createLatentGrid( resolution, resolution, channels, random ) );
 
 	const resolvedTextureResolution = textureResolution || resolutions[ 0 ];
+	const lodOffset = computeFeatureLodOffset(resolvedTextureResolution,resolutions[0]);
 	const maxLod = Math.ceil( Math.log2( Math.max( 1, resolvedTextureResolution ) ) );
 
 	const inputSize = computeDecoderInputSize( channels, positionalEncoding, dualGrid, lowResChannels );
@@ -162,7 +165,7 @@ function createNTCGridPyramidModel( options: NTCGridPyramidOptions, random: () =
 
 	const lowResGrids = dualGrid ? resolutions.map(r => createLatentGrid(Math.max(1, Math.floor(r/2)), Math.max(1, Math.floor(r/2)), lowResChannels, random)) : [];
 
-	return { channels, lowResChannels, lowResGrids, levels, mipsPerLevel, resolutions, grids, decoder, hiddenSizes, hiddenActivation, outputChannels, textureResolution: resolvedTextureResolution, maxLod, uvTransform, positionalEncoding, dualGrid };
+	return { channels, lowResChannels, lowResGrids, levels, mipsPerLevel, resolutions, grids, decoder, hiddenSizes, hiddenActivation, outputChannels, textureResolution: resolvedTextureResolution, maxLod, lodOffset, uvTransform, positionalEncoding, dualGrid };
 
 }
 

@@ -136,7 +136,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 		// sampleTrainingLod's doc comment - and the *stored* grid level it
 		// maps onto (see this function's doc comment and NTCMipBands.js).
 		const lod = samples.lod ?? trainingLodTSL( sampleIdx, stepUniform, maxLod );
-		const selectedLevel = selectFeatureLevelTSL( lod, layout.levels, mipsPerLevel );
+		const selectedLevel = selectFeatureLevelTSL( lod, layout.levels, mipsPerLevel, layout.lodOffset );
 
 		const targetComponents: TSLNode[] = [];
 

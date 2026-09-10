@@ -22,6 +22,7 @@ export interface NTCCpuModel {
 	levels: number;
 	mipsPerLevel: number;
 	maxLod: number;
+	lodOffset?: number;
 	grids: NTCGrid[];
 	lowResGrids?: NTCGrid[];
 	decoder: { layers: MLPLayer[] };
@@ -61,7 +62,7 @@ function gridFeatures(uv: any, grid: NTCGrid, texture: any, concatenate: boolean
 }
 
 function sampleFeatures(uv: any, model: NTCCpuModel, textures: any[], lod: any): any[] {
-	const selected=selectFeatureLevelTSL(lod,model.grids.length,model.mipsPerLevel);
+	const selected=selectFeatureLevelTSL(lod,model.grids.length,model.mipsPerLevel,model.lodOffset);
 	const highWidth=model.positionalEncoding ? 4*model.channels+12 : model.channels;
 	const lowChannels=model.lowResGrids?.[0]?.channels ?? model.channels;
 	const features:any[]=Array.from({length:highWidth+(model.dualGrid?lowChannels:0)},()=>float(0));

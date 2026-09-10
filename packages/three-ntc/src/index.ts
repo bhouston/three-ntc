@@ -29,7 +29,7 @@ export type { NTCOutputType, EffectiveTypeChannel } from './NTCOutputTypes.js';
 export { sigmoidTSL, applyChannelActivation, channelActivationDerivativeFromOutput } from './NTCOutputActivations.js';
 export type { NTCActivation } from './NTCOutputActivations.js';
 
-export { selectFeatureLevel, selectFeatureLevelTSL } from './NTCMipBands.js';
+export { computeFeatureLodOffset, selectFeatureLevel, selectFeatureLevelTSL } from './NTCMipBands.js';
 
 export {
 	computeTiledPositionalEncodingTSL,
