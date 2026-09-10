@@ -5,6 +5,7 @@ import { useGoogleAnalytics } from 'tanstack-router-ga4';
 
 import type { NTCSamplingMode } from 'three-ntc';
 import { SamplingModeSelect } from '@/components/SamplingModeSelect';
+import { ModelInfo } from '@/components/ModelInfo';
 import { NTCViewer } from '@/components/NTCViewer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -184,52 +185,11 @@ function ViewerPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Material info</CardTitle>
+            <CardTitle>Model Info</CardTitle>
           </CardHeader>
           <CardContent>
             {loaded ? (
-              <dl className="flex flex-col gap-2 text-sm">
-                <div>
-                  <dt className="text-muted-foreground">Name</dt>
-                  <dd>{loaded.name}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Latent grids</dt>
-                  <dd>
-                    {loaded.grids.length} (
-                    {loaded.grids.map((g) => `${g.width}×${g.height}×${g.channels} @ ${g.bits}-bit`).join(', ')})
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">MLP layers</dt>
-                  <dd>
-                    {loaded.mlpLayers.length} (
-                    {[loaded.mlpLayers[0]?.inputSize, ...loaded.mlpLayers.map((l) => l.outputSize)].join('→')})
-                  </dd>
-                </div>
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="text-muted-foreground">
-                      <th className="pr-4 font-normal">Channel</th>
-                      <th className="font-normal">Source</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {loaded.activeChannels.map((key) => (
-                      <tr key={key}>
-                        <td className="pr-4">{key}</td>
-                        <td>MLP</td>
-                      </tr>
-                    ))}
-                    {loaded.constantChannels.map((key) => (
-                      <tr key={key}>
-                        <td className="pr-4">{key}</td>
-                        <td>Fixed</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </dl>
+              <ModelInfo info={loaded.info} samplingMode={samplingMode} />
             ) : (
               <p className="text-sm text-muted-foreground">No material loaded yet.</p>
             )}

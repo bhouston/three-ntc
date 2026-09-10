@@ -615,3 +615,20 @@ manual layer arithmetic, and Chromium/WebKit browser tests drive the sampling
 selector and verify the displayed value changes and restores correctly. All 54 unit
 tests, TypeScript, and the website production build passed. Training and rendering
 math are unchanged.
+
+## Shared Model Info cards (2026-09-10)
+
+The trainer and viewer now use the same Model Info content: name, encoded payload,
+runtime estimate, latent grids (G0 and G1 with bit depths), MLP layers, decoder
+parameters, and sampling-aware FLOPs. Removed the requested current-settings/overhead
+disclaimer. The Channels section starts collapsed and its count includes active
+channel rows only; expanding it shows both active (MLP) and nondefault fixed channels.
+
+Loaded model information comes from its actual architecture and encoded blocks, so
+it also supports G1 grids and differing grid bit depths rather than reconstructing
+an assumed trainer preset. Trainer information continues to follow the current form.
+A before/after export fixture verifies identical displayed sizes, grids, layers,
+and channel lists (zero byte discrepancy). Browser tests verify initial collapsed
+state, expansion/collapse, active-only counts, and sampling-dependent FLOP updates.
+Both browser tests passed in Chromium and WebKit; all 55 unit tests, TypeScript,
+and the website production build passed. Rendering and training math are unchanged.

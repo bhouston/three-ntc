@@ -29,7 +29,7 @@ it('updates the visible card as the trainer form changes and restores values whe
   document.body.append(fixture);
   const root = createRoot(fixture);
   const click = (label: string) => [...fixture.querySelectorAll('button')].find(button => button.textContent === label)!.click();
-  const payload = () => fixture.querySelector('dd')?.textContent;
+  const payload = () => [...fixture.querySelectorAll('dt')].find(term => term.textContent === 'Encoded payload')?.nextElementSibling?.textContent;
   try {
     root.render(createElement(Harness));
     await expect.poll(payload).toContain('2,550 bytes');

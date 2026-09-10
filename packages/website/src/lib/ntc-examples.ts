@@ -1,5 +1,6 @@
-import { constantEqualsDefault, getChannel, NTCLoader, NTCNodeMaterial } from 'three-ntc';
+import { NTCLoader, NTCNodeMaterial } from 'three-ntc';
 
+import { loadedModelInfo, type ModelInfoData } from './model-info.js';
 import { getSharedRenderer } from '@/lib/renderer';
 
 export const EXAMPLE_FILES = [
@@ -33,6 +34,7 @@ export interface LoadedMaterialMLPLayer {
 }
 
 export interface LoadedMaterial {
+  info: ModelInfoData;
   name: string;
   channels: string[];
   activeChannels: string[];
@@ -50,26 +52,11 @@ export async function parseNtc(text: string): Promise<LoadedMaterial> {
     renderer: await getSharedRenderer(),
     lodBias: DEFAULT_LOD_BIAS,
   });
-  const activeChannels = (channelClassification?.activeChannels ?? []).map((c: any) => c.key);
-  // A constant channel that just equals its declared default (i.e. was never
-  // meaningfully set on the source material) isn't actionable info for a
-  // viewer - drop it the same way NTCNodeMaterial itself skips applying it
-  // (see NTCFormat's constantEqualsDefault).
-  const constantChannels = Object.entries(channelClassification?.constantValues ?? {})
-    .filter(([key, value]) => !constantEqualsDefault(getChannel(key), value))
-    .map(([key]) => key);
-  // Every stored grid level is quantized to a fixed bit depth per the
-  // `.ntc` format (`NTCManifestLevel.dtype`, currently always 'uint8') -
-  // read straight off the manifest since `cpuModel.grids` (already decoded
-  // to float) no longer carries it.
-  const grids = (cpuModel?.grids ?? []).map((g: any, i: number) => ({
-    width: g.width,
-    height: g.height,
-    channels: g.channels,
-    bits: parseInt((manifest?.latents?.levels?.[i]?.dtype ?? 'uint8').replace(/\D/g, ''), 10),
-  }));
+  const info = loadedModelInfo(manifest, cpuModel, channelClassification, name ?? 'Untitled');
+  const {activeChannels, constantChannels, grids} = info;
   const mlpLayers = (cpuModel?.decoder?.layers ?? []).map((l: any) => ({ inputSize: l.inputSize, outputSize: l.outputSize }));
   return {
+    info,
     name: name ?? 'Untitled',
     channels: [...activeChannels, ...constantChannels],
     activeChannels,

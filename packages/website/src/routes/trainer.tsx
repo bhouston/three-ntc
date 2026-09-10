@@ -725,10 +725,10 @@ function TrainerPage() {
       <div className="order-3 grid grid-cols-1 gap-4 sm:grid-cols-[220px_1fr] lg:col-start-2 lg:row-start-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Model size</CardTitle>
+              <CardTitle className="text-sm">Model Info</CardTitle>
             </CardHeader>
             <CardContent>
-              <ModelSizeSummary settings={values} outputChannels={channelClassification?.totalChannels ?? MAX_TOTAL_CHANNELS} />
+              <ModelSizeSummary name={sourceName || 'Untitled'} classification={channelClassification} settings={values} outputChannels={channelClassification?.totalChannels ?? MAX_TOTAL_CHANNELS} />
             </CardContent>
           </Card>
 
