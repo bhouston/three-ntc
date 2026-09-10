@@ -59,3 +59,14 @@ describe('NTCLoader positionalEncoding flag', () => {
     expect(cpuModel.decoder.layers[0].inputSize).toBe(4 * 1 + 12 + 1);
   });
 });
+
+it('preserves legacy emissive sigmoid and reads explicit HDR activations', () => {
+  const manifest = buildManifest() as any;
+  manifest.channels.activeKeys = ['emissive'];
+  const loader = new NTCLoader();
+  expect(loader.parse(manifest).channelClassification.activeChannels[0].activation).toBe('sigmoid');
+  manifest.channels.encodings = {emissive:{activation:'softplus'}};
+  expect(loader.parse(manifest).channelClassification.activeChannels[0].activation).toBe('softplus');
+  manifest.channels.encodings.emissive.activation = 'unknown';
+  expect(()=>loader.parse(manifest)).toThrow(/Invalid activation/);
+});

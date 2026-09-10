@@ -203,10 +203,11 @@ function simpleScalarChannel( key: string, { activation, clampRange, defaultValu
  * matching this addon's existing behavior of not round-tripping a distinct
  * intensity scalar for these two channels.
  */
-function colorIntensityChannel( key: string, { nodeKey, colorProperty, intensityProperty, applyActive, applyConstant }: {
+function colorIntensityChannel( key: string, { nodeKey, colorProperty, intensityProperty, applyActive, applyConstant, activation = 'sigmoid' }: {
 	nodeKey: string;
 	colorProperty: string;
 	intensityProperty: string;
+	activation?: NTCActivation;
 	applyActive: ( targetMaterial: any, sliceNode: any ) => void;
 	applyConstant: ( targetMaterial: any, constantValue: any ) => void;
 } ): NTCChannel {
@@ -214,10 +215,10 @@ function colorIntensityChannel( key: string, { nodeKey, colorProperty, intensity
 	return {
 		key,
 		size: 3,
-		activation: 'sigmoid',
+		activation,
 		type: 'color',
 		nodeKeys: [ nodeKey ],
-		clampRange: [ 0, 1 ],
+		clampRange: activation === 'sigmoid' ? [0,1] : null,
 		defaultValue: [ 0, 0, 0 ],
 		resolveNode: ( material: any ) => {
 
@@ -608,6 +609,7 @@ const CHANNELS: NTCChannel[] = [
 
 	} )(),
 	colorIntensityChannel( 'emissive', {
+		activation: 'softplus',
 		nodeKey: 'emissiveNode', colorProperty: 'emissive', intensityProperty: 'emissiveIntensity',
 		applyActive: ( targetMaterial: any, sliceNode: any ) => {
 

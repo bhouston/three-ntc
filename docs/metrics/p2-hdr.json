@@ -1,0 +1,23 @@
+[
+  {
+    "kind": "hdr-emission",
+    "size": 32,
+    "iterations": 420,
+    "batchSize": 512,
+    "seed": 7,
+    "metrics": [
+      {
+        "mode": "legacy",
+        "activation": "sigmoid",
+        "mse": 12.7763671875,
+        "trainingMs": 3382
+      },
+      {
+        "mode": "hdr",
+        "activation": "softplus",
+        "mse": 0.050043479849894844,
+        "trainingMs": 3577.7999999970198
+      }
+    ]
+  }
+]

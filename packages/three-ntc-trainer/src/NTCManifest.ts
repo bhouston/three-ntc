@@ -2,7 +2,7 @@
 // live in the sibling `three-ntc` runtime package, since NTCLoader (runtime,
 // no training dependencies) needs them too.
 
-import { FORMAT, VERSION, encodeUvTransform, isIdentityUvTransform } from 'three-ntc';
+import { FORMAT, VERSION, getChannel, encodeUvTransform, isIdentityUvTransform } from 'three-ntc';
 import { LATENT_CODECS, encodeMLPLayersBase64, type LatentDtype } from 'three-ntc';
 import { computeLatentRanges, type GridLevelLayout } from './NTCQuantization.js';
 
@@ -27,14 +27,8 @@ import { computeLatentRanges, type GridLevelLayout } from './NTCQuantization.js'
  * `NTCNodeMaterial.js`'s query-time coord build. Omitted from the manifest
  * (defaulting to identity on load) when identity or not supplied.
  *
- * Only the channel *keys* need to be persisted, in layout order - every
- * other field on an `activeChannels` entry (`size`, `activation`,
- * `nodeKeys`, `clampRange`, `defaultValue`, `offset`) is a fixed property of
- * that key already declared in `NTCFormat.CHANNELS`/`getChannel`, and
- * `offset`/`totalChannels`/`packCount` are re-derived deterministically from
- * the key list alone via `layoutChannels` - see NTCLoader.js. Storing only
- * the keys means this manifest can never disagree with NTCFormat.js about
- * what a channel's own size/activation/clampRange is.
+ * Channel keys identify reconstruction semantics. Per-asset encodings preserve
+ * trained output activations independently of future vocabulary defaults.
  */
 function encodeNTC( cpuModel: any, channelClassification: any, options: any = {} ): any {
 
@@ -113,6 +107,9 @@ function encodeNTC( cpuModel: any, channelClassification: any, options: any = {}
 		renderFlags: channelClassification.renderFlags || null,
 		channels: {
 			activeKeys: channelClassification.activeChannels.map( ( channel: any ) => channel.key ),
+			// Persist output nonlinearities so changing training defaults never reinterprets old weights.
+			encodings: Object.fromEntries(channelClassification.activeChannels.map((channel: any) =>
+				[channel.key, {activation: channel.activation ?? getChannel(channel.key).activation ?? 'linear'}])),
 			constantValues: channelClassification.constantValues
 		}
 	};

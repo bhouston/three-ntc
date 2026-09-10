@@ -1,3 +1,4 @@
+import type { NTCActivation } from './NTCOutputActivations.js';
 import { FileLoader, Loader } from 'three';
 import { FORMAT, VERSION, getChannel, layoutChannels, decodeUvTransform } from './NTCFormat.js';
 import { LATENT_CODECS, decodeMLPLayersBase64, MLPBlock, LatentDtype } from './NTCBinaryCodec.js';
@@ -38,6 +39,7 @@ export interface NTCManifest {
 	uvTransform?: number[];
 	channels: {
 		activeKeys: string[];
+		encodings?: Record<string, {activation: NTCActivation}>;
 		constantValues?: Record<string, any>;
 	};
 	renderFlags?: { side?: number; transparent?: boolean } | null;
@@ -177,7 +179,15 @@ class NTCLoader extends Loader {
 
 function decodeChannelClassification( channels: NTCManifest[ 'channels' ], renderFlags: NTCManifest[ 'renderFlags' ] ): NTCChannelClassification {
 
-	const activeList = channels.activeKeys.map( ( key ) => getChannel( key ) );
+	const activeList = channels.activeKeys.map( ( key ) => {
+		const channel = getChannel(key);
+		const encoding = channels.encodings?.[key];
+		if (encoding && !['linear','sigmoid','tanh','softplus'].includes(encoding.activation as string))
+			throw new Error(`THREE.NTCLoader: Invalid activation for ${key}.`);
+		// Before encodings were stored, all emissive networks used sigmoid.
+		const activation = encoding ? encoding.activation : key === 'emissive' ? 'sigmoid' : channel.activation;
+		return {...channel, activation};
+	} );
 	const { channels: activeChannels, totalChannels, packCount } = layoutChannels( activeList );
 
 	return { activeChannels, totalChannels, packCount, constantValues: channels.constantValues || {}, renderFlags: renderFlags || null };
