@@ -124,5 +124,5 @@ export function getNTCPaperProfile(textureResolution: number) {
 		gridChannels:8, lowResChannels:12, mipsPerLevel:2, positionalEncoding:true, positionalEncodingPeriod:8, dualGrid:true,
 		hiddenSizes:[64,64], hiddenActivation:'hgelu', batchSize:8*256*256,
 		iterations:250000, learningRate:0.01, weightsLearningRate:0.005, cosineAnnealingScale:0,
-		quantization:{mode:'uint4'}, retrainAfterQuantize:0.05};
+		mipFilter:'lanczos' as const, quantization:{mode:'uint4'}, retrainAfterQuantize:0.05};
 }

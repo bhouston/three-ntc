@@ -68,7 +68,11 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
    restores grid-cell PE as the default. `positionalEncodingPeriod: 8` remains
    explicit and is selected by the paper profile. This is a measured reason
    to retain the default deviation, rather than assuming paper fidelity wins.
-11. Lanczos source mip option and quantitative filter tests: in progress.
+11. Lanczos source mip option and quantitative filter tests: complete. Signed
+   DC, odd/rectangular CPU mips, and GPU upload/training/ownership tests pass.
+   `mipFilter: "lanczos"` rebuilds square GPU sources; the default preserves
+   caller-supplied mips. The paper profile opts in. Fixed compression fixtures
+   retain their box source targets, so their compression metric stays unchanged.
 12. Longer convergence measurements and final verification: pending.
 
 ## Measurements
@@ -86,8 +90,8 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 | step8: consistent presets and opt-in paper profile | 0.00621377 | 22.0665 | 0.00% |
 | step9: bounded noise QAT and in-budget frozen adaptation | 0.00613309 | 22.1232 | -1.30% |
 | step10a: eight-texel positional encoding | 0.00657211 | 21.8230 | 7.16% |
-
 | step10b: retain measured default; expose paper PE option | 0.00613309 | 22.1232 | -6.68% |
+| step11: optional Lanczos source mipmaps | 0.00613309 | 22.1232 | 0.00% |
 
 ## Per-change details
 
@@ -220,3 +224,30 @@ Compared with step10a. Six quality cases passed (finite error only; no PSNR thre
 | checker | true | 0.00219570 | 26.584 | -7.05% |
 | waves | false | 0.02387866 | 16.220 | 0.00% |
 | waves | true | 0.00126799 | 28.969 | -65.73% |
+
+### step11: optional Lanczos source mipmaps
+
+Compared with step10b. Six quality cases passed (finite error only; no PSNR threshold).
+
+| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
+|---|---|---:|---:|---:|
+| smooth | false | 0.00237807 | 26.238 | 0.00% |
+| smooth | true | 0.00154572 | 28.109 | 0.00% |
+| checker | false | 0.00553242 | 22.571 | 0.00% |
+| checker | true | 0.00219570 | 26.584 | 0.00% |
+| waves | false | 0.02387866 | 16.220 | 0.00% |
+| waves | true | 0.00126799 | 28.969 | 0.00% |
+
+### Lanczos filter measurements
+
+`node scripts/ntc-mip-quality.mjs` compares production Lanczos-3 and box
+downsampling against analytically ideal low-pass sinusoidal targets. This
+is a filter-quality measurement, separate from compression MSE.
+
+| Signal (cycles/source texel) | Box MSE | Lanczos MSE |
+|---|---:|---:|
+| 0.125 (passband) | 0.00289716 | 0.00006849 |
+| 0.375 (above new Nyquist) | 0.07322330 | 0.00005563 |
+
+Lanczos preserves negative lobes and signed physical channels. It can ring;
+these two frequency tests do not establish superiority for every material.

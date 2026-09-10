@@ -1,3 +1,4 @@
+import { createLanczosSourceTexture } from './NTCLanczosSource.js';
 import { createNTCGridPyramidModel } from './NTCGridPyramidModel.js';
 import { DEFAULT_MIPS_PER_LEVEL } from './NTCGridModel.js';
 import { NTCGPUModel } from './NTCGPUModel.js';
@@ -111,6 +112,8 @@ interface NTCTrainerOptions {
 	learningRate?: number;
 	/** Optional separate MLP rate, decayed proportionally with the latent rate. */
 	weightsLearningRate?: number;
+	/** Preserve supplied mips by default, or rebuild square sources with Lanczos-3. */
+	mipFilter?: 'source' | 'lanczos';
 	cosineAnnealingScale?: number;
 	iterations?: number;
 	maxGradientNorm?: number;
@@ -219,7 +222,7 @@ class NTCTrainer {
 
 		}
 
-		const textures = sourceTextures || ( sourceTexture ? [ sourceTexture ] : null );
+		let textures = sourceTextures || ( sourceTexture ? [ sourceTexture ] : null );
 
 		if ( ! textures || textures.length === 0 ) {
 
@@ -249,7 +252,12 @@ class NTCTrainer {
 		const gpuModel = new NTCGPUModel( modelSettings );
 		gpuModel.initFromCPUModel( cpuModel );
 
+		const ownedTextures:any[]=[];
 		try {
+			if(settings.mipFilter === 'lanczos') {
+				for(const source of textures) ownedTextures.push(await createLanczosSourceTexture(renderer,source));
+				textures=ownedTextures;
+			}
 
 			const trainBatchNode = createTextureTrainBatchComputeNode( gpuModel, textures );
 			const frozenBatchNode = createTextureTrainBatchComputeNode( gpuModel, textures, { trainLatents: false } );
@@ -366,6 +374,7 @@ class NTCTrainer {
 			};
 
 		} finally {
+			for(const texture of ownedTextures) texture.dispose();
 
 			gpuModel.dispose();
 

@@ -60,3 +60,6 @@ export { getLearningRate, createRandom, yieldToBrowser } from './NTCTrainingUtil
 // Re-exported once the sibling MaterialX loader port (a parallel effort)
 // lands its `MaterialXLoader.ts` file under `./materialx/`.
 export { MaterialXLoader } from './materialx/MaterialXLoader.js';
+
+export { createLanczosMipChain } from './NTCMipFilter.js';
+export { createLanczosSourceTexture } from './NTCLanczosSource.js';
