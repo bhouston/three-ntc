@@ -9,15 +9,9 @@ import { abs, fract } from 'three/tsl';
 // kernel (NTCGPUComputeTSL.js, three-ntc-trainer) and the runtime decoder
 // (NTCDecoderTSL.js) so the two can never disagree about this encoding.
 //
-// This addon applies it to the sub-texel fractional offset (tx, ty) within
-// whichever single stored grid level a given LOD selects (see
-// NTCMipBands.js) - the paper instead splits that offset across two grids
-// (a "learned interpolation" high-res G0 + bilinear low-res G1); here the
-// encoding pairs with the 4-neighbor-tap "learned interpolation" of the one
-// selected level (see NTCDecoderTSL.js/NTCGPUComputeTSL.js's
-// `positionalEncoding` branch). The optional `dualGrid` G1 tap (see
-// NTCGridPyramidModel.js's `computeDecoderInputSize`) is plain bilinear and
-// contributes nothing to this encoding, matching the paper.
+// New models supply source-mip texel coordinates divided by eight. This
+// produces the paper's 8x8-texel tile at each target mip. Legacy assets without
+// positionalEncodingPeriod retain their original grid-cell phase.
 const POSITIONAL_ENCODING_OCTAVES = 3;
 const POSITIONAL_ENCODING_SIZE = POSITIONAL_ENCODING_OCTAVES * 2 * 2; // 12
 

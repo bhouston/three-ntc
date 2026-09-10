@@ -27,6 +27,7 @@ export interface NTCManifest {
 		mipsPerLevel: number;
 		maxLod: number;
 		textureResolution?: number;
+		positionalEncodingPeriod?: number;
 		lodOffset?: number;
 		wrap?: string;
 		positionalEncoding?: boolean;
@@ -146,6 +147,7 @@ class NTCLoader extends Loader {
 			levels: grids.length,
 			mipsPerLevel: manifest.latents.mipsPerLevel,
 			maxLod: manifest.latents.maxLod,
+			positionalEncodingPeriod: manifest.latents.positionalEncodingPeriod,
 			textureResolution: manifest.latents.textureResolution ?? 2 ** manifest.latents.maxLod,
 			lodOffset: manifest.latents.lodOffset ?? 0,
 			grids,

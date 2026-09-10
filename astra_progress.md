@@ -61,7 +61,11 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
    stream, its mean/variance, disabled noise during adaptation, post-Adam bounds,
    and finite constant-range quantization. All nine training tests pass.
    STE with explicit/auto ranges remains available for comparison.
-10. Positional encoding, source mip filtering, convergence coverage: pending.
+10. Positional encoding: complete. GPU tests verify an eight-texel period at
+   multiple target mips, distinguish the previous four-texel repetition, and
+   preserve legacy assets. All 40 decoder/training/PE GPU tests pass.
+11. Lanczos source mip option and quantitative filter tests: in progress.
+12. Longer convergence measurements and final verification: pending.
 
 ## Measurements
 
@@ -77,6 +81,7 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 | step7: discrete texel training and decoded-value filtering | 0.00621377 | 22.0665 | -27.11% |
 | step8: consistent presets and opt-in paper profile | 0.00621377 | 22.0665 | 0.00% |
 | step9: bounded noise QAT and in-budget frozen adaptation | 0.00613309 | 22.1232 | -1.30% |
+| step10a: eight-texel positional encoding | 0.00657211 | 21.8230 | 7.16% |
 
 ## Per-change details
 
@@ -183,3 +188,16 @@ Compared with step8. Six quality cases passed (finite error only; no PSNR thresh
 | checker | true | 0.00219570 | 26.584 | -22.05% |
 | waves | false | 0.02387866 | 16.220 | 0.82% |
 | waves | true | 0.00126799 | 28.969 | -6.27% |
+
+### step10a: eight-texel positional encoding
+
+Compared with step9. Six quality cases passed (finite error only; no PSNR threshold).
+
+| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
+|---|---|---:|---:|---:|
+| smooth | false | 0.00237807 | 26.238 | 0.00% |
+| smooth | true | 0.00158167 | 28.009 | 2.33% |
+| checker | false | 0.00553242 | 22.571 | 0.00% |
+| checker | true | 0.00236230 | 26.267 | 7.59% |
+| waves | false | 0.02387866 | 16.220 | 0.00% |
+| waves | true | 0.00369953 | 24.319 | 191.76% |

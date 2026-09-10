@@ -126,6 +126,7 @@ interface NTCGridPyramidModel {
 	textureResolution: number;
 	maxLod: number;
 	lodOffset: number;
+	positionalEncodingPeriod: number;
 	uvTransform: any;
 	quantizationRange?: Array<[ number, number ]> | null;
 	quantization?: { mode: string };
@@ -165,7 +166,7 @@ function createNTCGridPyramidModel( options: NTCGridPyramidOptions, random: () =
 
 	const lowResGrids = dualGrid ? resolutions.map(r => createLatentGrid(Math.max(1, Math.floor(r/2)), Math.max(1, Math.floor(r/2)), lowResChannels, random)) : [];
 
-	return { channels, lowResChannels, lowResGrids, levels, mipsPerLevel, resolutions, grids, decoder, hiddenSizes, hiddenActivation, outputChannels, textureResolution: resolvedTextureResolution, maxLod, lodOffset, uvTransform, positionalEncoding, dualGrid };
+	return { channels, lowResChannels, lowResGrids, levels, mipsPerLevel, resolutions, grids, decoder, hiddenSizes, hiddenActivation, outputChannels, textureResolution: resolvedTextureResolution, maxLod, lodOffset, positionalEncodingPeriod: 8, uvTransform, positionalEncoding, dualGrid };
 
 }
 

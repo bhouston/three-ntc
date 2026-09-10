@@ -194,7 +194,10 @@ export function runtimeFeaturesCpu(cpuModel: any, u: number, v: number, lod: num
       const base = (wrap(y0 + dy, grid.height) * grid.width + wrap(x0 + dx, grid.width)) * channels;
       for (let c = 0; c < channels; c++) features.push(roundHalf(grid.data[base + c]));
     }
-    features.push(...positionalEncoding(x - x0, y - y0));
+    const size=Math.max(1,Math.floor((cpuModel.textureResolution ?? 2**maxLod)/(2**lod)));
+    features.push(...(cpuModel.positionalEncodingPeriod
+      ? positionalEncoding(u*size/cpuModel.positionalEncodingPeriod,v*size/cpuModel.positionalEncodingPeriod)
+      : positionalEncoding(x-x0,y-y0)));
   } else {
     const grid = grids[selectFeatureLevel(lod, grids.length, mipsPerLevel, cpuModel.lodOffset)];
     features = bilinearWrap(grid.data, grid.width, grid.height, channels, u, v, roundHalf);

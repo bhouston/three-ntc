@@ -85,6 +85,7 @@ function encodeNTC( cpuModel: any, channelClassification: any, options: any = {}
 			mipsPerLevel: cpuModel.mipsPerLevel,
 			maxLod: cpuModel.maxLod,
 			textureResolution: cpuModel.textureResolution,
+			positionalEncodingPeriod: cpuModel.positionalEncodingPeriod,
 			lodOffset: cpuModel.lodOffset ?? 0,
 			// Optional/additive (default false when absent, matching every
 			// manifest saved before this field existed) - see

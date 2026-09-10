@@ -24,6 +24,7 @@ export interface NTCCpuModel {
 	mipsPerLevel: number;
 	maxLod: number;
 	textureResolution?: number;
+	positionalEncodingPeriod?: number;
 	lodOffset?: number;
 	grids: NTCGrid[];
 	lowResGrids?: NTCGrid[];
@@ -71,7 +72,13 @@ function sampleFeatures(uv: any, model: NTCCpuModel, textures: any[], lod: any):
 	for(let g=0;g<model.grids.length;g++) {
 		const gate=selected.equal(int(g)).select(1,0);
 		const high=gridFeatures(uv,model.grids[g],textures[g],!!model.positionalEncoding);
-		if(model.positionalEncoding) high.values.push(...computeTiledPositionalEncodingTSL(high.tx,high.ty));
+		if(model.positionalEncoding) {
+			const size = floor(float(model.textureResolution ?? 2 ** model.maxLod).div(pow(2,lod))).max(1);
+			const phase = uv.mul(size).div(model.positionalEncodingPeriod ?? 1);
+			high.values.push(...computeTiledPositionalEncodingTSL(
+				model.positionalEncodingPeriod ? phase.x : high.tx,
+				model.positionalEncodingPeriod ? phase.y : high.ty));
+		}
 		for(let c=0;c<highWidth;c++) features[c]=features[c].add(high.values[c].mul(gate));
 		if(model.dualGrid) {
 			const lowIndex=model.lowResGrids?.length ? model.grids.length+g : model.grids.length-1;
