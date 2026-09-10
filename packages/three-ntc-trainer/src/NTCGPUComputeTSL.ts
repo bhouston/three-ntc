@@ -6,14 +6,11 @@ import {
 	atomicLoad,
 	float,
 	floor,
-	fract,
 	instanceIndex,
 	int,
-	log,
-	sin,
 	textureLevel,
-	vec2
 } from 'three/tsl';
+import { trainingUVTSL, trainingLodTSL } from './NTCSampling.js';
 import { FIXED_POINT_SCALE, GRADIENT_NORM_SCALE } from './NTCGPUTrainingConstants.js';
 import {
 	wrapIndexTSL,
@@ -27,58 +24,6 @@ import { applyChannelActivation, channelActivationDerivativeFromOutput } from 't
 import { QUANTIZATION_SCHEMES } from './NTCQuantization.js';
 import { selectFeatureLevelTSL, computeTiledPositionalEncodingTSL, POSITIONAL_ENCODING_SIZE } from 'three-ntc';
 import type { NTCGPUModel } from './NTCGPUModel.js';
-
-function hash1( seed: TSLNode ): TSLNode {
-
-	return fract( sin( seed ).mul( 43758.5453123 ) );
-
-}
-
-/**
- * Generates a stratified-random UV in [0,1)^2 for training sample `sampleIdx`,
- * re-jittered every training step via `stepUniform` so the same texel isn't
- * sampled every iteration.
- */
-function randomStratifiedUV( sampleIdx: TSLNode, stepUniform: TSLNode, gridSize: number ): TSLNode {
-
-	const cellX = sampleIdx.mod( int( gridSize ) );
-	const cellY = int( floor( float( sampleIdx ).div( float( gridSize ) ) ) );
-	const jitterSeed = float( sampleIdx ).mul( 12.9898 ).add( stepUniform.mul( 78.233 ) );
-	const jx = hash1( jitterSeed );
-	const jy = hash1( jitterSeed.add( 91.345 ) );
-	const u = float( cellX ).add( jx ).div( float( gridSize ) );
-	const v = float( cellY ).add( jy ).div( float( gridSize ) );
-
-	return vec2( u, v );
-
-}
-
-/**
- * Samples a per-training-sample LOD (mip index) from `seedBase`, following
- * the NVIDIA neural texture compression paper's own batch-LOD distribution
- * (Section 5.1): `LOD = floor(-log4(X))`, `X ~ U(0,1)` - this biases sampling
- * toward finer mips, which is correct since they cover proportionally more
- * texels (a mip is 4x the texel count of the next-coarser one), so a uniform
- * *texel* sampling density across the whole pyramid naturally means most
- * *samples* land at fine LODs. A separate 5% of samples instead draw LOD
- * uniformly across `[0, maxLod]`, so the coarsest mips - which the area-
- * biased distribution alone would sample increasingly rarely as `maxLod`
- * grows - still get enough training signal to actually converge, rather than
- * their feature levels/decoder weights merely drifting from initialization.
- * Both draws (and the 5% selector) are re-derived from `seedBase`, so the
- * whole thing changes every sample/training-step exactly like
- * `randomStratifiedUV`'s jitter does.
- */
-function sampleTrainingLod( seedBase: TSLNode, maxLod: number ): TSLNode {
-
-	const x = hash1( seedBase ).max( 1e-6 );
-	const areaLod = floor( log( x ).div( Math.log( 4 ) ).negate() );
-	const uniformLod = floor( hash1( seedBase.add( 131.71 ) ).mul( maxLod + 1 ) );
-	const useUniform = hash1( seedBase.add( 257.13 ) ).lessThan( 0.05 );
-
-	return useUniform.select( uniformLod, areaLod ).clamp( 0, maxLod );
-
-}
 
 /**
  * Creates the training compute node: samples the source texture(s) directly
@@ -178,19 +123,18 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 	const g0Width = positionalEncoding ? channels * 4 + POSITIONAL_ENCODING_SIZE : channels;
 	const featureWidth = g0Width + ( dualGrid ? channels : 0 );
 
-	const gridSize = Math.max( 1, Math.ceil( Math.sqrt( batchSize ) ) );
 
 	return Fn( () => {
 
 		const sampleIdx = int( instanceIndex );
-		const uv = samples.uv ?? randomStratifiedUV( sampleIdx, stepUniform, gridSize );
+		const uv = samples.uv ?? trainingUVTSL( sampleIdx, stepUniform );
 		const actBase = sampleIdx.mul( int( activationStride ) );
 
 		// This sample's stochastically chosen, exact-integer training LOD,
 		// across the model's full physical mip range - see
 		// sampleTrainingLod's doc comment - and the *stored* grid level it
 		// maps onto (see this function's doc comment and NTCMipBands.js).
-		const lod = samples.lod ?? sampleTrainingLod( float( sampleIdx ).mul( 12.9898 ).add( stepUniform.mul( 78.233 ) ), maxLod );
+		const lod = samples.lod ?? trainingLodTSL( sampleIdx, stepUniform, maxLod );
 		const selectedLevel = selectFeatureLevelTSL( lod, gridLevels.length, mipsPerLevel );
 
 		const targetComponents: TSLNode[] = [];

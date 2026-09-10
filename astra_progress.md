@@ -31,7 +31,8 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
    LOD 1 within a two-mip band. Decoder GPU suite: 26 passed; TypeScript passed.
 2. Quantize taps before interpolation: complete. Training GPU suite: 8 passed.
    Fixed-coordinate uint2 test verifies both bilinear inputs remain 0.4.
-3. Independent and complete UV/LOD sampling: pending.
+3. Independent and complete UV/LOD sampling: complete. Distribution test passed;
+   CPU/GPU stream parity and training suite: 9 GPU tests passed.
 4. Frozen-gradient handling: pending.
 5. G0/G1 pairs and feature capacity: pending.
 6. Resolution-aware mip bands: pending.
@@ -48,6 +49,8 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 | step1: native features | 0.01176782 | 19.2930 | -9.13% |
 | step2: quantize taps before interpolation | 0.01153805 | 19.3787 | -1.95% |
 
+| step3: independent full-domain sampling | 0.01007776 | 19.9664 | -12.66% |
+
 ## Per-change details
 
 ### step2: quantize taps before interpolation
@@ -62,3 +65,16 @@ Compared with step1. Six quality cases passed (finite error only; no PSNR thresh
 | checker | true | 0.01119423 | 19.510 | -2.66% |
 | waves | false | 0.02449993 | 16.108 | -0.34% |
 | waves | true | 0.00651213 | 21.863 | -0.34% |
+
+### step3: independent full-domain sampling
+
+Compared with step2. Six quality cases passed (finite error only; no PSNR threshold).
+
+| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
+|---|---|---:|---:|---:|
+| smooth | false | 0.00360238 | 24.434 | -13.49% |
+| smooth | true | 0.00351545 | 24.540 | -43.33% |
+| checker | false | 0.01639537 | 17.853 | -1.55% |
+| checker | true | 0.00949695 | 20.224 | -15.16% |
+| waves | false | 0.02396619 | 16.204 | -2.18% |
+| waves | true | 0.00349023 | 24.571 | -46.40% |
