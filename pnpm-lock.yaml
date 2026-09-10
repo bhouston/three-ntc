@@ -23,6 +23,9 @@ importers:
       playwright:
         specifier: ^1.63.0
         version: 1.63.0
+      three:
+        specifier: 0.186.0
+        version: 0.186.0
       typescript:
         specifier: ^5.7.0
         version: 5.9.3

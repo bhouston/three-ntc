@@ -220,63 +220,9 @@ function buildMipChainLevels( cpuModel: NTCMipChainModel ): MipChainLevel[] {
 
 }
 
-/**
- * Builds one real GPU mipmap-chain `DataTexture` from a trained CPU model's
- * stored feature-grid pyramid (`cpuModel.grids`, finest-first - see
- * NTCGridModel.js's `computeGridLevels`), so the runtime can sample it once
- * with hardware trilinear filtering (`textureLevel(...)`) instead
- * of sampling every stored level separately and hard-selecting one via an
- * equality mask (see NTCDecoderTSL.js).
- *
- * The stored pyramid does not map 1:1 onto a GPU mip chain when
- * `mipsPerLevel > 1`: each stored level is reused, via the decoder's LOD
- * input, to reconstruct `mipsPerLevel` different physical mips (see
- * NTCMipBands.js), whereas a real mip chain needs data at *every*
- * intermediate physical mip. This builds that missing data by box-filter-
- * downsampling each stored level's own data across its band, rather than by
- * literally duplicating one fixed-resolution image at mismatched sizes
- * (which a real mip chain's `floor(prev/2)`-per-level size rule forbids
- * outright). Two things follow from that:
- *
- * - Within one stored level's band, hardware trilinear sampling now
- *   interpolates between genuinely different (progressively blurrier) mip
- *   images, rather than between duplicates of the same image - a strictly
- *   better minification approximation of what that stored level "means" at
- *   each physical mip than duplication would give, and still cheap (a plain
- *   box filter, computed once at texture-build time, not per-frame).
- * - Training (NTCGPUComputeTSL.js) is unaffected: it always samples a
- *   selected level's data at that level's own native resolution, regardless
- *   of which physical mip within the band a given training sample targets -
- *   the LOD scalar concatenated onto the decoder's input is what lets the
- *   MLP disambiguate those physical mips from a fixed-resolution tap, not
- *   the tap's own resolution. This mip-chain construction is a runtime-only
- *   reinterpretation of already-trained data; it doesn't require a `.ntc`
- *   format change or retraining.
- * - Across the boundary *between* two stored levels' bands, trilinear
- *   sampling now blends smoothly between two independently-trained levels'
- *   reconstructions where before it snapped 0/1 discontinuously - this is
- *   the actual fix motivating this whole builder (see this addon's Stage 2
- *   design notes: a hard level switch pops visibly as LOD crosses that
- *   boundary; genuine hardware trilinear removes the pop as a side effect
- *   of the storage change, not as separate new blending code).
- *
- * The last stored level has no next level to hand off to, so its "band"
- * covers every remaining physical mip down to 1x1 (an open-ended tail,
- * exactly matching `NTCMipBands.selectFeatureLevel`'s own clamp) - its box-
- * filter pyramid is simply built deep enough to reach the chain's actual
- * end instead of stopping after `mipsPerLevel` steps.
- *
- * `interpolation` (default `true`) controls filtering *within* each physical
- * mip level only - `true` is genuine trilinear (`LinearMipmapLinearFilter` +
- * `LinearFilter`, as above); `false` swaps to nearest-neighbor within a level
- * (`NearestMipmapLinearFilter` + `NearestFilter`) while still blending
- * *between* mip levels exactly as before - useful for visually inspecting
- * the trained feature grid's actual stored texels (see NTCNodeMaterial.js's
- * `setInterpolation`) without the bilinear blur that otherwise always hides
- * them. This only ever changes the GPU sampler's filter mode, never the
- * texture's data - see `updateSampler`'s per-binding `samplerKey`
- * (src/renderers/webgpu/utils/WebGPUTextureUtils.js), so toggling it doesn't
- * require rebuilding the texture, the model, or reloading anything.
+/** Legacy storage container. Only band-start mips contain trained features.
+ * Intermediate mips satisfy GPU allocation rules; decoding must not sample them.
+ * New runtime paths use native per-level textures instead.
  */
 function buildMipChainTexture( cpuModel: NTCMipChainModel, { interpolation = true }: { interpolation?: boolean } = {} ): any {
 

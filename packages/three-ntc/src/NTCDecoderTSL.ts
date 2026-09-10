@@ -164,31 +164,8 @@ function sampleCoarsestLevelBilinear( uvNode: any, cpuModel: NTCCpuModel, mipCha
 
 }
 
-/**
- * Builds the TSL expression that evaluates the trained mip pyramid + MLP
- * decoder at `uvNode`, returning the raw array of `outputChannels` scalar
- * nodes (one per trained channel - callers slice/decode these into whatever
- * physical quantities they represent, see NTCFormat.js).
- * `lodNode` is the requested LOD (mip index, a TSL float node - e.g. derived
- * from screen-space UV derivatives or an explicit distance-based estimate,
- * see NTCNodeMaterial.js) this decode should reconstruct - defaults to
- * `float(0)` (finest/closest LOD) when omitted. It drives one single
- * hardware `textureSampleLevel` call against `mipChainTexture` (built by
- * NTCHalfFloatTexture.js's `buildMipChainTexture`): the GPU brackets
- * `lodNode` between its two nearest physical mip levels and blends them
- * (genuine trilinear - bilinear within each mip, linear between the two),
- * so a fractional LOD - including one that straddles two *different* stored
- * feature levels' bands - reconstructs a smooth cross-fade instead of the
- * old hard 0/1 level-equality switch. The normalized LOD is still
- * concatenated onto the decoder's input exactly as before - this must match
- * training bit-for-bit, or the decoder sees an input distribution it was
- * never fit against.
- *
- * `levelTextures` (see NTCHalfFloatTexture.buildLevelTextures) is only
- * needed - and only consulted - when `cpuModel.positionalEncoding` is true;
- * `mipChainTexture` is ignored in that case (see
- * `evaluatePositionalEncodingFeatures`'s doc comment for why that path
- * can't reuse the smooth cross-level mip-chain trick).
+/** Evaluates native stored features at a requested LOD. Latents must never
+ * be downsampled or blended between feature levels before a nonlinear decoder.
  */
 function evaluateNeuralTextureRaw( uvNode: any, cpuModel: NTCCpuModel, mipChainTexture: any, renderer: any | null = null, lodNode: any = null, levelTextures: any[] | null = null ): any[] {
 
@@ -213,7 +190,8 @@ function evaluateNeuralTextureRaw( uvNode: any, cpuModel: NTCCpuModel, mipChainT
 
 	} else {
 
-		const sample = textureLevel( mipChainTexture, uvNode, resolvedLodNode );
+		const selected = selectFeatureLevelTSL( resolvedLodNode, cpuModel.grids.length, cpuModel.mipsPerLevel );
+		const sample = textureLevel( mipChainTexture, uvNode, float( selected ).mul( cpuModel.mipsPerLevel ) );
 		features = [ sample.x, sample.y, sample.z, sample.w ].slice( 0, channels );
 
 	}

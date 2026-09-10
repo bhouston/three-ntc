@@ -11,3 +11,6 @@ coverage
 .DS_Store
 .idea
 .vscode
+
+.pnpm-store/
+docs/metrics/*.log

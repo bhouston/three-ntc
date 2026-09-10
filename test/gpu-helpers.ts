@@ -9,7 +9,6 @@
 import { DataUtils } from 'three';
 import { WebGPURenderer } from 'three/webgpu';
 import { selectFeatureLevel, POSITIONAL_ENCODING_OCTAVES } from 'three-ntc';
-import { buildMipChainLevels } from '../packages/three-ntc/src/NTCHalfFloatTexture.js';
 import { bakeColorNodeToTexture, createNTCGridPyramidModel, createRandom } from 'three-ntc-trainer';
 
 let rendererInit: Promise<any> | null = null;
@@ -197,30 +196,8 @@ export function runtimeFeaturesCpu(cpuModel: any, u: number, v: number, lod: num
     }
     features.push(...positionalEncoding(x - x0, y - y0));
   } else {
-    const mips = buildMipChainLevels(cpuModel);
-    const l = Math.min(Math.max(lod, 0), mips.length - 1);
-    const l0 = Math.floor(l);
-    const l1 = Math.min(l0 + 1, mips.length - 1);
-    const f = l - l0;
-    const s0 = bilinearWrap(
-      mips[l0].data,
-      mips[l0].width,
-      mips[l0].height,
-      channels,
-      u,
-      v,
-      roundHalf,
-    );
-    const s1 = bilinearWrap(
-      mips[l1].data,
-      mips[l1].width,
-      mips[l1].height,
-      channels,
-      u,
-      v,
-      roundHalf,
-    );
-    features = s0.map((a, c) => a * (1 - f) + s1[c] * f);
+    const grid = grids[selectFeatureLevel(lod, grids.length, mipsPerLevel)];
+    features = bilinearWrap(grid.data, grid.width, grid.height, channels, u, v, roundHalf);
   }
   if (cpuModel.dualGrid) {
     const last = grids[grids.length - 1];

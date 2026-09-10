@@ -43,6 +43,7 @@ export default defineConfig({
           testTimeout: 120_000,
           hookTimeout: 120_000,
           browser: {
+            commands: { recordMetric: async (_context, metric) => { console.log('NTC_METRIC ' + JSON.stringify(metric)); } },
             enabled: true,
             headless: true,
             screenshotFailures: false,
