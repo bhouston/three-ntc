@@ -27,7 +27,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc -w --preserveWatchOutput --noEmitOnError",
-    "test": "vitest run"
+    "test": "vitest run --root ../.. --project unit packages/three-ntc-trainer"
   },
   "dependencies": {
     "fflate": "^0.8.2",

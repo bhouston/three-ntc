@@ -35,3 +35,33 @@ jobs:
 
       - name: Unit tests
         run: pnpm test
+
+  gpu:
+    name: GPU (WebGPU in headless Chromium)
+    runs-on: ubuntu-latest
+    # No GPU on hosted runners: Chromium falls back to SwiftShader (software
+    # Vulkan), see /vitest.config.ts. Advisory until it proves stable.
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: GPU tests
+        run: pnpm test:gpu

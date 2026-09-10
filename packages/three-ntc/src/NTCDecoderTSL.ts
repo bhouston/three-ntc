@@ -65,10 +65,17 @@ function evaluatePositionalEncodingFeatures( uvNode: any, cpuModel: NTCCpuModel,
 	const grids = cpuModel.grids;
 	const selectedLevel = selectFeatureLevelTSL( lodNode, grids.length, cpuModel.mipsPerLevel );
 
+	// Accumulated as plain expressions (`a = a.add(...)`), not `.toVar()` +
+	// `.addAssign()`: this runs in a material's node graph, outside any
+	// `Fn()` scope, where TSL has no statement stack and silently drops
+	// assignments ("No stack defined for assign operation") - which left
+	// every tap and the sub-texel offset at 0, so a positionalEncoding
+	// model rendered garbage while its training kernel (inside a Fn) was
+	// fine. Caught by NTCDecoder.gpu.test.ts.
 	const taps: any[] = [];
-	for ( let t = 0; t < 4 * channels; t ++ ) taps.push( float( 0 ).toVar() );
-	const selTx = float( 0 ).toVar();
-	const selTy = float( 0 ).toVar();
+	for ( let t = 0; t < 4 * channels; t ++ ) taps.push( float( 0 ) );
+	let selTx: any = float( 0 );
+	let selTy: any = float( 0 );
 
 	for ( let g = 0; g < grids.length; g ++ ) {
 
@@ -101,12 +108,12 @@ function evaluatePositionalEncodingFeatures( uvNode: any, cpuModel: NTCCpuModel,
 			const sample = textureLevel( levelTextures[ g ], vec2( corners[ t ][ 0 ], corners[ t ][ 1 ] ), 0 );
 			const comps = [ sample.x, sample.y, sample.z, sample.w ];
 
-			for ( let c = 0; c < channels; c ++ ) taps[ t * channels + c ].addAssign( comps[ c ].mul( weight ) );
+			for ( let c = 0; c < channels; c ++ ) taps[ t * channels + c ] = taps[ t * channels + c ].add( comps[ c ].mul( weight ) );
 
 		}
 
-		selTx.addAssign( tx.mul( weight ) );
-		selTy.addAssign( ty.mul( weight ) );
+		selTx = selTx.add( tx.mul( weight ) );
+		selTy = selTy.add( ty.mul( weight ) );
 
 	}
 

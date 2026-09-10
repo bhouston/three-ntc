@@ -146,7 +146,7 @@ function SelectFormField({
   parse?: (value: string) => unknown;
 }) {
   return (
-    <Field data-invalid={field.state.meta.errors.length > 0}>
+    <Field orientation="horizontal" data-invalid={field.state.meta.errors.length > 0}>
       <FieldLabel htmlFor={field.name}>{label}</FieldLabel>
       <Select value={String(field.state.value)} onValueChange={(v) => field.handleChange(parse(v))} disabled={disabled}>
         <SelectTrigger id={field.name} size="sm">
@@ -169,9 +169,9 @@ function SelectFormField({
 // toggle. Native <details> gives us open/close state and a11y for free.
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <details className="py-3 first:pt-0" open>
+    <details className="py-1.5 first:pt-0" open>
       <summary className="cursor-pointer text-sm font-bold text-foreground select-none">{title}</summary>
-      <FieldGroup className="mt-4">{children}</FieldGroup>
+      <FieldGroup className="mt-2 gap-2">{children}</FieldGroup>
     </details>
   );
 }
@@ -479,7 +479,7 @@ function TrainerPage() {
     // graph at once. Single column on mobile, where the `order-*` classes
     // below give the requested viewer -> settings -> details stacking.
     <div className="grid flex-1 grid-cols-1 gap-4 p-4 lg:grid-cols-[380px_1fr] lg:grid-rows-[minmax(320px,1fr)_auto]">
-      <div className="order-2 flex flex-col gap-4 overflow-y-auto lg:order-none lg:col-start-1 lg:row-span-2 lg:row-start-1">
+      <div className="order-2 flex flex-col gap-2 overflow-y-auto lg:order-none lg:col-start-1 lg:row-span-2 lg:row-start-1">
         <div>
           <h1 className="text-lg font-semibold">MaterialX Trainer</h1>
           <p className="text-sm text-muted-foreground">
@@ -489,7 +489,7 @@ function TrainerPage() {
 
         <div className="flex flex-wrap gap-2">
           {isTraining ? (
-            <Button type="button" variant="outline" onClick={stopTraining}>
+            <Button type="button" variant="destructive" onClick={stopTraining}>
               Stop training
             </Button>
           ) : (
@@ -509,8 +509,9 @@ function TrainerPage() {
           </Button>
         </div>
 
+        <fieldset disabled={isTraining} className="flex min-w-0 flex-col gap-2">
         <Section title="Source">
-              <Field>
+              <Field orientation="horizontal">
                 <FieldLabel>Built-in MaterialX</FieldLabel>
                 <Select
                   value={builtInKey}
@@ -545,6 +546,7 @@ function TrainerPage() {
                 onDrop={(e) => {
                   e.preventDefault();
                   setMtlxDragOver(false);
+                  if (isTraining) return;
                   const file = e.dataTransfer.files[0];
                   if (!file) return;
                   ga.event('trainer-drop-materialx', { file_name: file.name });
@@ -573,7 +575,7 @@ function TrainerPage() {
         </Section>
 
         <Section title="Network (grid + MLP)">
-              <Field>
+              <Field orientation="horizontal">
                 <FieldLabel>Preset</FieldLabel>
                 <Select value={values.preset} onValueChange={applyPreset}>
                   <SelectTrigger size="sm">
@@ -635,9 +637,10 @@ function TrainerPage() {
 
               <form.Field name="iterations">
                 {(field) => (
-                  <Field>
+                  <Field orientation="horizontal">
                     <FieldLabel>Iterations: {field.state.value}</FieldLabel>
                     <Slider
+                      disabled={isTraining}
                       min={200}
                       max={20000}
                       step={100}
@@ -650,9 +653,10 @@ function TrainerPage() {
 
               <form.Field name="learningRate">
                 {(field) => (
-                  <Field>
+                  <Field orientation="horizontal">
                     <FieldLabel>Learning rate: {field.state.value.toFixed(3)}</FieldLabel>
                     <Slider
+                      disabled={isTraining}
                       min={0.001}
                       max={0.05}
                       step={0.001}
@@ -663,7 +667,7 @@ function TrainerPage() {
                 )}
               </form.Field>
 
-              <Field>
+              <Field orientation="horizontal">
                 <FieldLabel>Quantization</FieldLabel>
                 <Select
                   value={values.quantization}
@@ -683,6 +687,8 @@ function TrainerPage() {
               </Field>
         </Section>
 
+        </fieldset>
+
         <Section title="Object">
               <form.Field name="shape">
                 {(field) => <SelectFormField field={field} label="Shape" options={SHAPE_OPTIONS} />}
@@ -696,6 +702,7 @@ function TrainerPage() {
                     <FieldLabel htmlFor={field.name}>Interpolation (feature grid)</FieldLabel>
                     <Switch
                       id={field.name}
+                      disabled={isTraining}
                       checked={field.state.value}
                       onCheckedChange={(checked) => {
                         field.handleChange(checked);
@@ -708,7 +715,7 @@ function TrainerPage() {
 
               <form.Field name="lodBias">
                 {(field) => (
-                  <Field>
+                  <Field orientation="horizontal">
                     <FieldLabel>LOD bias (force finer): {field.state.value.toFixed(2)}</FieldLabel>
                     <Slider
                       min={-4}

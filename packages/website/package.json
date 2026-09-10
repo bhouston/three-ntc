@@ -8,7 +8,7 @@
     "dev": "vite dev --port 3200 --strictPort",
     "start": "node .output/server/index.mjs",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run --root ../.. --project unit packages/website"
   },
   "dependencies": {
     "@tanstack/charts": "^0.16.2",

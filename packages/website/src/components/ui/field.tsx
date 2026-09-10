@@ -35,7 +35,7 @@ const fieldVariants = cva('flex gap-2', {
   variants: {
     orientation: {
       vertical: 'flex-col',
-      horizontal: 'flex-row items-center justify-between',
+      horizontal: 'grid grid-cols-2 items-center',
     },
   },
   defaultVariants: {
