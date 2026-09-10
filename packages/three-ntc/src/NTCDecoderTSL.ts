@@ -10,8 +10,9 @@ import {
 import { buildMipChainTexture, buildLevelTextures, NTCGrid } from './NTCHalfFloatTexture.js';
 import { selectFeatureLevelTSL } from './NTCMipBands.js';
 import { computeTiledPositionalEncodingTSL } from './NTCPositionalEncodingTSL.js';
+import { applyChannelActivation, NTCActivation } from './NTCOutputActivations.js';
 import { MLPLayer } from './NTCBinaryCodec.js';
-import { float, floor, int, textureLevel, vec2 } from 'three/tsl';
+import { float, floor, int, pow, textureLevel, vec2 } from 'three/tsl';
 
 /**
  * A fully decoded `.ntc` CPU model - what `NTCLoader.parse()` produces and
@@ -22,6 +23,7 @@ export interface NTCCpuModel {
 	levels: number;
 	mipsPerLevel: number;
 	maxLod: number;
+	textureResolution?: number;
 	lodOffset?: number;
 	grids: NTCGrid[];
 	lowResGrids?: NTCGrid[];
@@ -84,7 +86,7 @@ function sampleFeatures(uv: any, model: NTCCpuModel, textures: any[], lod: any):
 /** Evaluates native stored features at a requested LOD. Latents must never
  * be downsampled or blended between feature levels before a nonlinear decoder.
  */
-function evaluateNeuralTextureRaw( uvNode: any, cpuModel: NTCCpuModel, mipChainTexture: any, renderer: any | null = null, lodNode: any = null, levelTextures: any[] | null = null ): any[] {
+function evaluateNeuralTextureRaw( uvNode: any, cpuModel: NTCCpuModel, mipChainTexture: any, renderer: any | null = null, lodNode: any = null, levelTextures: any[] | null = null, packed?: ReturnType<typeof packDecoder> ): any[] {
 
 	// renderer is accepted for compatibility with the higher-level material
 	// constructor, but this stock-Three.js path always uses fp32 uniforms.
@@ -114,11 +116,12 @@ function evaluateNeuralTextureRaw( uvNode: any, cpuModel: NTCCpuModel, mipChainT
 	// around.
 	let activations = packVec4Inputs( features );
 
+	const parameters = packed ?? packDecoder(cpuModel);
 	for ( let l = 0; l < cpuModel.decoder.layers.length; l ++ ) {
 
 		const layer = cpuModel.decoder.layers[ l ];
-		const weights = createMat4Storage( packLayerWeightsMat4( layer.weights, layer.inputSize, layer.outputSize ) );
-		const biases = createVec4Storage( packLayerBiasesVec4( layer.biases ) );
+		const weights = parameters[l].weights;
+		const biases = parameters[l].biases;
 		const inputVectorCount = Math.ceil( layer.inputSize / 4 );
 
 		activations = evaluateLinearLayerMat4(
@@ -135,4 +138,40 @@ function evaluateNeuralTextureRaw( uvNode: any, cpuModel: NTCCpuModel, mipChainT
 
 }
 
-export { evaluateNeuralTextureRaw, buildMipChainTexture, buildLevelTextures };
+function packDecoder(model: NTCCpuModel) {
+	return model.decoder.layers.map(layer => ({
+		weights: createMat4Storage(packLayerWeightsMat4(layer.weights, layer.inputSize, layer.outputSize)),
+		biases: createVec4Storage(packLayerBiasesVec4(layer.biases))
+	}));
+}
+
+/** Trilinear filtering of reconstructed physical channels. This costs eight
+ * decoder evaluations, with shared weights. The raw evaluator remains available
+ * for texel reconstruction and diagnostics. Output activations precede filtering.
+ */
+function evaluateNeuralTextureFiltered(uv: any, model: NTCCpuModel, textures: any[], lod: any,
+	activations: NTCActivation[] = [], interpolation: any = float(1)): any[] {
+	const packed = packDecoder(model);
+	const resolved = lod.clamp(0, model.maxLod);
+	const lower = floor(resolved), upper = lower.add(1).min(model.maxLod);
+	const blend = resolved.sub(lower);
+	const enabled = interpolation.greaterThan(0);
+	const levels = [enabled.select(lower, floor(resolved.add(0.5))), upper];
+	const result = Array.from({length:model.outputChannels}, () => float(0));
+	for (let m=0; m<2; m++) {
+		const size = floor(float(model.textureResolution ?? 2 ** model.maxLod).div(pow(2,levels[m]))).max(1);
+		const pixel = uv.mul(size).sub(0.5);
+		const base = enabled.select(floor(pixel), floor(uv.mul(size)));
+		const fraction = enabled.select(pixel.sub(floor(pixel)), vec2(0));
+		const mipWeight = enabled.select(m === 0 ? blend.oneMinus() : blend, float(m === 0 ? 1 : 0));
+		for(let y=0;y<2;y++) for(let x=0;x<2;x++) {
+			const center = base.add(vec2(x+0.5,y+0.5)).div(size).fract();
+			const raw = evaluateNeuralTextureRaw(center,model,null,null,levels[m],textures,packed);
+			const weight = (x ? fraction.x : fraction.x.oneMinus()).mul(y ? fraction.y : fraction.y.oneMinus()).mul(mipWeight);
+			for(let c=0;c<result.length;c++) result[c] = result[c].add(applyChannelActivation(raw[c],activations[c]).mul(weight));
+		}
+	}
+	return result;
+}
+
+export { evaluateNeuralTextureFiltered, evaluateNeuralTextureRaw, buildMipChainTexture, buildLevelTextures };

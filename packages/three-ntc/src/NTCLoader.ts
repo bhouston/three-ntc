@@ -26,6 +26,7 @@ export interface NTCManifest {
 		channelsPerLevel: number;
 		mipsPerLevel: number;
 		maxLod: number;
+		textureResolution?: number;
 		lodOffset?: number;
 		wrap?: string;
 		positionalEncoding?: boolean;
@@ -145,6 +146,7 @@ class NTCLoader extends Loader {
 			levels: grids.length,
 			mipsPerLevel: manifest.latents.mipsPerLevel,
 			maxLod: manifest.latents.maxLod,
+			textureResolution: manifest.latents.textureResolution ?? 2 ** manifest.latents.maxLod,
 			lodOffset: manifest.latents.lodOffset ?? 0,
 			grids,
 			lowResGrids: manifest.latents.lowResLevels?.map((level,index)=>decodeLevel(level, `latents.lowResLevels[${index}]`)),

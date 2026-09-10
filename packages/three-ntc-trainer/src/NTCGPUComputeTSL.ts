@@ -9,6 +9,8 @@ import {
 	instanceIndex,
 	int,
 	textureLevel,
+	textureSize,
+	texture,
 } from 'three/tsl';
 import { trainingUVTSL, trainingLodTSL } from './NTCSampling.js';
 import { FIXED_POINT_SCALE, GRADIENT_NORM_SCALE } from './NTCGPUTrainingConstants.js';
@@ -128,7 +130,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 	return Fn( () => {
 
 		const sampleIdx = int( instanceIndex );
-		const uv = samples.uv ?? trainingUVTSL( sampleIdx, stepUniform );
+		const randomUV = samples.uv ?? trainingUVTSL( sampleIdx, stepUniform );
 		const actBase = sampleIdx.mul( int( activationStride ) );
 
 		// This sample's stochastically chosen, exact-integer training LOD,
@@ -136,6 +138,9 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 		// sampleTrainingLod's doc comment - and the *stored* grid level it
 		// maps onto (see this function's doc comment and NTCMipBands.js).
 		const lod = samples.lod ?? trainingLodTSL( sampleIdx, stepUniform, maxLod );
+		// Train exact source texels; bilinear targets blur away high frequencies.
+		const sourceSize = textureSize(texture(sourceTextures[0]), int(lod));
+		const uv = samples.uv ?? floor(randomUV.mul(sourceSize)).add(0.5).div(sourceSize);
 		const selectedLevel = selectFeatureLevelTSL( lod, layout.levels, mipsPerLevel, layout.lodOffset );
 
 		const targetComponents: TSLNode[] = [];

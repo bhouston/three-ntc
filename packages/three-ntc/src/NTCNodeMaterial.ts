@@ -3,7 +3,7 @@ import * as THREE from 'three';
 // not the base 'three' entrypoint - see `three-shims.d.ts`.
 import { MeshPhysicalNodeMaterial } from 'three/webgpu';
 import { bitangentWorld, fract, log, max, min, step, tangentWorld, uniform, uv, vec2, vec3, vec4 } from 'three/tsl';
-import { buildLevelTextures, evaluateNeuralTextureRaw, NTCCpuModel } from './NTCDecoderTSL.js';
+import { buildLevelTextures, evaluateNeuralTextureFiltered, NTCCpuModel } from './NTCDecoderTSL.js';
 import { applyChannelActivation } from './NTCOutputActivations.js';
 import { CHANNELS, FRAME_VIEWS, getChannel, buildDebugViewColorNode, buildFrameViewColorNode, NTCChannel, NTCLayoutChannel } from './NTCFormat.js';
 import { constantToNode, reconstructFinalNormal } from './NTCOutputTypes.js';
@@ -40,14 +40,14 @@ export interface NTCNodeMaterialOptions {
  * consumer downstream of `sliceChannels` already sees values in the
  * channel's natural physical range.
  */
-function sliceChannels( outputs: any[], activeChannels: NTCLayoutChannel[] ): Record<string, any> {
+function sliceChannels( outputs: any[], activeChannels: NTCLayoutChannel[], activated = false ): Record<string, any> {
 
 	const slices: Record<string, any> = {};
 
 	for ( const channel of activeChannels ) {
 
 		const values = [];
-		for ( let i = 0; i < channel.size; i ++ ) values.push( applyChannelActivation( outputs[ channel.offset + i ], channel.activation ) );
+		for ( let i = 0; i < channel.size; i ++ ) values.push( activated ? outputs[channel.offset+i] : applyChannelActivation( outputs[ channel.offset + i ], channel.activation ) );
 
 		if ( channel.size === 1 ) slices[ channel.key ] = values[ 0 ];
 		else if ( channel.size === 2 ) slices[ channel.key ] = vec2( ...values );
@@ -69,29 +69,12 @@ function sliceChannels( outputs: any[], activeChannels: NTCLayoutChannel[] ): Re
  * otherwise show up as a spurious huge derivative (and therefore a spurious
  * max-LOD spike) at every tile seam.
  *
- * Texel-unit scaling uses `2^maxLod` as a stand-in for the source texture's
- * actual resolution: `maxLod` is derived from it as `ceil(log2(
- * textureResolution))` (see NTCGridPyramidModel.js), so `2^maxLod` is always
- * within a factor of 2 of the true resolution - close enough for a screen-
- * space LOD heuristic, and it means this only needs `maxLod`, which (unlike
- * the source texture's exact pixel size) is always available, including for
- * a model loaded from a `.ntc` file (see NTCLoader.js).
- *
- * `lodBias` (mip levels, default 0) is subtracted from the raw footprint-
- * derived estimate before clamping - the same sign convention as WebGL/
- * WebGPU's own sampler LOD bias (positive lowers the *reconstructed* LOD,
- * i.e. keeps a finer/higher-resolution stored level in use for longer as
- * the surface recedes; negative pushes toward coarser levels sooner). This
- * addon's own reconstruction can afford to stay fine longer than ordinary
- * mipmapped textures would: since the last stored level absorbs every LOD
- * past its own band as an open-ended tail (see NTCMipBands.js), aliasing
- * from under-blurring at a moderate positive bias is bounded by the MLP's
- * own reconstruction, not by an unfiltered raw texture read - a positive
- * bias here is a legitimate quality/aliasing trade-off, not just a hack.
+ * Uses the source resolution when available. Positive lodBias retains this
+ * library's historical convention of choosing finer mips.
  */
-function computeAutoLodNode( coord: any, maxLod: number, lodBias: number | any = 0 ): any {
+function computeAutoLodNode( coord: any, maxLod: number, lodBias: number | any = 0, resolution = 2 ** maxLod ): any {
 
-	const texelCoord = coord.mul( Math.pow( 2, maxLod ) );
+	const texelCoord = coord.mul( resolution );
 	const footprint = max( texelCoord.dFdx().length(), texelCoord.dFdy().length() ).max( 1e-6 );
 
 	return log( footprint ).div( Math.LN2 ).sub( lodBias ).clamp( 0, maxLod );
@@ -165,6 +148,7 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 	private _constantValues: Record<string, any>;
 	private _shadedColorNode: any;
 	private _lodBiasUniform: any;
+	private _interpolationUniform: any;
 
 	/**
 	 * `channelClassification` is whatever `NTCSource.
@@ -226,8 +210,8 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 		this.cpuModel = cpuModel;
 		this.activeChannels = activeChannels;
 		this.channels = channels;
-		// See buildMipChainTexture's doc comment / setInterpolation below -
-		// `false` swaps to nearest-neighbor sampling *within* each stored mip
+		// See setInterpolation below; false selects nearest decoded texels.
+		// Legacy comment: `false` swaps to nearest-neighbor sampling *within* each stored mip
 		// level (still blending *between* levels) so the trained feature
 		// grid's actual texels can be inspected without bilinear blur hiding
 		// them. Not part of the trained model or the `.ntc` format - a pure
@@ -278,10 +262,12 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 
 		}
 
-		const lodNode = options.lodNode || computeAutoLodNode( coord, cpuModel.maxLod, this._lodBiasUniform );
+		const lodNode = options.lodNode || computeAutoLodNode( coord, cpuModel.maxLod, this._lodBiasUniform, cpuModel.textureResolution );
 
-		const outputs = evaluateNeuralTextureRaw( tiledUV, cpuModel, this.mipChainTexture, options.renderer || null, lodNode, this.levelTextures );
-		const slices = sliceChannels( outputs, activeChannels );
+		this._interpolationUniform = uniform(this.interpolation ? 1 : 0);
+		const activations = Array.from({length:cpuModel.outputChannels}, (_,i) => activeChannels.find(c=>i>=c.offset && i<c.offset+c.size)?.activation);
+		const outputs = evaluateNeuralTextureFiltered(tiledUV,cpuModel,this.levelTextures!,lodNode,activations,this._interpolationUniform);
+		const slices = sliceChannels( outputs, activeChannels, true );
 		this._slices = slices;
 		this._constantValues = constantValues;
 
@@ -418,36 +404,10 @@ class NTCNodeMaterial extends ( MeshPhysicalNodeMaterial as any ) {
 
 	}
 
-	/**
-	 * Toggles whether the feature grid's mip-chain texture (`this.
-	 * mipChainTexture`, see `buildMipChainTexture`) is sampled with bilinear
-	 * filtering within each stored mip level (`true`, the default) or plain
-	 * nearest-neighbor (`false`) - mip levels are still blended into each
-	 * other either way, only the filtering *within* one level changes. Useful
-	 * for visually inspecting the trained feature grid's actual stored texels
-	 * (e.g. via the 'textureUv' debug view) without bilinear blur hiding them.
-	 *
-	 * This purely reassigns the existing texture's `minFilter`/`magFilter` -
-	 * the GPU sampler these select is looked up/created by a filter-mode key
-	 * (see `updateSampler` in src/renderers/webgpu/utils/WebGPUTextureUtils.
-	 * js), so no rebuild of this material, its node graph, or the underlying
-	 * grid/MLP data is needed; `needsUpdate` is set only to make sure a
-	 * pending render picks up the change.
-	 */
-	setInterpolation( enabled: boolean ): void {
-
-		// No-op for a `positionalEncoding` model: its `levelTextures` are
-		// always raw/`NearestFilter` (see NTCDecoderTSL.js's
-		// `evaluatePositionalEncodingFeatures` - it needs exact texel values,
-		// not a filtered blend), so there is no mip-chain texture here to
-		// retune.
-		if ( ! this.mipChainTexture ) return;
-
-		this.interpolation = Boolean( enabled );
-		this.mipChainTexture.magFilter = this.interpolation ? THREE.LinearFilter : THREE.NearestFilter;
-		this.mipChainTexture.minFilter = this.interpolation ? THREE.LinearMipmapLinearFilter : THREE.NearestMipmapLinearFilter;
-		this.mipChainTexture.needsUpdate = true;
-
+	/** Toggle decoded-value trilinear filtering versus nearest decoded texel. */
+	setInterpolation(enabled: boolean): void {
+		this.interpolation = Boolean(enabled);
+		this._interpolationUniform.value = this.interpolation ? 1 : 0;
 	}
 
 	/**

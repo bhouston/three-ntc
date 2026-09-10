@@ -44,7 +44,11 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
    1024/256 mapping, boundaries, and other resolution ratios. All 25 unit tests
    and TypeScript checks pass. The waves/learned case regresses at this budget;
    the aggregate improves because coarse checker mips now use the right grids.
-7. Discrete targets and decoded-value filtering: pending.
+7. Discrete targets and decoded-value filtering: complete. GPU regressions
+   verify exact texel centers, spatial/mip filtering after sigmoid, and nearest
+   sampling. Existing 30 decoder and 8 training tests pass. Exact trilinear
+   filtering uses eight MLP evaluations with shared weights. The metric samples
+   texel centers, so its improvement measures training, not off-center filtering.
 8. Preset consistency and paper baseline: pending.
 9. Bounded noise quantization: pending.
 10. Positional encoding, source mip filtering, convergence coverage: pending.
@@ -60,6 +64,8 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 | step4: exclude frozen latent gradients | 0.01007776 | 19.9664 | 0.00% |
 | step5: independent G0/G1 pairs | 0.01003036 | 19.9868 | -0.47% |
 | step6: resolution-aware feature mip bands | 0.00852505 | 20.6930 | -15.01% |
+
+| step7: discrete texel training and decoded-value filtering | 0.00621377 | 22.0665 | -27.11% |
 
 ## Per-change details
 
@@ -127,3 +133,16 @@ Compared with step5. Six quality cases passed (finite error only; no PSNR thresh
 | checker | true | 0.00909203 | 20.413 | -7.91% |
 | waves | false | 0.02384627 | 16.226 | -0.94% |
 | waves | true | 0.00416928 | 23.799 | 31.38% |
+
+### step7: discrete texel training and decoded-value filtering
+
+Compared with step6. Six quality cases passed (finite error only; no PSNR threshold).
+
+| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
+|---|---|---:|---:|---:|
+| smooth | false | 0.00242112 | 26.160 | -6.15% |
+| smooth | true | 0.00185991 | 27.305 | -19.48% |
+| checker | false | 0.00514766 | 22.884 | -43.76% |
+| checker | true | 0.00281665 | 25.503 | -69.02% |
+| waves | false | 0.02368443 | 16.255 | -0.68% |
+| waves | true | 0.00135283 | 28.688 | -67.55% |
