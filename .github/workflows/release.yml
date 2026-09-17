@@ -1,0 +1,44 @@
+name: Release
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
+jobs:
+  checks:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/ci.yml
+  release:
+    needs: checks
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: pnpm
+      # Node 26 ships npm with OIDC support. Do not configure registry-url or NPM_TOKEN.
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Restore generated changelog from the previous release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag=$(git describe --tags --match 'v[0-9]*' --abbrev=0)
+          if [ "$tag" != "v0.1.0" ]; then
+            gh release download "$tag" --pattern CHANGELOG.md --clobber
+          fi
+      - run: pnpm release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
