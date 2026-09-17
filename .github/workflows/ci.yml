@@ -2,7 +2,7 @@ name: ci
 
 on:
   push:
-    branches: [dev, main, master]
+    branches: [main]
   pull_request:
   workflow_call:
     inputs:
@@ -108,7 +108,7 @@ jobs:
   coverage-badge:
     name: Publish coverage badge
     needs: unit
-    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write

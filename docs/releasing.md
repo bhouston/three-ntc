@@ -19,35 +19,47 @@ No npm token secret is needed. GitHub-hosted Ubuntu, Node 26, and
 See [npm's trusted publishing documentation](https://docs.npmjs.com/trusted-publishers/).
 The repository URL in both package manifests must match this repository.
 
-## One-time bootstrap
+## One-time bootstrap (historical)
 
-- Create `main` and `dev` from the current `master` tip; retain `master` as history.
-  Make `main` the default branch. Feature PRs explicitly target `dev`.
-- Seed `v0.1.0` at `f51b2304714ce8853f6bc5cb9293dc70825b4ff9`, the `gitHead`
-  recorded on npm for **both** existing 0.1.0 packages. This prevents semantic-release
-  from treating the project as an unreleased 1.0.0 package.
-- Enable private vulnerability reporting in GitHub security settings.
-- Create GitHub environment `npm`, restricting deployments to `main`.
-- Protect `dev` and `main`: require PRs, `Unit` and `Issue, branch and commits` checks,
-  prevent force pushes/deletion, and enforce for admins. The release PR policy allows
-  only this repository's `dev` branch into `main`. Leave merge commits enabled for
-  release PRs; squash only implementation PRs.
-- Merge the setup PR into `dev`. Configure npm trust before merging `dev` into `main`.
+- `main` and `dev` were created from the `master` tip, with `master` retained as
+  history. `v0.1.0` was seeded at `f51b2304714ce8853f6bc5cb9293dc70825b4ff9`, the
+  `gitHead` recorded on npm for both existing 0.1.0 packages, so semantic-release
+  did not treat the project as an unreleased 1.0.0 package.
+- Private vulnerability reporting is enabled in GitHub security settings.
+- GitHub environment `npm` restricts deployments to `main`.
+- `main` requires PRs, the `Unit` and `Issue, branch and commits` checks, blocks
+  force pushes/deletion, and enforces for admins.
+- The repository has since moved off the `dev` → `main` promotion model
+  described in earlier revisions of this document; see "Routine release" below.
+  `dev` is left inactive rather than deleted, in case any old references depend
+  on it.
 
 ## Routine release
 
-Open a PR from `dev` to `main`; review CI, then **merge commit** it. The release
-workflow runs the required quality gates again (the separate main CI run retains
-the advisory GPU suite), builds, restores the previous
-release changelog, and runs semantic-release. Only release-worthy commits
-produce a version. Chore/docs-only changes may deploy the demo without an npm
-release. The workflow setup commit is a chore. Existing Conventional Commits since
-`v0.1.0` already request a minor release, so the first merge to main is expected
-to publish **0.2.0** for both packages. Configure npm trust before that merge.
+Contributors branch from `main` and open issue-linked PRs directly into `main`
+(see `CONTRIBUTING.md`). Merging a PR runs CI only; nothing publishes
+automatically.
+
+When `main` has release-worthy commits ready to ship, the maintainer runs:
+
+```sh
+gh workflow run release.yml --ref main
+```
+
+The workflow rejects any dispatch not targeting `refs/heads/main`, re-runs the
+required quality gates against the exact commit that was dispatched (the
+separate PR/push CI run retains the advisory GPU suite), aborts if `main` has
+advanced since the dispatch instead of releasing an unvalidated commit,
+restores the previous release changelog, and runs semantic-release. Only
+release-worthy commits produce a version; a dispatch with none is a successful
+no-op reported in the run summary. Pass `dry_run: true` to validate changelog
+rendering and tag ancestry without publishing, tagging, or creating a GitHub
+release.
 
 The `npm` environment and workflow permissions apply only to the publish job.
-PR jobs have read-only access. The workflow never uses a long-lived npm token.
-GitHub release assets retain the generated changelog between releases.
+PR and push CI jobs have read-only access. The workflow never uses a
+long-lived npm token. GitHub release assets retain the generated changelog
+between releases. Ordinary PR merges and tag pushes never trigger publishing.
 
 Two registry publications are sequential, not atomic. If publishing fails after
 one package succeeds, do not blindly rerun: inspect the npm versions, workflow
@@ -68,8 +80,7 @@ shared version preparation, and workspace dependency conversion without publishi
 Never run the real release command as a local packaging test.
 
 Coverage is uploaded as a CI artifact and summarized in checks; the README badge
-is updated from successful `dev` CI on the dedicated `coverage-badge` branch.
-Before first successful dev CI it may display unavailable.
+is updated from successful `main` CI on the dedicated `coverage-badge` branch.
 After this pilot's PR and first OIDC release succeed, extract the shared files
 into a separate template repo and add a copy script there. Review project-specific
 names, branching, package topology and limits for every rollout.
