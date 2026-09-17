@@ -5,6 +5,11 @@ on:
     branches: [dev, main, master]
   pull_request:
   workflow_call:
+    inputs:
+      skip-gpu:
+        description: Skip duplicate advisory GPU tests when called by the release workflow.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -70,6 +75,7 @@ jobs:
         run: node scripts/report-coverage.mjs
 
   gpu:
+    if: ${{ !inputs.skip-gpu }}
     name: GPU (WebGPU in headless Chromium)
     runs-on: ubuntu-latest
     # No GPU on hosted runners: Chromium falls back to SwiftShader (software

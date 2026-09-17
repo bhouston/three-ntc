@@ -12,6 +12,10 @@ jobs:
     permissions:
       contents: write
     uses: ./.github/workflows/ci.yml
+    with:
+      # The separate main CI run already executes the advisory GPU suite.
+      # Publish after required gates, without duplicating that slow suite.
+      skip-gpu: true
   release:
     needs: checks
     runs-on: ubuntu-latest
