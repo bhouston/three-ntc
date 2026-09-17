@@ -6,7 +6,7 @@ Read this file before starting a task. Do not commit directly to `main` or `dev`
 1. Before implementing a feature or fix, create a GitHub issue (or reuse the
    supplied issue). Follow the feature template: description, motivation,
    constraints, acceptance criteria. Agents may use `gh issue create`.
-2. Branch from current `origin/dev` using `<type>/<issue>-<short-description>`,
+2. Branch from current `origin/main` using `<type>/<issue>-<short-description>`,
    for example `feature/42-batch-export`. Allowed branch types are `feature`,
    `fix`, `docs`, `chore`, `refactor`, `test`, `perf`, and `ci`.
 3. Use Conventional Commits for every commit and the PR title:
@@ -22,15 +22,20 @@ Read this file before starting a task. Do not commit directly to `main` or `dev`
    `pnpm test`, `pnpm size`, `pnpm release:check`, and
    `pnpm audit --prod --audit-level high`. Run `pnpm test:gpu` for GPU changes;
    hosted SwiftShader GPU checks are advisory.
-5. Push the branch and open a PR **against `dev`** with `Closes #<issue>` and
+5. Push the branch and open a PR **against `main`** with `Closes #<issue>` and
    validation results. Use the PR template. Keep each feature PR focused.
    Squash feature PRs using the validated Conventional Commit title, or retain
    their validated commits with a merge commit. Do not bypass required checks.
-6. For a release, open `dev` → `main` and use a **merge commit**, never squash or
-   rebase this PR: preserving ancestry preserves release history. Only pushes
-   to `main` run semantic-release. After release, open a `main` → `dev` sync PR and merge it with a merge
-   commit to bring release ancestry back into the integration branch. GitHub closing keywords close issues when they reach the default
-   branch (`main`), not when the implementation first lands on `dev`.
+   Merging does not publish anything; it only runs CI.
+6. Releases are manual. When `main` has release-worthy commits ready to ship,
+   the maintainer runs `gh workflow run release.yml --ref main` (or the
+   Actions UI). The workflow re-runs quality checks against the exact commit
+   dispatched, aborting if `main` has since advanced, then runs
+   semantic-release to compute the version, generate the changelog, create the
+   tag/GitHub release, and publish both packages via npm trusted publishing
+   (OIDC). A dispatch with no release-worthy commits since the last release is
+   a successful no-op. Use the workflow's `dry_run` input to validate changes
+   without publishing.
 
 Unit coverage includes **all runtime and trainer TypeScript source**, including
 GPU paths that unit tests do not execute. Initial gates are statements 19%,
