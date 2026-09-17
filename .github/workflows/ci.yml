@@ -1,6 +1,13 @@
 name: ci
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [dev, main, master]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   unit:
@@ -18,8 +25,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
-          cache: 'pnpm'
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -33,8 +40,34 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Unit tests
+      - name: Unit tests with coverage gate
         run: pnpm test
+
+      - name: Release tooling tests
+        run: pnpm release:check
+
+      - name: Bundle size gate
+        run: pnpm size
+
+      - name: Production dependency audit
+        run: pnpm audit --prod --audit-level high
+
+      # extract-zip has two advisories but the registry has no patched release yet.
+      # Keep all development advisories visible; production vulnerabilities block.
+      - name: Development dependency audit (advisory)
+        continue-on-error: true
+        run: pnpm audit --audit-level high
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+
+      - name: Report coverage
+        if: always()
+        run: node scripts/report-coverage.mjs
 
   gpu:
     name: GPU (WebGPU in headless Chromium)
@@ -54,8 +87,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
-          cache: 'pnpm'
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -65,3 +98,33 @@ jobs:
 
       - name: GPU tests
         run: pnpm test:gpu
+
+  coverage-badge:
+    name: Publish coverage badge
+    needs: unit
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: coverage-badge
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+      - name: Update badge data
+        run: |
+          node --input-type=module <<'JS'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const { total } = JSON.parse(readFileSync('coverage/coverage-summary.json', 'utf8'));
+          writeFileSync('/tmp/coverage.json', JSON.stringify({ schemaVersion: 1, label: 'unit coverage', message: `${total.lines.pct}%`, color: 'blue' }));
+          JS
+          git switch --orphan coverage-badge
+          git rm -rf --ignore-unmatch .
+          cp /tmp/coverage.json coverage.json
+          git add coverage.json
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'chore: update coverage badge'
+          git push origin HEAD:coverage-badge --force
