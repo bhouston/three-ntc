@@ -117,3 +117,26 @@ test("both npm plugin preparations produce installable registry tarballs", async
     rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+test("renders release notes with the installed Conventional Commits preset", async () => {
+  const { generateNotes } = await import("@semantic-release/release-notes-generator");
+  const notes = await generateNotes(
+    { preset: "conventionalcommits" },
+    {
+      cwd: process.cwd(),
+      options: { repositoryUrl: "https://github.com/bhouston/three-ntc.git" },
+      lastRelease: { gitTag: "v0.1.0", version: "0.1.0" },
+      nextRelease: { gitTag: "v0.2.0", version: "0.2.0" },
+      commits: [
+        { hash: "1234567890abcdef", message: "feat: add texture export" },
+        { hash: "abcdef1234567890", message: "fix: preserve mip levels" },
+        { hash: "fedcba1234567890", message: "feat!: replace loader options" },
+      ],
+      logger: { log() {} },
+    },
+  );
+  assert.match(notes, /add texture export/);
+  assert.match(notes, /preserve mip levels/);
+  assert.match(notes, /BREAKING CHANGES/);
+  assert.match(notes, /v0\.1\.0\.\.\.v0\.2\.0/);
+});

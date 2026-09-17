@@ -37,7 +37,8 @@ The repository URL in both package manifests must match this repository.
 ## Routine release
 
 Open a PR from `dev` to `main`; review CI, then **merge commit** it. The release
-workflow runs the same quality gates again, builds, restores the previous
+workflow runs the required quality gates again (the separate main CI run retains
+the advisory GPU suite), builds, restores the previous
 release changelog, and runs semantic-release. Only release-worthy commits
 produce a version. Chore/docs-only changes may deploy the demo without an npm
 release. The workflow setup commit is a chore. Existing Conventional Commits since
