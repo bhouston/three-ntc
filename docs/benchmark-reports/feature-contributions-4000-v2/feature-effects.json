@@ -1,0 +1,4252 @@
+{
+  "sourceHash": "afc70a40f6977152453212f1a2b6d7ce0b6705f8df47e778df85c7cc8a8cb0fe",
+  "analysisSha256": "b464067bc87aef7ac02f99ae679d600d92fd231c732e9de49b929fc1f022508a",
+  "matplotlibVersion": "3.11.1",
+  "complete": 144,
+  "expected": 144,
+  "effects": [
+    {
+      "n": 3,
+      "mean": 0.2680524581237786,
+      "low": -0.1526521226047342,
+      "high": 0.6887570388522914,
+      "p": 0.11128376544209329,
+      "values": [
+        0.1514699473668628,
+        0.19037322587072225,
+        0.46231420113375066
+      ],
+      "material": "uv_grid",
+      "variant": "hidden-64",
+      "complete": true,
+      "geometricMseReductionPercent": 5.98551872078168,
+      "jsonRatio": 1.0487358719359017,
+      "brotliRatio": 1.0491606333054948,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 1.2730586412166498,
+      "mip0Delta": -0.055227518301544855,
+      "equalMipDelta": 1.0223697850844975,
+      "holmP": 0.5878395246894637
+    },
+    {
+      "n": 3,
+      "mean": -3.4186157419702496,
+      "low": -4.507765441810381,
+      "high": -2.329466042130118,
+      "p": 0.005438111288616709,
+      "values": [
+        -3.548736559980334,
+        -3.777268210624605,
+        -2.92984245530581
+      ],
+      "material": "uv_grid",
+      "variant": "g1-off",
+      "complete": true,
+      "geometricMseReductionPercent": -119.71594447362092,
+      "jsonRatio": 0.8037363064863903,
+      "brotliRatio": 0.817524944991681,
+      "runtimeGridRatio": 0.8,
+      "trainingRatio": 1.0742242675827596,
+      "mip0Delta": -2.215706787224441,
+      "equalMipDelta": -3.552291272395834,
+      "holmP": 0.06525733546340051
+    },
+    {
+      "n": 3,
+      "mean": 2.2697591401359674,
+      "low": 0.8487809689373351,
+      "high": 3.6907373113345994,
+      "p": 0.020521618852995083,
+      "values": [
+        2.7235956186021824,
+        2.458451306649799,
+        1.6272304951559207
+      ],
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "complete": true,
+      "geometricMseReductionPercent": 40.704179084990756,
+      "jsonRatio": 1.9645199872531858,
+      "brotliRatio": 1.9994942418986577,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 1.0211593354718742,
+      "mip0Delta": 2.939009186240677,
+      "equalMipDelta": 4.426386065704577,
+      "holmP": 0.18864002502609778
+    },
+    {
+      "n": 3,
+      "mean": -0.28108368444521403,
+      "low": -0.6555660009233981,
+      "high": 0.09339863203297005,
+      "p": 0.08397707495563766,
+      "values": [
+        -0.20102841122167803,
+        -0.4549722646272798,
+        -0.18725037748668427
+      ],
+      "material": "uv_grid",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "complete": true,
+      "geometricMseReductionPercent": -6.686229957116208,
+      "jsonRatio": 0.9914000389026152,
+      "brotliRatio": 0.992787685674998,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 1.1304356134561082,
+      "mip0Delta": -0.9587701876198196,
+      "equalMipDelta": -0.7938542835789187,
+      "holmP": 0.5878395246894637
+    },
+    {
+      "n": 3,
+      "mean": -0.7953826976458297,
+      "low": -2.136426500698255,
+      "high": 0.5456611054065957,
+      "p": 0.12532991638746527,
+      "values": [
+        -1.0596092919835343,
+        -1.152215670504951,
+        -0.17432313044900383
+      ],
+      "material": "uv_grid",
+      "variant": "levels-2",
+      "complete": true,
+      "geometricMseReductionPercent": -20.09868985841907,
+      "jsonRatio": 0.9944294765942829,
+      "brotliRatio": 0.9983333145666574,
+      "runtimeGridRatio": 0.9961089494163424,
+      "trainingRatio": 1.0470581483644028,
+      "mip0Delta": -0.6862422040423866,
+      "equalMipDelta": -0.0014117269607965,
+      "holmP": 0.5878395246894637
+    },
+    {
+      "n": 3,
+      "mean": -0.85722208961419,
+      "low": -2.8178501213198217,
+      "high": 1.1034059420914415,
+      "p": 0.20067666794984595,
+      "values": [
+        -1.0305899660276765,
+        -1.5453848745370635,
+        0.004308571722170029
+      ],
+      "material": "uv_grid",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "complete": true,
+      "geometricMseReductionPercent": -21.821013677310418,
+      "jsonRatio": 0.995654495114411,
+      "brotliRatio": 0.993320546270196,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 1.0769485347554344,
+      "mip0Delta": -1.7614672835745704,
+      "equalMipDelta": -0.9596733558103333,
+      "holmP": 0.6020300038495379
+    },
+    {
+      "n": 3,
+      "mean": 1.1817341338923413,
+      "low": 0.9294359074920637,
+      "high": 1.4340323602926188,
+      "p": 0.0024531036539772177,
+      "values": [
+        1.1954639555532154,
+        1.0740039421310072,
+        1.2757345039928012
+      ],
+      "material": "uv_grid",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "complete": true,
+      "geometricMseReductionPercent": 23.822522668120904,
+      "jsonRatio": 1.0,
+      "brotliRatio": 1.0065738843860308,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 1.015378791326494,
+      "mip0Delta": 0.5483756282917914,
+      "equalMipDelta": 2.242662802811379,
+      "holmP": 0.03434345115568105
+    },
+    {
+      "n": 3,
+      "mean": -0.3265145699831251,
+      "low": -0.7786450458328428,
+      "high": 0.12561590586659255,
+      "p": 0.08983565521201442,
+      "values": [
+        -0.2027403388362714,
+        -0.5354952144568159,
+        -0.24130815665628802
+      ],
+      "material": "uv_grid",
+      "variant": "activation-relu",
+      "complete": true,
+      "geometricMseReductionPercent": -7.808116099877593,
+      "jsonRatio": 0.999991722847837,
+      "brotliRatio": 0.9989836007567182,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.790238273346311,
+      "mip0Delta": -0.2592330863400534,
+      "equalMipDelta": -0.816710695161594,
+      "holmP": 0.5878395246894637
+    },
+    {
+      "n": 3,
+      "mean": -6.346563371992704,
+      "low": -7.097618529756696,
+      "high": -5.595508214228712,
+      "p": 0.0007556164015346534,
+      "values": [
+        -6.6588856866400405,
+        -6.3254976941808465,
+        -6.055306735157224
+      ],
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "complete": true,
+      "geometricMseReductionPercent": -331.17774530853194,
+      "jsonRatio": 0.5178062235907114,
+      "brotliRatio": 0.38866526747685504,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 1.1423719966809218,
+      "mip0Delta": -6.902241439389066,
+      "equalMipDelta": -4.896824161756453,
+      "holmP": 0.0113342460230198
+    },
+    {
+      "n": 3,
+      "mean": -0.4055217620817828,
+      "low": -1.6835069839150671,
+      "high": 0.8724634597515015,
+      "p": 0.3054472071196881,
+      "values": [
+        -0.9069519903419874,
+        -0.43065646129160484,
+        0.12104316538824378
+      ],
+      "material": "uv_grid",
+      "variant": "relu-hidden-16",
+      "complete": true,
+      "geometricMseReductionPercent": -9.787318100957233,
+      "jsonRatio": 0.9840995906948256,
+      "brotliRatio": 0.9741755730534819,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.9006290730222546,
+      "mip0Delta": -0.533569203000603,
+      "equalMipDelta": -1.8424582521397472,
+      "holmP": 0.6108944142393762
+    },
+    {
+      "n": 3,
+      "mean": 1.9705818285880692,
+      "low": 1.3715677592473774,
+      "high": 2.569595897928761,
+      "p": 0.004954225367476139,
+      "values": [
+        2.2442360116872706,
+        1.7892415390417966,
+        1.8782679350351401
+      ],
+      "material": "uv_grid",
+      "variant": "grid-channels-8-12",
+      "complete": true,
+      "geometricMseReductionPercent": 36.47541783566769,
+      "jsonRatio": 2.1657044477277148,
+      "brotliRatio": 2.193294167022223,
+      "runtimeGridRatio": 2.2,
+      "trainingRatio": 0.9344380440921295,
+      "mip0Delta": 2.1012474030917665,
+      "equalMipDelta": 2.333746891800826,
+      "holmP": 0.06440492977718981
+    },
+    {
+      "n": 3,
+      "mean": -2.6257808624402017,
+      "low": -3.906694867221023,
+      "high": -1.3448668576593805,
+      "p": 0.012611699685988742,
+      "values": [
+        -2.488825913418715,
+        -3.196069364735486,
+        -2.192447309166404
+      ],
+      "material": "uv_grid",
+      "variant": "hidden-16",
+      "complete": true,
+      "geometricMseReductionPercent": -83.05352073596018,
+      "jsonRatio": 0.9841078678469886,
+      "brotliRatio": 0.9599767334491032,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 1.047009887072063,
+      "mip0Delta": -2.7582348771954273,
+      "equalMipDelta": -2.457987615923656,
+      "holmP": 0.13872869654587616
+    },
+    {
+      "n": 3,
+      "mean": -1.4346629700832285,
+      "low": -2.294697807567982,
+      "high": -0.5746281325984751,
+      "p": 0.018864002502609778,
+      "values": [
+        -1.7598763771333594,
+        -1.4733991774233104,
+        -1.070713355693016
+      ],
+      "material": "uv_grid",
+      "variant": "base-512",
+      "complete": true,
+      "geometricMseReductionPercent": -39.144580888544,
+      "jsonRatio": 3.8930467783254494,
+      "brotliRatio": 3.916447465148642,
+      "runtimeGridRatio": 4.0,
+      "trainingRatio": 1.242925140315396,
+      "mip0Delta": -2.015638762584544,
+      "equalMipDelta": -3.3033676947151704,
+      "holmP": 0.18864002502609778
+    },
+    {
+      "n": 3,
+      "mean": -1.7374575596508848,
+      "low": -3.1840174424758176,
+      "high": -0.29089767682595213,
+      "p": 0.03546330386655816,
+      "values": [
+        -1.1880299065798354,
+        -2.3478677185553565,
+        -1.6764750538174624
+      ],
+      "material": "uv_grid",
+      "variant": "base-128",
+      "complete": true,
+      "geometricMseReductionPercent": -49.19207558294514,
+      "jsonRatio": 0.27672588969039313,
+      "brotliRatio": 0.2660837970497624,
+      "runtimeGridRatio": 0.25,
+      "trainingRatio": 0.7966505553014833,
+      "mip0Delta": -1.9659027912684788,
+      "equalMipDelta": -0.8869571019290324,
+      "holmP": 0.2837064309324653
+    },
+    {
+      "n": 3,
+      "mean": -0.21032064027106165,
+      "low": -1.1716411889899014,
+      "high": 0.7509999084477782,
+      "p": 0.4458955499260687,
+      "values": [
+        0.09813916511186704,
+        -0.6445428931615353,
+        -0.08455819276351662
+      ],
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "complete": true,
+      "geometricMseReductionPercent": -4.961991938867971,
+      "jsonRatio": 0.9957496823642857,
+      "brotliRatio": 0.9931982332887669,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.8537655515037792,
+      "mip0Delta": -0.9732427836861083,
+      "equalMipDelta": -0.743866123630975,
+      "holmP": 0.6108944142393762
+    },
+    {
+      "n": 3,
+      "mean": 2.5888644990546914,
+      "low": 2.1866746903636476,
+      "high": 2.991054307745735,
+      "p": 0.001301135823588928,
+      "values": [
+        2.443032925714597,
+        2.560476260006233,
+        2.7630843114432437
+      ],
+      "material": "brick",
+      "variant": "hidden-64",
+      "complete": true,
+      "geometricMseReductionPercent": 44.90482712716285,
+      "jsonRatio": 1.0497268166075664,
+      "brotliRatio": 1.0557622164548865,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 1.6549937282714742,
+      "mip0Delta": 2.762374568304807,
+      "equalMipDelta": 2.0715644497846313,
+      "holmP": 0.015613629883067137
+    },
+    {
+      "n": 3,
+      "mean": -3.7198155520668004,
+      "low": -4.21233217917643,
+      "high": -3.2272989249571706,
+      "p": 0.0009456056186761819,
+      "values": [
+        -3.8482455208536237,
+        -3.491472056742971,
+        -3.8197290786038067
+      ],
+      "material": "brick",
+      "variant": "g1-off",
+      "complete": true,
+      "geometricMseReductionPercent": -135.49492654138663,
+      "jsonRatio": 0.8040064142303337,
+      "brotliRatio": 0.7803161329529644,
+      "runtimeGridRatio": 0.8,
+      "trainingRatio": 1.0458667277816318,
+      "mip0Delta": -2.378557176311046,
+      "equalMipDelta": -1.9375454282995104,
+      "holmP": 0.013238478661466546
+    },
+    {
+      "n": 3,
+      "mean": 0.361067322734435,
+      "low": 0.2076026792287127,
+      "high": 0.5145319662401573,
+      "p": 0.009617606499878306,
+      "values": [
+        0.3244355869947455,
+        0.3263729317614903,
+        0.43239344944706914
+      ],
+      "material": "brick",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "complete": true,
+      "geometricMseReductionPercent": 7.977661026967564,
+      "jsonRatio": 1.9631925674279431,
+      "brotliRatio": 2.02516236301323,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 1.0442222233309293,
+      "mip0Delta": 0.31982729418238875,
+      "equalMipDelta": 0.23373946213314648,
+      "holmP": 0.07694085199902645
+    },
+    {
+      "n": 3,
+      "mean": 0.48261726770458324,
+      "low": -0.7504818047000648,
+      "high": 1.7157163401092312,
+      "p": 0.23421821444945146,
+      "values": [
+        0.8129222649477157,
+        -0.08821511809104976,
+        0.7231446562570838
+      ],
+      "material": "brick",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "complete": true,
+      "geometricMseReductionPercent": 10.517466182019641,
+      "jsonRatio": 0.9914118745918781,
+      "brotliRatio": 0.9874791650435186,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.9652710851399325,
+      "mip0Delta": -0.27704392725834265,
+      "equalMipDelta": 1.4852008591388024,
+      "holmP": 0.5263268055706858
+    },
+    {
+      "n": 3,
+      "mean": -0.03239014609381741,
+      "low": -1.5361135943266138,
+      "high": 1.471333302138979,
+      "p": 0.9346063395702872,
+      "values": [
+        -0.11905300946845188,
+        -0.5897181427750979,
+        0.6116007139620976
+      ],
+      "material": "brick",
+      "variant": "levels-2",
+      "complete": true,
+      "geometricMseReductionPercent": -0.7485987703669927,
+      "jsonRatio": 0.9944371430224581,
+      "brotliRatio": 0.999744447461238,
+      "runtimeGridRatio": 0.9961089494163424,
+      "trainingRatio": 1.0355582181519687,
+      "mip0Delta": 0.09447803379539721,
+      "equalMipDelta": 0.149630093928567,
+      "holmP": 0.9346063395702872
+    },
+    {
+      "n": 3,
+      "mean": -1.1227641929219345,
+      "low": -1.34532999700088,
+      "high": -0.9001983888429891,
+      "p": 0.0021158609081577406,
+      "values": [
+        -1.0891242386322446,
+        -1.054858187988522,
+        -1.224310152145037
+      ],
+      "material": "brick",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "complete": true,
+      "geometricMseReductionPercent": -29.501983204791692,
+      "jsonRatio": 0.995660475611873,
+      "brotliRatio": 0.9888130829375709,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 1.023124736906058,
+      "mip0Delta": -1.9924991475766969,
+      "equalMipDelta": -0.007776225179867424,
+      "holmP": 0.023274469989735147
+    },
+    {
+      "n": 3,
+      "mean": 2.05354375931064,
+      "low": 1.5712599796397146,
+      "high": 2.5358275389815654,
+      "p": 0.0029661232341220423,
+      "values": [
+        1.8784316138725359,
+        2.0198801207539248,
+        2.262319543305459
+      ],
+      "material": "brick",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "complete": true,
+      "geometricMseReductionPercent": 37.67739125353021,
+      "jsonRatio": 1.0,
+      "brotliRatio": 1.0009347594322384,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.8382149537575371,
+      "mip0Delta": 1.471874035927468,
+      "equalMipDelta": 3.208560006853626,
+      "holmP": 0.027197868806201342
+    },
+    {
+      "n": 3,
+      "mean": 0.9723646203482611,
+      "low": 0.06442264878164339,
+      "high": 1.880306591914879,
+      "p": 0.04401037837393251,
+      "values": [
+        1.3176666399414572,
+        1.0098613853003116,
+        0.5895658358030147
+      ],
+      "material": "brick",
+      "variant": "activation-relu",
+      "complete": true,
+      "geometricMseReductionPercent": 20.06011153796252,
+      "jsonRatio": 0.9999917342392607,
+      "brotliRatio": 1.0051943802449645,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.7246905073330584,
+      "mip0Delta": 1.393175544031898,
+      "equalMipDelta": 0.08654359085689123,
+      "holmP": 0.17604151349573005
+    },
+    {
+      "n": 3,
+      "mean": -1.851210807661836,
+      "low": -2.1016567174115464,
+      "high": -1.6007648979121258,
+      "p": 0.0009871884723375857,
+      "values": [
+        -1.8315758889282918,
+        -1.7616545741068492,
+        -1.9604019599503673
+      ],
+      "material": "brick",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "complete": true,
+      "geometricMseReductionPercent": -53.1514386489208,
+      "jsonRatio": 0.5184698423719427,
+      "brotliRatio": 0.4149241422157691,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 1.0579750014164526,
+      "mip0Delta": -1.7534457431227988,
+      "equalMipDelta": -1.4137538436048562,
+      "holmP": 0.013238478661466546
+    },
+    {
+      "n": 3,
+      "mean": -0.8491325542559996,
+      "low": -2.621777033659935,
+      "high": 0.9235119251479357,
+      "p": 0.17544226852356193,
+      "values": [
+        -0.16271468753173934,
+        -0.7975921351350763,
+        -1.5870908401011832
+      ],
+      "material": "brick",
+      "variant": "relu-hidden-16",
+      "complete": true,
+      "geometricMseReductionPercent": -21.594310784840243,
+      "jsonRatio": 0.9835924649325101,
+      "brotliRatio": 0.9890558286572596,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.7052318974753021,
+      "mip0Delta": -0.7577120071633535,
+      "equalMipDelta": -1.1293001486600431,
+      "holmP": 0.5263268055706858
+    },
+    {
+      "n": 3,
+      "mean": 1.0450714296987584,
+      "low": 0.3741090552922528,
+      "high": 1.716033804105264,
+      "p": 0.021548401206988865,
+      "values": [
+        1.196021357877207,
+        1.2059519157807657,
+        0.7332410154383027
+      ],
+      "material": "brick",
+      "variant": "grid-channels-8-12",
+      "complete": true,
+      "geometricMseReductionPercent": 21.387273862592792,
+      "jsonRatio": 2.164100147957117,
+      "brotliRatio": 2.1960803441011745,
+      "runtimeGridRatio": 2.2,
+      "trainingRatio": 1.2806381959577955,
+      "mip0Delta": 1.0118643176330835,
+      "equalMipDelta": 1.427457311604788,
+      "holmP": 0.10774200603494433
+    },
+    {
+      "n": 3,
+      "mean": -2.0363192308313245,
+      "low": -3.102089410545042,
+      "high": -0.9705490511176074,
+      "p": 0.014476114241823379,
+      "values": [
+        -2.2665563217046127,
+        -1.5413189909732452,
+        -2.3010823798161155
+      ],
+      "material": "brick",
+      "variant": "hidden-16",
+      "complete": true,
+      "geometricMseReductionPercent": -59.82029320455551,
+      "jsonRatio": 0.9836007306932494,
+      "brotliRatio": 0.9849408939768706,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 1.0156108468690555,
+      "mip0Delta": -2.2567351092333823,
+      "equalMipDelta": -1.092106279406534,
+      "holmP": 0.08685668545094027
+    },
+    {
+      "n": 3,
+      "mean": 1.6561491770476404,
+      "low": 1.2837656292386543,
+      "high": 2.0285327248566265,
+      "p": 0.002719786880620134,
+      "values": [
+        1.5167956664954616,
+        1.636905610287826,
+        1.8147462543596333
+      ],
+      "material": "brick",
+      "variant": "base-512",
+      "complete": true,
+      "geometricMseReductionPercent": 31.70560182321378,
+      "jsonRatio": 3.8890652251179936,
+      "brotliRatio": 3.9021371922649117,
+      "runtimeGridRatio": 4.0,
+      "trainingRatio": 0.9925420850434286,
+      "mip0Delta": 1.920678614629324,
+      "equalMipDelta": 0.41581163895148404,
+      "holmP": 0.027197868806201342
+    },
+    {
+      "n": 3,
+      "mean": -4.742605017719029,
+      "low": -5.276292974697957,
+      "high": -4.208917060740101,
+      "p": 0.0006833181911086728,
+      "values": [
+        -4.611096676687701,
+        -4.626192593587419,
+        -4.990525782881967
+      ],
+      "material": "brick",
+      "variant": "base-128",
+      "complete": true,
+      "geometricMseReductionPercent": -198.03035614147504,
+      "jsonRatio": 0.27772129507939264,
+      "brotliRatio": 0.27645683772464397,
+      "runtimeGridRatio": 0.25,
+      "trainingRatio": 1.1042847599865147,
+      "mip0Delta": -5.05201257279532,
+      "equalMipDelta": -1.9728778814541574,
+      "holmP": 0.010249772866630091
+    },
+    {
+      "n": 3,
+      "mean": 1.4304545859963724,
+      "low": 0.747874805441128,
+      "high": 2.113034366551617,
+      "p": 0.012077100029956322,
+      "values": [
+        1.7451984446819395,
+        1.2383880722353524,
+        1.3077772410718254
+      ],
+      "material": "brick",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "complete": true,
+      "geometricMseReductionPercent": 28.06263244300449,
+      "jsonRatio": 0.9957555318603748,
+      "brotliRatio": 0.99445308206722,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.9122373819190558,
+      "mip0Delta": 1.3072974280619836,
+      "equalMipDelta": 1.528279201666744,
+      "holmP": 0.08453970020969426
+    },
+    {
+      "n": 3,
+      "mean": 1.3265465437580275,
+      "low": 0.8880324876014951,
+      "high": 1.7650605999145599,
+      "p": 0.005850929418493966,
+      "values": [
+        1.411502048223518,
+        1.123606237221182,
+        1.4445313458293825
+      ],
+      "material": "wood",
+      "variant": "hidden-64",
+      "complete": true,
+      "geometricMseReductionPercent": 26.320724686462103,
+      "jsonRatio": 1.0497284607818016,
+      "brotliRatio": 1.045383799919068,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 1.5376611083109684,
+      "mip0Delta": 1.2363750338189803,
+      "equalMipDelta": 1.1253856269036053,
+      "holmP": 0.04680743534795173
+    },
+    {
+      "n": 3,
+      "mean": -0.6687822046981348,
+      "low": -0.8923184187349095,
+      "high": -0.44524599066136006,
+      "p": 0.00598059120061456,
+      "values": [
+        -0.6416554795660545,
+        -0.7692103138740123,
+        -0.5954808206543376
+      ],
+      "material": "wood",
+      "variant": "g1-off",
+      "complete": true,
+      "geometricMseReductionPercent": -16.648248049187607,
+      "jsonRatio": 0.8039999338717276,
+      "brotliRatio": 0.8075675886874429,
+      "runtimeGridRatio": 0.8,
+      "trainingRatio": 0.8924567166719604,
+      "mip0Delta": -0.5628900455642191,
+      "equalMipDelta": -0.8776296363160085,
+      "holmP": 0.04680743534795173
+    },
+    {
+      "n": 3,
+      "mean": 0.0977115720572949,
+      "low": -0.004451459714306952,
+      "high": 0.19987460382889677,
+      "p": 0.054286660027813904,
+      "values": [
+        0.13250460014167942,
+        0.0523249794901659,
+        0.10830513654003937
+      ],
+      "material": "wood",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "complete": true,
+      "geometricMseReductionPercent": 2.22477077374319,
+      "jsonRatio": 1.9632244145581392,
+      "brotliRatio": 1.9948607885392202,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.9417685270446937,
+      "mip0Delta": 0.0948798512878805,
+      "equalMipDelta": 0.040905214665961864,
+      "holmP": 0.2714333001390695
+    },
+    {
+      "n": 3,
+      "mean": -0.0007682716151672745,
+      "low": -0.40732286249045957,
+      "high": 0.405786319260125,
+      "p": 0.994250765299565,
+      "values": [
+        0.09765427478361488,
+        0.08973240218588785,
+        -0.18969149181500455
+      ],
+      "material": "wood",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "complete": true,
+      "geometricMseReductionPercent": -0.017691672476360942,
+      "jsonRatio": 0.9914115906329303,
+      "brotliRatio": 0.9900120793605115,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.834804905938081,
+      "mip0Delta": -0.9510000185841747,
+      "equalMipDelta": 0.6800423162019721,
+      "holmP": 0.994250765299565
+    },
+    {
+      "n": 3,
+      "mean": 0.08774933301628825,
+      "low": -0.06411361247292395,
+      "high": 0.23961227850550043,
+      "p": 0.1307875994575931,
+      "values": [
+        0.019565752520257718,
+        0.13766834091461533,
+        0.10601390561399171
+      ],
+      "material": "wood",
+      "variant": "levels-2",
+      "complete": true,
+      "geometricMseReductionPercent": 2.0002276826286636,
+      "jsonRatio": 0.9944369590913975,
+      "brotliRatio": 0.9888564061361764,
+      "runtimeGridRatio": 0.9961089494163424,
+      "trainingRatio": 0.870986416408927,
+      "mip0Delta": 0.04640085452203143,
+      "equalMipDelta": 0.1182293250459902,
+      "holmP": 0.3923627983727793
+    },
+    {
+      "n": 3,
+      "mean": -1.4791046853522947,
+      "low": -1.803183542195896,
+      "high": -1.1550258285086934,
+      "p": 0.0025831265523657,
+      "values": [
+        -1.5921338867571748,
+        -1.5088335053399362,
+        -1.3363466639597732
+      ],
+      "material": "wood",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "complete": true,
+      "geometricMseReductionPercent": -40.575769194318,
+      "jsonRatio": 0.9956603321292478,
+      "brotliRatio": 0.9823372749512644,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 1.0150113982087563,
+      "mip0Delta": -2.339430650120042,
+      "equalMipDelta": -0.46754194279148703,
+      "holmP": 0.025831265523657
+    },
+    {
+      "n": 3,
+      "mean": 2.14982695492548,
+      "low": 1.5705535734130613,
+      "high": 2.7291003364378987,
+      "p": 0.0038988977802373315,
+      "values": [
+        2.380772712234176,
+        1.9144578141460329,
+        2.1542503383962313
+      ],
+      "material": "wood",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "complete": true,
+      "geometricMseReductionPercent": 39.04388152167911,
+      "jsonRatio": 1.0,
+      "brotliRatio": 0.9899763561826038,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.8556218966386014,
+      "mip0Delta": 1.260665604516537,
+      "equalMipDelta": 2.6303915614487416,
+      "holmP": 0.03509008002213598
+    },
+    {
+      "n": 3,
+      "mean": -0.25460123638752447,
+      "low": -0.5513059038148038,
+      "high": 0.04210343103975489,
+      "p": 0.06616193325073805,
+      "values": [
+        -0.2879960273445974,
+        -0.12201840908927153,
+        -0.3537892727287044
+      ],
+      "material": "wood",
+      "variant": "activation-relu",
+      "complete": true,
+      "geometricMseReductionPercent": -6.037657148817033,
+      "jsonRatio": 0.9999917339659604,
+      "brotliRatio": 1.0029421008127788,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.7342156313060365,
+      "mip0Delta": -0.4767714248136343,
+      "equalMipDelta": -0.05187555905118776,
+      "holmP": 0.2714333001390695
+    },
+    {
+      "n": 3,
+      "mean": -0.8815510877548576,
+      "low": -0.9181449232622464,
+      "high": -0.8449572522474688,
+      "p": 9.30652763558859e-05,
+      "values": [
+        -0.8660570932467131,
+        -0.8953771059593478,
+        -0.8832190640585118
+      ],
+      "material": "wood",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "complete": true,
+      "geometricMseReductionPercent": -22.50536504675511,
+      "jsonRatio": 0.5184539209932466,
+      "brotliRatio": 0.471113069491028,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.9117302484916537,
+      "mip0Delta": -1.0137705666790922,
+      "equalMipDelta": -1.1165577351159612,
+      "holmP": 0.0012098485926265168
+    },
+    {
+      "n": 3,
+      "mean": -1.6116775567773385,
+      "low": -1.6886257237870574,
+      "high": -1.5347293897676195,
+      "p": 0.0001231083320066828,
+      "values": [
+        -1.585703931214809,
+        -1.645960580911165,
+        -1.6033681582060417
+      ],
+      "material": "wood",
+      "variant": "relu-hidden-16",
+      "complete": true,
+      "geometricMseReductionPercent": -44.93315812411276,
+      "jsonRatio": 0.9835919224315366,
+      "brotliRatio": 0.9841335844125417,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.7153516282269322,
+      "mip0Delta": -2.270669670214494,
+      "equalMipDelta": -0.8524141124608775,
+      "holmP": 0.0014772999840801937
+    },
+    {
+      "n": 3,
+      "mean": 1.0948930920006912,
+      "low": 0.9087422527277997,
+      "high": 1.2810439312735826,
+      "p": 0.001557751820801312,
+      "values": [
+        1.1679629697723328,
+        1.0182212823810701,
+        1.0984950238486704
+      ],
+      "material": "wood",
+      "variant": "grid-channels-8-12",
+      "complete": true,
+      "geometricMseReductionPercent": 22.28395504898033,
+      "jsonRatio": 2.164138637922911,
+      "brotliRatio": 2.163399867409928,
+      "runtimeGridRatio": 2.2,
+      "trainingRatio": 1.3614616528739591,
+      "mip0Delta": 1.2331670037383304,
+      "equalMipDelta": 0.8415459428684926,
+      "holmP": 0.01713527002881443
+    },
+    {
+      "n": 3,
+      "mean": -1.4990983392125325,
+      "low": -2.099816199878635,
+      "high": -0.89838047854643,
+      "p": 0.008562532428207925,
+      "values": [
+        -1.2338415715662023,
+        -1.556183595492218,
+        -1.707269850579177
+      ],
+      "material": "wood",
+      "variant": "hidden-16",
+      "complete": true,
+      "geometricMseReductionPercent": -41.224431098413675,
+      "jsonRatio": 0.9836001884655761,
+      "brotliRatio": 0.9782026516918824,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.9097144943796589,
+      "mip0Delta": -1.8790023107645861,
+      "equalMipDelta": -1.1914085951936286,
+      "holmP": 0.05137519456924755
+    },
+    {
+      "n": 3,
+      "mean": 3.5448982730334557,
+      "low": 3.4340036469138626,
+      "high": 3.655792899153049,
+      "p": 5.285747622363335e-05,
+      "values": [
+        3.551874044233898,
+        3.4971799536564987,
+        3.585640821209971
+      ],
+      "material": "wood",
+      "variant": "base-512",
+      "complete": true,
+      "geometricMseReductionPercent": 55.79105279630414,
+      "jsonRatio": 3.889160749563967,
+      "brotliRatio": 3.8091726153579923,
+      "runtimeGridRatio": 4.0,
+      "trainingRatio": 0.8937015391811234,
+      "mip0Delta": 3.3466371206888916,
+      "equalMipDelta": 1.910561366185334,
+      "holmP": 0.0007928621433545002
+    },
+    {
+      "n": 3,
+      "mean": -3.3734275220468546,
+      "low": -3.4983416545933443,
+      "high": -3.248513389500365,
+      "p": 7.405588041942135e-05,
+      "values": [
+        -3.324010891777281,
+        -3.4245375240173423,
+        -3.37173415034594
+      ],
+      "material": "wood",
+      "variant": "base-128",
+      "complete": true,
+      "geometricMseReductionPercent": -117.44165864763741,
+      "jsonRatio": 0.277697413557949,
+      "brotliRatio": 0.2783026089731134,
+      "runtimeGridRatio": 0.25,
+      "trainingRatio": 0.8237333129151371,
+      "mip0Delta": -4.012656351295244,
+      "equalMipDelta": -2.1686870976817025,
+      "holmP": 0.0010367823258718989
+    },
+    {
+      "n": 3,
+      "mean": 0.18095161382696526,
+      "low": -0.1955029575744244,
+      "high": 0.557406185228355,
+      "p": 0.1745346732188715,
+      "values": [
+        0.3477223021730538,
+        0.05167463006966244,
+        0.14345790923817958
+      ],
+      "material": "wood",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "complete": true,
+      "geometricMseReductionPercent": 4.0809566616258675,
+      "jsonRatio": 0.9957553915207022,
+      "brotliRatio": 0.9954221088111846,
+      "runtimeGridRatio": 1.0,
+      "trainingRatio": 0.701606576646226,
+      "mip0Delta": -0.5548376067240545,
+      "equalMipDelta": 0.4648872227944736,
+      "holmP": 0.3923627983727793
+    }
+  ],
+  "propertyEffects": [
+    {
+      "material": "uv_grid",
+      "variant": "hidden-64",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.2626796767111017,
+      "low": -0.1441191716033724,
+      "high": 0.6694785250255758,
+      "p": 0.10881011074229274,
+      "values": [
+        0.151049058593955,
+        0.18631774018599145,
+        0.45067223135335865
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "hidden-64",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 2.768563720780046,
+      "low": -5.751833538475324,
+      "high": 11.288960980035416,
+      "p": 0.29696217495559174,
+      "values": [
+        0.4748125088808166,
+        1.1193008667599997,
+        6.711577786699323
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "hidden-64",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 3.011284745579843,
+      "low": -5.322471433029699,
+      "high": 11.345040924189385,
+      "p": 0.26026068203532415,
+      "values": [
+        0.3180128301110301,
+        1.9466307047465534,
+        6.769210701881946
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "g1-off",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -3.4266931601081745,
+      "low": -4.5141413169553335,
+      "high": -2.3392450032610155,
+      "p": 0.005395949088912166,
+      "values": [
+        -3.5542607600826273,
+        -3.7864962932802015,
+        -2.939322426961695
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "g1-off",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 1.0820905132532346,
+      "low": 0.05075656659107719,
+      "high": 2.113424459915392,
+      "p": 0.04572858880045494,
+      "values": [
+        0.6429863194617838,
+        1.1350445359203434,
+        1.4682406843775766
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "g1-off",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.9709145144745198,
+      "low": -0.12480245182336847,
+      "high": 2.066631480772408,
+      "p": 0.06242332294107367,
+      "values": [
+        0.46265436819710715,
+        1.196582686224417,
+        1.253506489002035
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 2.2768550182966387,
+      "low": 0.8364404608515821,
+      "high": 3.717269575741695,
+      "p": 0.020942084921528936,
+      "values": [
+        2.7355327488362846,
+        2.4699272687551996,
+        1.6251050372984324
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.28124185292443354,
+      "low": -4.054019369562528,
+      "high": 4.616503075411396,
+      "p": 0.8063634018762916,
+      "values": [
+        -1.072443025125608,
+        -0.33470239490726783,
+        2.2508709788061765
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.42581748347792825,
+      "low": -3.676285432734578,
+      "high": 4.5279203996904345,
+      "p": 0.6988430421535318,
+      "values": [
+        -0.8548355054276726,
+        -0.15729347582937692,
+        2.2895814316908343
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.2525995002329869,
+      "low": -0.6540462893918817,
+      "high": 0.14884728892590793,
+      "p": 0.11364282245624346,
+      "values": [
+        -0.17025008515326334,
+        -0.4387907895907617,
+        -0.1487576259549357
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -5.322703359872922,
+      "low": -8.58458575206242,
+      "high": -2.0608209676834246,
+      "p": 0.019689007415218285,
+      "values": [
+        -6.517434220918716,
+        -3.916849104953073,
+        -5.533826753746979
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -5.385959782603552,
+      "low": -8.910794734711924,
+      "high": -1.86112483049518,
+      "p": 0.022362371907614143,
+      "values": [
+        -6.632390096472449,
+        -3.841771846638437,
+        -5.68371740469977
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "levels-2",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.7958464214061252,
+      "low": -2.1439713748235665,
+      "high": 0.5522785320113159,
+      "p": 0.12629534124731,
+      "values": [
+        -1.0576716350932358,
+        -1.1579872726983993,
+        -0.17188035642674038
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "levels-2",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.7035536989559953,
+      "low": -4.657630617436201,
+      "high": 3.25052321952421,
+      "p": 0.5239361630457704,
+      "values": [
+        -2.1341164811503432,
+        1.0110887370146457,
+        -0.9876333527322885
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "levels-2",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.41390370888422484,
+      "low": -4.398436690669643,
+      "high": 3.570629272901193,
+      "p": 0.6986507043336938,
+      "values": [
+        -1.814461175806656,
+        1.335953135874263,
+        -0.7632030867202815
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.8507828620638236,
+      "low": -2.8348901161448525,
+      "high": 1.1333243920172056,
+      "p": 0.20633853397437874,
+      "values": [
+        -1.024120876640957,
+        -1.5485908504790729,
+        0.020363140928559176
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -2.293910933067494,
+      "low": -6.5561763849803,
+      "high": 1.9683545188453122,
+      "p": 0.1465699531570992,
+      "values": [
+        -3.4006904943582015,
+        -0.31741750910858,
+        -3.1636247957357
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -2.2800848976457124,
+      "low": -6.3529651552434725,
+      "high": 1.7927953599520472,
+      "p": 0.13764701449427663,
+      "values": [
+        -3.3464337693209956,
+        -0.39217230823723526,
+        -3.101648615378906
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 1.1983157898213126,
+      "low": 0.9118306553359365,
+      "high": 1.4848009243066886,
+      "p": 0.0030731478540888535,
+      "values": [
+        1.2138713256063767,
+        1.0760017572486333,
+        1.305074286608928
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -2.078321322136574,
+      "low": -7.435251335448142,
+      "high": 3.278608691174994,
+      "p": 0.23700454441129737,
+      "values": [
+        -3.534076452425481,
+        0.3990930032449569,
+        -3.0999805172291985
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -2.194830148287764,
+      "low": -8.001507475402315,
+      "high": 3.611847178826787,
+      "p": 0.24539696098272823,
+      "values": [
+        -3.6224753155485843,
+        0.5027485740565112,
+        -3.4647637033712186
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "activation-relu",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.33554508238823644,
+      "low": -0.7841444262514868,
+      "high": 0.11305426147501396,
+      "p": 0.0844915979680535,
+      "values": [
+        -0.2079538103862788,
+        -0.5421744917995994,
+        -0.2565069449788311
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "activation-relu",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 11.24639527198427,
+      "low": -24.100959270821136,
+      "high": 46.593749814789675,
+      "p": 0.3044808714365185,
+      "values": [
+        3.3540080259065377,
+        2.712464175259612,
+        27.67271361478666
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "activation-relu",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 13.50713135654108,
+      "low": -32.03080104699393,
+      "high": 59.04506376007609,
+      "p": 0.330041222240787,
+      "values": [
+        3.5386268118560196,
+        2.319957644911952,
+        34.66280961285527
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -6.356032308451373,
+      "low": -7.099889492636179,
+      "high": -5.6121751242665665,
+      "p": 0.0007390140726610817,
+      "values": [
+        -6.6654127189084775,
+        -6.335053805932731,
+        -6.067630400512911
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.35942805525786997,
+      "low": -3.5518159135143934,
+      "high": 2.832959802998653,
+      "p": 0.6759399338629373,
+      "values": [
+        -1.263709095172473,
+        -0.9262144828276604,
+        1.1116394122265234
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.34060503397139524,
+      "low": -3.5998506222039217,
+      "high": 2.9186405542611316,
+      "p": 0.6969992131162759,
+      "values": [
+        -1.1412794332186706,
+        -1.0540876109326547,
+        1.1735519422371397
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "relu-hidden-16",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.4034654720283086,
+      "low": -1.6802902136313482,
+      "high": 0.873359269574731,
+      "p": 0.3069495643766167,
+      "values": [
+        -0.9041747820377211,
+        -0.4290718986214088,
+        0.122850264574204
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "relu-hidden-16",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -1.1752406794260537,
+      "low": -2.9530893801340454,
+      "high": 0.6026080212819378,
+      "p": 0.10457854014093737,
+      "values": [
+        -1.996480802025829,
+        -0.8444450984622733,
+        -0.6847961377900589
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "relu-hidden-16",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -1.0901357177667943,
+      "low": -3.388515435702689,
+      "high": 1.2082440001691006,
+      "p": 0.17806602321406984,
+      "values": [
+        -2.084683099639136,
+        -0.930786597891256,
+        -0.2549374557699906
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "grid-channels-8-12",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 1.9722165011276023,
+      "low": 1.3650341283732088,
+      "high": 2.5793988738819955,
+      "p": 0.005080855179986576,
+      "values": [
+        2.2508450726227522,
+        1.7939460594451049,
+        1.87185837131495
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "grid-channels-8-12",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 1.596895863731575,
+      "low": -4.263964851033832,
+      "high": 7.457756578496983,
+      "p": 0.3618022338042439,
+      "values": [
+        -0.0750677222602576,
+        0.5701469840247171,
+        4.295608329430266
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "grid-channels-8-12",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 1.523663581357771,
+      "low": -4.363759563232984,
+      "high": 7.411086725948525,
+      "p": 0.3813689334383855,
+      "values": [
+        -0.14055849494569372,
+        0.47436407032238037,
+        4.237185168696627
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "hidden-16",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -2.605207624401755,
+      "low": -3.866650648442789,
+      "high": -1.3437646003607202,
+      "p": 0.012428601729827182,
+      "values": [
+        -2.4619122736278953,
+        -3.1692573822446874,
+        -2.184453217332681
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "hidden-16",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -7.32425716264039,
+      "low": -13.115578443507681,
+      "high": -1.5329358817730991,
+      "p": 0.03215202287293495,
+      "values": [
+        -9.12160635265797,
+        -8.16115376866584,
+        -4.690011366597361
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "hidden-16",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -6.607581693819891,
+      "low": -12.710460082373684,
+      "high": -0.5047033052660979,
+      "p": 0.04312127932368803,
+      "values": [
+        -8.199188677686408,
+        -7.845409853128231,
+        -3.778146550645033
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "base-512",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -1.4391851001575944,
+      "low": -2.292755835122333,
+      "high": -0.5856143651928555,
+      "p": 0.018475904288647205,
+      "values": [
+        -1.7642765500521662,
+        -1.47362525303366,
+        -1.079653497386957
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "base-512",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.847281979509134,
+      "low": -5.071366871646141,
+      "high": 6.765930830664409,
+      "p": 0.6006910230607306,
+      "values": [
+        1.2275886576181279,
+        -1.7025741532896177,
+        3.0168314341988918
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "base-512",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.821997293700349,
+      "low": -4.171470317421445,
+      "high": 5.815464904822143,
+      "p": 0.5521935322825458,
+      "values": [
+        1.0695834407074614,
+        -1.3004687269514648,
+        2.6968771673450505
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "base-128",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -1.7372293725190506,
+      "low": -3.192832272581957,
+      "high": -0.28162647245614414,
+      "p": 0.03589334993112736,
+      "values": [
+        -1.1806686790677645,
+        -2.348718541759794,
+        -1.6823008967295934
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "base-128",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -2.0476671357534855,
+      "low": -7.279013370256499,
+      "high": 3.1836790987495283,
+      "p": 0.23418830886799213,
+      "values": [
+        -3.5397372992466103,
+        -2.964494298305709,
+        0.3612301902918631
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "base-128",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -1.7110367003908162,
+      "low": -7.012383857752299,
+      "high": 3.5903104569706663,
+      "p": 0.29935792233434133,
+      "values": [
+        -3.8306908625769722,
+        -1.7396004627741206,
+        0.43718122417864436
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.19186503630759214,
+      "low": -1.168722030055407,
+      "high": 0.7849919574402228,
+      "p": 0.4870411442548991,
+      "values": [
+        0.11769082873878034,
+        -0.6343361875121118,
+        -0.058949750149444924
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -3.989844792215005,
+      "low": -6.651752193774538,
+      "high": -1.3279373906554723,
+      "p": 0.023209898001153362,
+      "values": [
+        -4.979173281886673,
+        -2.8516226051553417,
+        -4.138738489603
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -4.138389432249824,
+      "low": -6.330173407286207,
+      "high": -1.9466054572134404,
+      "p": 0.014815771526156762,
+      "values": [
+        -4.838196459808145,
+        -3.1472553231040763,
+        -4.429716513837249
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "hidden-64",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 2.4287901957160423,
+      "low": 1.7265452178725658,
+      "high": 3.1310351735595185,
+      "p": 0.00448533707280796,
+      "values": [
+        2.5643585028965745,
+        2.618164538188182,
+        2.1038475460633705
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "hidden-64",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 2.699191395840425,
+      "low": 1.3595343122735006,
+      "high": 4.038848479407349,
+      "p": 0.013046175812199579,
+      "values": [
+        2.3286007885217543,
+        2.4510991417329606,
+        3.31787425726656
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "hidden-64",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 4.075620279627489,
+      "low": 2.028019387832505,
+      "high": 6.123221171422474,
+      "p": 0.013361579868713336,
+      "values": [
+        3.123835414039462,
+        4.552334098098214,
+        4.55069132674479
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "hidden-64",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 3.6910545529126395,
+      "low": 1.8330472111986285,
+      "high": 5.54906189462665,
+      "p": 0.01341265472713804,
+      "values": [
+        2.8763216845069906,
+        3.8502579683705918,
+        4.346584005860336
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "hidden-64",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.0779948241259613,
+      "low": -3.2511860576556018,
+      "high": 3.407175705907524,
+      "p": 0.9289033262302586,
+      "values": [
+        0.9611286679620363,
+        0.7369399389547695,
+        -1.464084134538922
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "g1-off",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -4.677192380950838,
+      "low": -6.194990319805088,
+      "high": -3.1593944420965876,
+      "p": 0.0056402509464189565,
+      "values": [
+        -4.854817681377391,
+        -3.997065161007292,
+        -5.17969430046783
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "g1-off",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -2.7866826367598185,
+      "low": -3.5159851053245603,
+      "high": -2.0573801681950767,
+      "p": 0.003679304596349242,
+      "values": [
+        -2.8613882203153977,
+        -3.0356962640186893,
+        -2.462963425945368
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "g1-off",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -1.567419235207602,
+      "low": -3.591237957094808,
+      "high": 0.45639948667960395,
+      "p": 0.07946706653196278,
+      "values": [
+        -1.9790655284542211,
+        -2.094154046136211,
+        -0.6290381310323738
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "g1-off",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -1.3585240223967243,
+      "low": -3.736488646699671,
+      "high": 1.0194406019062223,
+      "p": 0.13321720424918881,
+      "values": [
+        -1.0081471770596266,
+        -2.4416072376413567,
+        -0.6258176524891894
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "g1-off",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -1.579918920210493,
+      "low": -4.566999862200197,
+      "high": 1.4071620217792107,
+      "p": 0.15064098855585473,
+      "values": [
+        -0.7113901813393753,
+        -1.0760159363989032,
+        -2.952350642893201
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.3702716380912463,
+      "low": -0.025585257541584805,
+      "high": 0.7661285337240774,
+      "p": 0.056552952893276776,
+      "values": [
+        0.3773295651900952,
+        0.20750609855875268,
+        0.525979250524891
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.38231744426935893,
+      "low": 0.09678603431560617,
+      "high": 0.6678488542231117,
+      "p": 0.02883246226432934,
+      "values": [
+        0.34602980082576806,
+        0.5110236305603166,
+        0.28989890142199215
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.26194458511477353,
+      "low": -4.554707773910963,
+      "high": 5.07859694414051,
+      "p": 0.8367622120623753,
+      "values": [
+        -1.0495264965980837,
+        -0.6538198473490908,
+        2.489180099291495
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.14607110716473196,
+      "low": -4.360722166848639,
+      "high": 4.652864381178103,
+      "p": 0.9018666364261717,
+      "values": [
+        -0.9560834937037939,
+        -0.8456951496459411,
+        2.239991964843931
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -1.0386398511288775,
+      "low": -2.424639199653254,
+      "high": 0.34735949739549876,
+      "p": 0.08421573548049421,
+      "values": [
+        -0.4275315006026119,
+        -1.52084843757779,
+        -1.1675396152062305
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.8794357177146495,
+      "low": -0.1769855949095578,
+      "high": 1.9358570303388567,
+      "p": 0.06987483987884724,
+      "values": [
+        1.053877760730181,
+        0.39468565667918654,
+        1.1897437357345808
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.15118519979808553,
+      "low": -1.3398657460075347,
+      "high": 1.6422361456037058,
+      "p": 0.7052197645051186,
+      "values": [
+        0.6325253787794409,
+        -0.5213509699476546,
+        0.3423811905624703
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 1.4026192326741789,
+      "low": -0.22790693796905503,
+      "high": 3.0331454033174126,
+      "p": 0.06586653203305504,
+      "values": [
+        1.1278729840190636,
+        0.9282618912504077,
+        2.151722822753065
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 1.1629474746329933,
+      "low": -0.8001462955749521,
+      "high": 3.1260412448409385,
+      "p": 0.1255733818912641,
+      "values": [
+        0.8426838563290033,
+        0.5830988904492855,
+        2.063059677120691
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -2.1033505104866514,
+      "low": -4.21412148353852,
+      "high": 0.007420462565217445,
+      "p": 0.05032718135206293,
+      "values": [
+        -2.680528956755829,
+        -1.1276380846311014,
+        -2.5018844900730244
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "levels-2",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.16850061729675284,
+      "low": -1.2579646767185484,
+      "high": 0.9209634421250427,
+      "p": 0.5742279905199013,
+      "values": [
+        0.0399326100613564,
+        -0.6724156776031123,
+        0.12698121565149734
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "levels-2",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.07631010318752374,
+      "low": -2.0251535699463648,
+      "high": 2.1777737763214122,
+      "p": 0.8901886929852427,
+      "values": [
+        -0.2587105819925739,
+        -0.5508224182660086,
+        1.0384633098211538
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "levels-2",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.3610625216858712,
+      "low": -1.3575549711261532,
+      "high": 2.0796800144978955,
+      "p": 0.4614354005843164,
+      "values": [
+        -0.32416279777221035,
+        0.3480241792152441,
+        1.05932618361458
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "levels-2",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.6533460487364001,
+      "low": -0.82999895904332,
+      "high": 2.13669105651612,
+      "p": 0.19855527337444046,
+      "values": [
+        0.740118724890074,
+        0.017580441447236694,
+        1.2023389798718895
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "levels-2",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -1.033524317668937,
+      "low": -6.526101453300426,
+      "high": 4.459052817962552,
+      "p": 0.5031685958274601,
+      "values": [
+        0.5646767648291373,
+        -0.10835672495299775,
+        -3.5568929928829505
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.2822800536113424,
+      "low": -0.4897162578940005,
+      "high": 1.0542763651166853,
+      "p": 0.25630101881219436,
+      "values": [
+        0.23710593097286647,
+        0.6131651456538165,
+        -0.003430915792655753
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -2.08792631592069,
+      "low": -2.400577764052519,
+      "high": -1.7752748677888608,
+      "p": 0.0012090097605317318,
+      "values": [
+        -1.9990117881080423,
+        -2.2319384862987874,
+        -2.0328286733552403
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.3319614912780959,
+      "low": -0.9206274702733817,
+      "high": 1.5845504528295735,
+      "p": 0.3723157695732704,
+      "values": [
+        0.1684824486880956,
+        0.897652248608594,
+        -0.07025022346240206
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.10733237290973818,
+      "low": -0.7773500900294864,
+      "high": 0.9920148358489628,
+      "p": 0.6537194496982283,
+      "values": [
+        -0.08622293757400001,
+        0.5183276228713041,
+        -0.11010756656808951
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -1.906700451513366,
+      "low": -6.297847252989296,
+      "high": 2.484446349962564,
+      "p": 0.20267244033552123,
+      "values": [
+        -0.7507354303002742,
+        -1.0278090254362766,
+        -3.9415568988035474
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 1.2171255111906305,
+      "low": 0.947221560059663,
+      "high": 1.487029462321598,
+      "p": 0.002645750857085627,
+      "values": [
+        1.3394031518242002,
+        1.180300584150359,
+        1.1316727975973322
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 3.1679501275296147,
+      "low": 1.8926287505706958,
+      "high": 4.443271504488534,
+      "p": 0.00864077126073004,
+      "values": [
+        2.6697960514753305,
+        3.1387341331840943,
+        3.6953201979294192
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.5949539243209282,
+      "low": -3.260661403868694,
+      "high": 2.0707535552268377,
+      "p": 0.4382360307799791,
+      "values": [
+        -1.7911195680993046,
+        0.28315843410527464,
+        -0.2769006389687547
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.512612241435645,
+      "low": -2.8360638566467875,
+      "high": 1.8108393737754973,
+      "p": 0.4426747888380175,
+      "values": [
+        -1.5832793671911887,
+        0.14547450089787617,
+        -0.10003185801362235
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -1.4512977663908917,
+      "low": -4.544348305681945,
+      "high": 1.6417527729001617,
+      "p": 0.18096117068289352,
+      "values": [
+        -0.42368536455246897,
+        -1.094280005775424,
+        -2.8359279288447823
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "activation-relu",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.2607690734631305,
+      "low": -0.9009356014044649,
+      "high": 1.422473748330726,
+      "p": 0.4360317389746253,
+      "values": [
+        0.3915340987570275,
+        0.6491166874590633,
+        -0.25834356582669926
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "activation-relu",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 1.6464918084166698,
+      "low": 0.4476213961351385,
+      "high": 2.8453622206982008,
+      "p": 0.027464326628767743,
+      "values": [
+        2.1979987916624495,
+        1.301508814478865,
+        1.4399678191086949
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "activation-relu",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 2.4967772864283995,
+      "low": -2.981632933162144,
+      "high": 7.975187506018942,
+      "p": 0.18892597670000955,
+      "values": [
+        4.378087669557466,
+        3.0424270587634794,
+        0.06981713096425324
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "activation-relu",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 2.7062597203002263,
+      "low": -2.537203858801792,
+      "high": 7.949723299402244,
+      "p": 0.15651895726893394,
+      "values": [
+        4.666042152455596,
+        2.9812884101953543,
+        0.4714485982497294
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "activation-relu",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.8419821428146221,
+      "low": -1.2984229536241274,
+      "high": -0.38554133200511687,
+      "p": 0.015505900850543819,
+      "values": [
+        -0.6369400170507475,
+        -0.991720508445205,
+        -0.8972859029479139
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -2.107618636074882,
+      "low": -2.490864092751362,
+      "high": -1.724373179398402,
+      "p": 0.001781294645554543,
+      "values": [
+        -2.1870778018745725,
+        -1.9298090357713917,
+        -2.205969070578682
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -1.702489201670654,
+      "low": -2.1034752105872143,
+      "high": -1.3015031927540939,
+      "p": 0.002983117778147526,
+      "values": [
+        -1.5526576476290828,
+        -1.6813901854032025,
+        -1.8734197719796768
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.3621376711417407,
+      "low": -2.848826495338504,
+      "high": 3.573101837621985,
+      "p": 0.6754441759582106,
+      "values": [
+        -0.8407285723432381,
+        0.19831540489369814,
+        1.728826180874762
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.10934720958525428,
+      "low": -2.7300868267974066,
+      "high": 2.948781245967915,
+      "p": 0.8836311924286365,
+      "values": [
+        -0.8565645620566826,
+        -0.18665089188558426,
+        1.3712570826980297
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.48513302434531386,
+      "low": -4.937166025660952,
+      "high": 3.9668999769703244,
+      "p": 0.6853125893912684,
+      "values": [
+        1.1285293017795013,
+        -0.16991447457174758,
+        -2.4140139002436953
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "relu-hidden-16",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -1.136025178213669,
+      "low": -2.530954545301652,
+      "high": 0.258904188874314,
+      "p": 0.07267647556256296,
+      "values": [
+        -0.7132827688854277,
+        -0.9216173445067781,
+        -1.7731754212488013
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "relu-hidden-16",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.6813955169829503,
+      "low": -2.848974434200289,
+      "high": 1.4861834002343883,
+      "p": 0.308818242362196,
+      "values": [
+        0.2288280175950561,
+        -0.7623487061127179,
+        -1.510665862431189
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "relu-hidden-16",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 2.7909964740354667,
+      "low": -6.114866446187035,
+      "high": 11.696859394257968,
+      "p": 0.3099336735085415,
+      "values": [
+        6.902010959147411,
+        1.1568638220306724,
+        0.31411464092831665
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "relu-hidden-16",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 4.216015545998523,
+      "low": -5.321892957845858,
+      "high": 13.753924049842905,
+      "p": 0.19753519855583246,
+      "values": [
+        8.61247224538615,
+        2.5130926866357655,
+        1.5224817059736537
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "relu-hidden-16",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -3.291285131755025,
+      "low": -5.850587206507859,
+      "high": -0.731983057002191,
+      "p": 0.031143973250616352,
+      "values": [
+        -3.3446266545494012,
+        -2.235392821186558,
+        -4.293835919529116
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "grid-channels-8-12",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 1.2142140348950459,
+      "low": -0.384976352280872,
+      "high": 2.8134044220709638,
+      "p": 0.08229803388467827,
+      "values": [
+        1.1712240193248462,
+        1.8783923340874509,
+        0.5930257512728403
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "grid-channels-8-12",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.9644053799680989,
+      "low": 0.2453639129330647,
+      "high": 1.6834468470031332,
+      "p": 0.028739136105936147,
+      "values": [
+        1.2054496547417415,
+        0.6433679940723067,
+        1.0443984910902486
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "grid-channels-8-12",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.41051675876573296,
+      "low": -5.516335387167862,
+      "high": 6.3373689046993285,
+      "p": 0.7937978888529515,
+      "values": [
+        1.6154045258494847,
+        1.9536737198987169,
+        -2.3375279694510027
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "grid-channels-8-12",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.8415638319700349,
+      "low": -3.1738071284240785,
+      "high": 4.856934792364148,
+      "p": 0.462352452677117,
+      "values": [
+        1.7913843591019258,
+        1.7581073733408559,
+        -1.024800236532677
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "grid-channels-8-12",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.7425852322102505,
+      "low": -4.163046947392217,
+      "high": 2.6778764829717154,
+      "p": 0.4488583290020308,
+      "values": [
+        -0.14969852661984362,
+        0.23857691940651904,
+        -2.316634089417427
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "hidden-16",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -2.4804452585821175,
+      "low": -4.112991037130582,
+      "high": -0.8478994800336528,
+      "p": 0.022608578027734083,
+      "values": [
+        -2.917713354116195,
+        -1.7246951367196104,
+        -2.7989272849105475
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "hidden-16",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -1.465331085814564,
+      "low": -2.4965480568883827,
+      "high": -0.43411411474074524,
+      "p": 0.025724206473428657,
+      "values": [
+        -1.3866413350272069,
+        -1.095187093266695,
+        -1.9141648291497901
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "hidden-16",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -4.311087606496905,
+      "low": -10.886467498869,
+      "high": 2.2642922858751904,
+      "p": 0.10604435299466375,
+      "values": [
+        -6.139965188443966,
+        -5.517434387592324,
+        -1.275863243454424
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "hidden-16",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -2.5957053908583725,
+      "low": -7.343253551929184,
+      "high": 2.1518427702124385,
+      "p": 0.1429473614817175,
+      "values": [
+        -3.6654640122491102,
+        -3.732408803572291,
+        -0.3892433567537168
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "hidden-16",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -3.475684220165659,
+      "low": -8.637723387064867,
+      "high": 1.6863549467335495,
+      "p": 0.10135634354766143,
+      "values": [
+        -5.509207253811077,
+        -1.3558933613097324,
+        -3.5619520453761666
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "base-512",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.6139462346724803,
+      "low": 0.39994689648844983,
+      "high": 0.8279455728565108,
+      "p": 0.006498928981251817,
+      "values": [
+        0.6603672373126841,
+        0.6669263327717516,
+        0.5145451339330052
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "base-512",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 2.921439282539751,
+      "low": 2.016516700578184,
+      "high": 3.826361864501318,
+      "p": 0.0051427597515889545,
+      "values": [
+        2.5365401652080166,
+        2.966954558714363,
+        3.2608231236968734
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "base-512",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.2939630360479839,
+      "low": -3.137136895140464,
+      "high": 3.7250629672364317,
+      "p": 0.7477645695661498,
+      "values": [
+        -0.5642483591427236,
+        -0.4411169319527346,
+        1.88725439923941
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "base-512",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.2886872134108079,
+      "low": -2.8691930870309714,
+      "high": 3.4465675138525875,
+      "p": 0.7320380553794744,
+      "values": [
+        -0.3327210588710017,
+        -0.5522959965039433,
+        1.7510786956073687
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "base-512",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.478341368361382,
+      "low": -4.448160276492921,
+      "high": 3.4914775397701563,
+      "p": 0.655803263544201,
+      "values": [
+        0.6618980374328061,
+        0.208005893539827,
+        -2.304928036056779
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "base-128",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -4.532115850668338,
+      "low": -4.993864016453114,
+      "high": -4.0703676848835615,
+      "p": 0.0005602355729377173,
+      "values": [
+        -4.3998434157167665,
+        -4.451866020442026,
+        -4.744638115846222
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "base-128",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -4.978165044141655,
+      "low": -5.628434399742297,
+      "high": -4.327895688541013,
+      "p": 0.000920397639297521,
+      "values": [
+        -4.791041949286935,
+        -4.866150492498061,
+        -5.277302690639971
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "base-128",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -3.2662765394138304,
+      "low": -6.815086478204096,
+      "high": 0.2825333993764354,
+      "p": 0.058249877093687785,
+      "values": [
+        -4.89187239239196,
+        -2.69626034853615,
+        -2.2106968773133815
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "base-128",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -2.801805078337665,
+      "low": -5.62772675782108,
+      "high": 0.024116601145748984,
+      "p": 0.05079969217989411,
+      "values": [
+        -4.061429781394665,
+        -2.494657245900733,
+        -1.8493282077175976
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "base-128",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -2.551098969935699,
+      "low": -5.36145054113731,
+      "high": 0.25925260126591176,
+      "p": 0.05973935624710358,
+      "values": [
+        -2.1514627498001815,
+        -1.6738375644116346,
+        -3.8279965955952804
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 1.177173930795476,
+      "low": 0.29332270298934815,
+      "high": 2.0610251586016037,
+      "p": 0.02912731594295359,
+      "values": [
+        1.178882085563167,
+        1.532114777406882,
+        0.8205249294163792
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 1.7003674236877633,
+      "low": 0.1262982234160117,
+      "high": 3.274436623959515,
+      "p": 0.04330549704807096,
+      "values": [
+        2.343176751787958,
+        1.0762961600453167,
+        1.6816293592300156
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "property": "roughness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 1.1815881226333858,
+      "low": -2.7674292068573427,
+      "high": 5.130605452124114,
+      "p": 0.32682609000389296,
+      "values": [
+        1.0866982882329879,
+        -0.358534927490922,
+        2.8166010071580914
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "property": "specularIntensity",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 1.3135809621735746,
+      "low": -2.9727326578207673,
+      "high": 5.5998945821679165,
+      "p": 0.31805343924794305,
+      "values": [
+        1.5667041509856503,
+        -0.5244726855018413,
+        2.8985114210369147
+      ]
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.516797570473957,
+      "low": -4.863467690962776,
+      "high": 3.8298725500148616,
+      "p": 0.6598403591374666,
+      "values": [
+        -1.9586208145784667,
+        1.4299015631499472,
+        -1.0216734599933517
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "hidden-64",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.9937178953821473,
+      "low": 0.4077764286622213,
+      "high": 1.5796593621020731,
+      "p": 0.01826757529047862,
+      "values": [
+        0.7343858430998083,
+        1.0512983959443893,
+        1.1954694471022442
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "hidden-64",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 1.4966792414241776,
+      "low": 0.29307905674536805,
+      "high": 2.700279426102987,
+      "p": 0.03320286566178687,
+      "values": [
+        1.9709991342548854,
+        1.0025765718472037,
+        1.5164620181704436
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "hidden-64",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 2.2099845573719406,
+      "low": 1.5729250964474704,
+      "high": 2.847044018296411,
+      "p": 0.004458582285029822,
+      "values": [
+        2.270145589857254,
+        1.928801324615172,
+        2.431006757643395
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "hidden-64",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 1.40287660901555,
+      "low": -2.7362449222975886,
+      "high": 5.541998140328689,
+      "p": 0.2821247357674127,
+      "values": [
+        3.011008205019536,
+        1.5135379850057618,
+        -0.31591636297864767
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "hidden-64",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.17820047158126093,
+      "low": -1.9587543772408256,
+      "high": 1.6023534340783039,
+      "p": 0.708712689165891,
+      "values": [
+        -0.2771640452611024,
+        -0.8403457190295427,
+        0.5829083495468623
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "g1-off",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.6917977885308039,
+      "low": -1.5088238568806402,
+      "high": 0.12522827981903262,
+      "p": 0.06777291441484734,
+      "values": [
+        -1.0307122537884332,
+        -0.6707526229703689,
+        -0.3739284888336094
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "g1-off",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.6554925805548386,
+      "low": -1.480540718508382,
+      "high": 0.16955555739870487,
+      "p": 0.07595423367252851,
+      "values": [
+        -0.2889510290508923,
+        -0.9364543325761048,
+        -0.7410723800375187
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "g1-off",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.6327973957749412,
+      "low": -1.2741743057284711,
+      "high": 0.00857951417858871,
+      "p": 0.05126181145523334,
+      "values": [
+        -0.4031289828068907,
+        -0.5830082458424499,
+        -0.9122549586754829
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "g1-off",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.6190245213009197,
+      "low": -3.7976601090910744,
+      "high": 2.559611066489235,
+      "p": 0.49025652005807674,
+      "values": [
+        0.5785416341832956,
+        -0.4683520737214053,
+        -1.9672631243646492
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "g1-off",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.3809867786449293,
+      "low": -4.590250783858727,
+      "high": 3.828277226568869,
+      "p": 0.7345071109494596,
+      "values": [
+        1.479017385070506,
+        -1.8367950847734633,
+        -0.7851826362318306
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.1263694185328461,
+      "low": 0.04873719539334448,
+      "high": 0.20400164167234774,
+      "p": 0.019782867460542364,
+      "values": [
+        0.11824528858986483,
+        0.09998259447645097,
+        0.16088037253222254
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.07173967863521706,
+      "low": -0.08400966549294371,
+      "high": 0.22748902276337785,
+      "p": 0.18599670747993136,
+      "values": [
+        0.13151263324623486,
+        0.0064783800121546165,
+        0.0772280226472617
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.08583832173978696,
+      "low": -0.13540002494461628,
+      "high": 0.3070766684241902,
+      "p": 0.23698685854858303,
+      "values": [
+        0.18804080342891538,
+        0.024850328566657254,
+        0.04462383322378827
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.545681731434937,
+      "low": -2.2163488225230394,
+      "high": 1.1249853596531656,
+      "p": 0.2951185015126697,
+      "values": [
+        0.07019617186391969,
+        -0.4439588741496081,
+        -1.2632824920191226
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.3849241628032658,
+      "low": -1.2983458810979664,
+      "high": 2.068194206704498,
+      "p": 0.42889073662354493,
+      "values": [
+        1.0892300262830545,
+        0.32792661049052185,
+        -0.262384148363779
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.9763659817839793,
+      "low": -0.04776499356899955,
+      "high": 2.000496957136958,
+      "p": 0.05460841383964776,
+      "values": [
+        0.7848145696396038,
+        1.4495620219142573,
+        0.6947213537980765
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.9898877324682473,
+      "low": -1.6947126869828604,
+      "high": -0.28506277795363444,
+      "p": 0.02630940016666694,
+      "values": [
+        -0.6724315480186398,
+        -1.2187515458747917,
+        -1.0784801035113105
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.5022945398968339,
+      "low": -0.4381544994707117,
+      "high": 1.4427435792643797,
+      "p": 0.1483464653383132,
+      "values": [
+        0.8457789035902401,
+        0.5647274223126146,
+        0.09637729378764703
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.5435619815097823,
+      "low": -4.181759156595863,
+      "high": 3.094635193576299,
+      "p": 0.5861916708624185,
+      "values": [
+        1.1274268356420905,
+        -1.1536305330273748,
+        -1.6044822471440625
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.8759057843815418,
+      "low": -4.421633542354349,
+      "high": 2.669821973591265,
+      "p": 0.3991936484341727,
+      "values": [
+        -1.139158586079553,
+        -2.1533018686550633,
+        0.6647431015899912
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "levels-2",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.017640904557828446,
+      "low": -0.6251404887246986,
+      "high": 0.6604222978403554,
+      "p": 0.9167910287506054,
+      "values": [
+        -0.25675342202700335,
+        0.2572324977934102,
+        0.05244363790707851
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "levels-2",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.1664211944626691,
+      "low": -0.33533555715912244,
+      "high": 0.6681779460844607,
+      "p": 0.289695714848349,
+      "values": [
+        0.2715795425067178,
+        -0.06644646565351664,
+        0.2941305065348061
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "levels-2",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.08715319577093321,
+      "low": -0.7995389850173541,
+      "high": 0.9738453765592204,
+      "p": 0.7134945542609337,
+      "values": [
+        0.13372328636173947,
+        0.41852397242163875,
+        -0.2907876714705786
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "levels-2",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.29132991726901974,
+      "low": -4.153840855038595,
+      "high": 3.5711810205005556,
+      "p": 0.7763376988145224,
+      "values": [
+        1.5036394492701817,
+        -1.223225549290028,
+        -1.154403651787213
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "levels-2",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.8164471183295751,
+      "low": -2.708687897714837,
+      "high": 4.341582134373987,
+      "p": 0.4239892285091632,
+      "values": [
+        2.357432319718484,
+        -0.4364856538678197,
+        0.5283946891380609
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.4522378072878001,
+      "low": -1.0229382579128516,
+      "high": 0.11846264333725137,
+      "p": 0.07630626054865652,
+      "values": [
+        -0.7153590275774704,
+        -0.34991580367663033,
+        -0.29143859060929955
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -2.6040019352390593,
+      "low": -2.97864289878601,
+      "high": -2.229360971692109,
+      "p": 0.0011162146159837683,
+      "values": [
+        -2.6113979147182818,
+        -2.750981153197344,
+        -2.4496267378015517
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.45977456108071973,
+      "low": -1.0254310214111322,
+      "high": 0.10588189924969266,
+      "p": 0.072929157314232,
+      "values": [
+        -0.2426767185275125,
+        -0.6967837507214192,
+        -0.4398632139932275
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -1.2502413175478277,
+      "low": -7.807174742573142,
+      "high": 5.306692107477486,
+      "p": 0.4982072399798234,
+      "values": [
+        1.6857810924175922,
+        -2.009803567647566,
+        -3.426701477413509
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -2.1876840063463803,
+      "low": -3.2172393769320013,
+      "high": -1.158128635760759,
+      "p": 0.01175298871622732,
+      "values": [
+        -1.7188859553601006,
+        -2.5053992560872658,
+        -2.3387668075917745
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 1.5535789976446577,
+      "low": 1.3902714590618779,
+      "high": 1.7168865362274375,
+      "p": 0.0005963271530823322,
+      "values": [
+        1.627184371647882,
+        1.5006998834509382,
+        1.532852737835153
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 3.1199988368837253,
+      "low": 2.0686040896043494,
+      "high": 4.171393584163101,
+      "p": 0.006078220405555279,
+      "values": [
+        3.495787946769827,
+        2.6615089470721074,
+        3.202699616809241
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 1.667795557360287,
+      "low": 1.0151243836766255,
+      "high": 2.3204667310439486,
+      "p": 0.008171129842058589,
+      "values": [
+        1.946293576759114,
+        1.4243396143820064,
+        1.6327534809397406
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.9385472657722621,
+      "low": 0.7543533202223526,
+      "high": 1.1227412113221715,
+      "p": 0.0020740206342156897,
+      "values": [
+        0.9948922448287121,
+        0.9662036623480148,
+        0.8545458901400593
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.5245505534672551,
+      "low": -1.5698029055946985,
+      "high": 2.618904012529209,
+      "p": 0.3939055922663983,
+      "values": [
+        0.7833444713691478,
+        -0.41760174869468614,
+        1.2079089377273036
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "activation-relu",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.027443883165635913,
+      "low": -0.3257949498477091,
+      "high": 0.3806827161789809,
+      "p": 0.7699656394567347,
+      "values": [
+        -0.0983272185680697,
+        0.18174292934730474,
+        -0.0010840612823272977
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "activation-relu",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.6129377530566616,
+      "low": -1.0426386515615005,
+      "high": -0.18323685455182281,
+      "p": 0.025535247360142455,
+      "values": [
+        -0.5911385398434312,
+        -0.4518927582191665,
+        -0.7957819611073873
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "activation-relu",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.001647448291696681,
+      "low": -0.5031185772278794,
+      "high": 0.49982368064448607,
+      "p": 0.9900053989591906,
+      "values": [
+        0.22137907908169652,
+        -0.1718598464438834,
+        -0.05446157751290315
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "activation-relu",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.3678689973703844,
+      "low": -2.6519073249939624,
+      "high": 1.9161693302531935,
+      "p": 0.5599724817177866,
+      "values": [
+        -0.878301756331588,
+        0.6935610964130561,
+        -0.9188663321926214
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "activation-relu",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.4513114763281152,
+      "low": -3.0496703378799883,
+      "high": 2.147047385223758,
+      "p": 0.5327810983794029,
+      "values": [
+        0.1655611248776765,
+        -1.6590117675964962,
+        0.1395162137344741
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.982397756732059,
+      "low": -1.4309426949689494,
+      "high": -0.5338528184951685,
+      "p": 0.011073976104134187,
+      "values": [
+        -1.1866858734549517,
+        -0.9163508002590497,
+        -0.8441565964821756
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.8139970910063923,
+      "low": -1.3746513458347862,
+      "high": -0.25334283617799835,
+      "p": 0.02468074382457075,
+      "values": [
+        -0.5563373078275831,
+        -0.9089710000146098,
+        -0.9766829651769839
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.7332853874119193,
+      "low": -0.7403037751953453,
+      "high": -0.7262669996284933,
+      "p": 4.948263809700926e-06,
+      "values": [
+        -0.732949080003916,
+        -0.7306433120634708,
+        -0.736263770168371
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.6079038754812061,
+      "low": -4.0581308734705415,
+      "high": 2.8423231225081294,
+      "p": 0.5275459616463047,
+      "values": [
+        -0.3442957668650024,
+        -2.109720840251633,
+        0.6303049806730172
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.08923615504178883,
+      "low": -2.3250677423333417,
+      "high": 2.5035400524169193,
+      "p": 0.8882515610004467,
+      "values": [
+        -0.9784808227334025,
+        0.9223467672306143,
+        0.3238425206281548
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "relu-hidden-16",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.41231464290522385,
+      "low": -0.6731575726823136,
+      "high": -0.15147171312813407,
+      "p": 0.02094191546310853,
+      "values": [
+        -0.5245488002976906,
+        -0.3959258472440119,
+        -0.3164692811739691
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "relu-hidden-16",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -2.6697243513093896,
+      "low": -2.9585848865618805,
+      "high": -2.3808638160568987,
+      "p": 0.0006317703991676193,
+      "values": [
+        -2.5613404601675356,
+        -2.792554520907501,
+        -2.6552780728531324
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "relu-hidden-16",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -1.6032033851763903,
+      "low": -2.5130433499839473,
+      "high": -0.693363420368833,
+      "p": 0.01695601280968384,
+      "values": [
+        -1.2128565110991687,
+        -1.6574219231728122,
+        -1.93933172125719
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "relu-hidden-16",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.7821475432401854,
+      "low": -8.09586506207959,
+      "high": 9.66016014855996,
+      "p": 0.741102114244712,
+      "values": [
+        4.908560015737798,
+        -1.2345228560994315,
+        -1.3275945299178105
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "relu-hidden-16",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.9824460927705138,
+      "low": -3.089014473004919,
+      "high": 1.1241222874638912,
+      "p": 0.1826028224389198,
+      "values": [
+        -0.46326235118432635,
+        -1.9610327923594895,
+        -0.5230431347677253
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "grid-channels-8-12",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 1.2399052811458837,
+      "low": 0.5259906798697574,
+      "high": 1.9538198824220099,
+      "p": 0.01744071398303304,
+      "values": [
+        0.9368012944023967,
+        1.5084555240717386,
+        1.274459024963516
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "grid-channels-8-12",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 1.013472002143594,
+      "low": 0.03613452315399224,
+      "high": 1.9908094811331956,
+      "p": 0.046739697026903504,
+      "values": [
+        1.3530703661151833,
+        0.582343745517484,
+        1.1050018947981144
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "grid-channels-8-12",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.8678895682344022,
+      "low": -0.3298188507958276,
+      "high": 2.065597987264632,
+      "p": 0.08930668809204168,
+      "values": [
+        1.4074512125607122,
+        0.7169209280068713,
+        0.47929656413562327
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "grid-channels-8-12",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.04379289707666819,
+      "low": -3.2826297163968694,
+      "high": 3.1950439222435327,
+      "p": 0.9588974521867258,
+      "values": [
+        1.1364670731618318,
+        0.17549246897120696,
+        -1.4433382333630433
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "grid-channels-8-12",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.3624841005725159,
+      "low": -3.3769717112397273,
+      "high": 2.6520035100946955,
+      "p": 0.6564258967860209,
+      "values": [
+        -0.03399981323980228,
+        -1.7064052737295938,
+        0.6529527852518484
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "hidden-16",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.71844251017502,
+      "low": -1.3222922532922408,
+      "high": -0.1145927670577993,
+      "p": 0.03610539145524072,
+      "values": [
+        -0.9985680077092667,
+        -0.5630092888942535,
+        -0.5937502339215399
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "hidden-16",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -2.241931930718433,
+      "low": -3.8123043421722134,
+      "high": -0.6715595192646531,
+      "p": 0.025493461757910563,
+      "values": [
+        -1.526228923955074,
+        -2.475472826440626,
+        -2.7240940417595993
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "hidden-16",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -1.444124396407452,
+      "low": -2.3095905840355595,
+      "high": -0.5786582087793445,
+      "p": 0.01885381843255829,
+      "values": [
+        -1.0419789057147426,
+        -1.6357240209979516,
+        -1.6546702625096614
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "hidden-16",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -1.5331165938150377,
+      "low": -8.570521727855752,
+      "high": 5.504288540225677,
+      "p": 0.44753184443898486,
+      "values": [
+        1.5027791784423954,
+        -4.106068528998179,
+        -1.9960604308893295
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "hidden-16",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -1.7836340956202743,
+      "low": -6.886334635971283,
+      "high": 3.3190664447307343,
+      "p": 0.27148659096700256,
+      "values": [
+        -3.0634752568208654,
+        -2.8731315607049694,
+        0.5857045306650122
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "base-512",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 2.8896642680535756,
+      "low": 2.39832656347939,
+      "high": 3.381001972627761,
+      "p": 0.0015580339873092486,
+      "values": [
+        2.6618672206482863,
+        2.9893402757862226,
+        3.017785307726218
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "base-512",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 4.391379083549506,
+      "low": 3.9661266012580385,
+      "high": 4.816631565840973,
+      "p": 0.0005061618791945,
+      "values": [
+        4.587221811093091,
+        4.316679770140276,
+        4.27023566941515
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "base-512",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 3.799199054972655,
+      "low": 2.808742768334516,
+      "high": 4.7896553416107945,
+      "p": 0.0036511556199821937,
+      "values": [
+        4.069225832514153,
+        3.3412527612833287,
+        3.987118571120483
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "base-512",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.3734123843773129,
+      "low": -0.846661951465485,
+      "high": 1.5934867202201108,
+      "p": 0.3185327620360464,
+      "values": [
+        0.9377891833768288,
+        0.04291737252615491,
+        0.1395305972289549
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "base-512",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.0236269063782449,
+      "low": -3.818108704723155,
+      "high": 3.865362517479645,
+      "p": 0.9812921158014085,
+      "values": [
+        -0.2845101559620815,
+        -1.345613996279937,
+        1.7010048713767532
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "base-128",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -2.215179581678637,
+      "low": -2.3149142389845085,
+      "high": -2.115444924372765,
+      "p": 0.0001094788951482295,
+      "values": [
+        -2.2614240179284195,
+        -2.189229049256781,
+        -2.19488567785071
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "base-128",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -4.610183429143256,
+      "low": -5.026738636706759,
+      "high": -4.193628221579753,
+      "p": 0.0004407060037069366,
+      "values": [
+        -4.450481926196087,
+        -4.784850737065106,
+        -4.595217624168576
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "base-128",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -2.2911625476837947,
+      "low": -2.8214791004819904,
+      "high": -1.760845994885599,
+      "p": 0.002881414498973056,
+      "values": [
+        -2.0877036000248452,
+        -2.2723617764805155,
+        -2.513422266546023
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "base-128",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -1.0258113717238473,
+      "low": -6.262461936022276,
+      "high": 4.210839192574581,
+      "p": 0.4880425735197542,
+      "values": [
+        1.2584891904221038,
+        -2.8961731691973043,
+        -1.4397501363963414
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "base-128",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.5149886252753669,
+      "low": -3.220798181124336,
+      "high": 2.190820930573602,
+      "p": 0.49889233568013447,
+      "values": [
+        -0.7604902985915132,
+        -1.4605211871087462,
+        0.6760456098741585
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "property": "albedo",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.6803627828067947,
+      "low": 0.2980892062891061,
+      "high": 1.0626363593244834,
+      "p": 0.016628610477289363,
+      "values": [
+        0.8483138165277673,
+        0.5461360544305904,
+        0.6466384774620266
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "property": "normal",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": -0.4814499371802358,
+      "low": -0.8810312490478173,
+      "high": -0.08186862531265438,
+      "p": 0.03525220233296633,
+      "values": [
+        -0.3047918582151219,
+        -0.6194546237425698,
+        -0.5201033295830157
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "property": "roughness",
+      "spatiallyVarying": true,
+      "n": 3,
+      "mean": 0.9552061785662396,
+      "low": 0.3722236837814459,
+      "high": 1.5381886733510333,
+      "p": 0.019533156751197822,
+      "values": [
+        1.1825916160062668,
+        0.713851582472742,
+        0.9691753372197098
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "property": "metalness",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": -0.9303005842922758,
+      "low": -7.963040558475635,
+      "high": 6.102439389891083,
+      "p": 0.6266448113436319,
+      "values": [
+        2.1739988387980915,
+        -1.5951015203478747,
+        -3.3697990713270443
+      ]
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "property": "specularColor",
+      "spatiallyVarying": false,
+      "n": 3,
+      "mean": 0.13044248140769574,
+      "low": -3.3998203635064748,
+      "high": 3.6607053263218665,
+      "p": 0.8882863426307637,
+      "values": [
+        0.27355908110792626,
+        -1.3568227347051547,
+        1.4745910978203156
+      ]
+    }
+  ],
+  "interactions": [
+    {
+      "material": "uv_grid",
+      "name": "G0 concatenation benefit: tiled PE minus PE off",
+      "n": 3,
+      "mean": 0.7864590454400376,
+      "low": -1.5044392188078017,
+      "high": 3.0773573096878772,
+      "p": 0.27768700875722296,
+      "values": [
+        0.7314223896941314,
+        1.734955503071319,
+        -0.10700075644533769
+      ]
+    },
+    {
+      "material": "uv_grid",
+      "name": "Width-16 effect: hardGELU minus ReLU",
+      "n": 3,
+      "mean": -2.546773670341544,
+      "low": -4.430194173344935,
+      "high": -0.6633531673381534,
+      "p": 0.028294284078324905,
+      "values": [
+        -1.7846142619129992,
+        -3.300908117900697,
+        -2.554798631210936
+      ]
+    },
+    {
+      "material": "brick",
+      "name": "G0 concatenation benefit: tiled PE minus PE off",
+      "n": 3,
+      "mean": 0.17492687463014533,
+      "low": -0.9577906407746617,
+      "high": 1.3076443900349524,
+      "p": 0.5747524779740619,
+      "values": [
+        0.15684805889802078,
+        -0.27174500233788024,
+        0.6396775673302955
+      ]
+    },
+    {
+      "material": "brick",
+      "name": "Width-16 effect: hardGELU minus ReLU",
+      "n": 3,
+      "mean": -0.21482205622706374,
+      "low": -1.5362513047184492,
+      "high": 1.1066071922643217,
+      "p": 0.5566610941672173,
+      "values": [
+        -0.7861749942314162,
+        0.26613452946214267,
+        -0.12442570391191765
+      ]
+    },
+    {
+      "material": "wood",
+      "name": "G0 concatenation benefit: tiled PE minus PE off",
+      "n": 3,
+      "mean": 1.2973847999101622,
+      "low": 0.615272549610481,
+      "high": 1.9794970502098435,
+      "p": 0.014605122246122426,
+      "values": [
+        1.342065859367736,
+        1.5468912774561616,
+        1.003197262906589
+      ]
+    },
+    {
+      "material": "wood",
+      "name": "Width-16 effect: hardGELU minus ReLU",
+      "n": 3,
+      "mean": -0.14202201882271837,
+      "low": -0.8315406914414926,
+      "high": 0.5474966537960558,
+      "p": 0.46899083159317745,
+      "values": [
+        0.06386633230400918,
+        -0.032241423670324565,
+        -0.4576909651018397
+      ]
+    }
+  ]
+}

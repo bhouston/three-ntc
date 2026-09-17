@@ -87,6 +87,7 @@ function encodeNTC( cpuModel: any, channelClassification: any, options: any = {}
 			// Only written when true, since false is the default a loader
 			// already falls back to.
 			positionalEncoding: cpuModel.positionalEncoding || undefined,
+			g0Sampling: cpuModel.g0Sampling,
 			// Same optional/additive pattern as `positionalEncoding`.
 			dualGrid: cpuModel.dualGrid || undefined
 		},

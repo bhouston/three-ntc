@@ -110,9 +110,14 @@ interface NTCTrainerOptions {
 	hiddenSizes?: number[];
 	hiddenActivation?: string;
 	positionalEncoding?: boolean;
+	g0Sampling?: 'bilinear' | 'concatenate';
 	dualGrid?: boolean;
 	outputChannels?: number;
 	batchSize?: number;
+	/** Optional dispatch size dividing batchSize; gradients accumulate before one Adam step. */
+	microBatchSize?: number;
+	/** Progress readback interval; default 4. Does not change optimizer updates. */
+	progressInterval?: number;
 	learningRate?: number;
 	/** Optional separate MLP rate, decayed proportionally with the latent rate. */
 	weightsLearningRate?: number;
@@ -256,7 +261,15 @@ class NTCTrainer {
 		await renderer.init();
 		const device = renderer.backend.device;
 		const gradientPrecision = await resolveGradientPrecision(device, settings.gradientPrecision ?? 'auto');
-		const gpuModel = new NTCGPUModel( { ...modelSettings, gradientPrecision } );
+		const logicalBatchSize = settings.batchSize as number;
+		const microBatchSize = (settings.microBatchSize as number | undefined) ?? logicalBatchSize;
+		if (!Number.isInteger(microBatchSize) || microBatchSize < 1 || microBatchSize > logicalBatchSize || logicalBatchSize % microBatchSize !== 0)
+			throw new Error('microBatchSize must be a positive integer divisor of batchSize');
+		if (microBatchSize !== logicalBatchSize && gradientPrecision !== 'float')
+			throw new Error('Chunked training requires floating accumulation to avoid fixed-point overflow');
+		const gpuModel = new NTCGPUModel( { ...modelSettings, batchSize:microBatchSize, gradientPrecision } );
+		gpuModel.logicalBatchSize = logicalBatchSize;
+		gpuModel.invBatchUniform.value = 1 / logicalBatchSize;
 		gpuModel.initFromCPUModel( cpuModel );
 
 		const ownedTextures:any[]=[];
@@ -300,7 +313,10 @@ class NTCTrainer {
 				gpuModel.maxGradientNormUniform.value = settings.maxGradientNorm;
 
 				const dispatch = () => {
-					renderer.compute( latentsFrozen ? frozenBatchNode : trainBatchNode );
+					for (let sampleOffset = 0; sampleOffset < logicalBatchSize; sampleOffset += microBatchSize) {
+						gpuModel.sampleOffsetUniform.value = sampleOffset;
+						renderer.compute( latentsFrozen ? frozenBatchNode : trainBatchNode );
+					}
 					renderer.compute( resetGradientNormNode );
 					renderer.compute( latentsFrozen ? frozenNormNode : accumulateGradientNormNode );
 					renderer.compute( adamWeightsNode );
@@ -312,7 +328,7 @@ class NTCTrainer {
 
 				completedIterations = iteration + 1;
 
-				const shouldSync = onProgress !== null && ( iteration % 4 === 0 || iteration === iterations - 1 );
+				const shouldSync = onProgress !== null && ( iteration % Math.max(1, settings.progressInterval as number || 4) === 0 || iteration === iterations - 1 );
 
 				if ( shouldSync ) {
 

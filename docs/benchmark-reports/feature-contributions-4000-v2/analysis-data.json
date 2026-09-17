@@ -1,0 +1,873 @@
+{
+  "sourceHash": "afc70a40f6977152453212f1a2b6d7ce0b6705f8df47e778df85c7cc8a8cb0fe",
+  "verifiedRuns": 144,
+  "nominalSamples": 2359296000,
+  "trainingHours": 12.743504722222202,
+  "aggregates": [
+    {
+      "material": "brick",
+      "variant": "reference",
+      "meanPsnr": 40.60831402154992,
+      "psnrOfMeanMse": 40.607225538905425,
+      "psnrBySeed": [
+        40.4977649880562,
+        40.73459569817154,
+        40.59258137842203
+      ],
+      "brotliKiB": 171.251953125,
+      "jsonKiB": 236.291015625,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2400,
+      "trainingSeconds": 258.55656666666766,
+      "normalMeanDegrees": 1.58474082160736
+    },
+    {
+      "material": "brick",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "meanPsnr": 42.661857780860565,
+      "psnrOfMeanMse": 42.65692314037487,
+      "psnrBySeed": [
+        42.37619660192873,
+        42.754475818925464,
+        42.85490092172749
+      ],
+      "brotliKiB": 171.40234375,
+      "jsonKiB": 236.291015625,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2400,
+      "trainingSeconds": 215.6406333333353,
+      "normalMeanDegrees": 1.26714279828639
+    },
+    {
+      "material": "brick",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "meanPsnr": 39.48554982862799,
+      "psnrOfMeanMse": 39.48336361200908,
+      "psnrBySeed": [
+        39.40864074942395,
+        39.67973751018302,
+        39.368271226276995
+      ],
+      "brotliKiB": 169.33430989583334,
+      "jsonKiB": 235.265625,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2016,
+      "trainingSeconds": 264.870199999998,
+      "normalMeanDegrees": 2.1977200462513427
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "meanPsnr": 42.038768607546295,
+      "psnrOfMeanMse": 42.03628399585119,
+      "psnrBySeed": [
+        42.24296343273814,
+        41.97298377040689,
+        41.90035861949386
+      ],
+      "brotliKiB": 170.30045572916666,
+      "jsonKiB": 235.2880859375,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2016,
+      "trainingSeconds": 234.78043333333483,
+      "normalMeanDegrees": 1.457513644060079
+    },
+    {
+      "material": "brick",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "meanPsnr": 41.090931289254506,
+      "psnrOfMeanMse": 41.07936834347676,
+      "psnrBySeed": [
+        41.31068725300391,
+        40.64638058008049,
+        41.315726034679116
+      ],
+      "brotliKiB": 169.10579427083334,
+      "jsonKiB": 234.26171875,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 1632,
+      "trainingSeconds": 249.07286666666715,
+      "normalMeanDegrees": 1.8308313848535531
+    },
+    {
+      "material": "brick",
+      "variant": "g1-off",
+      "meanPsnr": 36.888498469483125,
+      "psnrOfMeanMse": 36.88105708250581,
+      "psnrBySeed": [
+        36.64951946720257,
+        37.24312364142857,
+        36.772852299818226
+      ],
+      "brotliKiB": 133.62434895833334,
+      "jsonKiB": 189.9794921875,
+      "latentBytes": 139808,
+      "runtimeGridBytes": 559232,
+      "decoderMacs": 2272,
+      "trainingSeconds": 270.67529999999704,
+      "normalMeanDegrees": 1.924356159281293
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "meanPsnr": 38.75710321388809,
+      "psnrOfMeanMse": 38.75442138573226,
+      "psnrBySeed": [
+        38.666189099127905,
+        38.97294112406469,
+        38.632179418471665
+      ],
+      "brotliKiB": 71.05240885416667,
+      "jsonKiB": 122.509765625,
+      "latentBytes": 87380,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2400,
+      "trainingSeconds": 272.30896666666865,
+      "normalMeanDegrees": 1.8672084165769907
+    },
+    {
+      "material": "brick",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "meanPsnr": 40.96938134428436,
+      "psnrOfMeanMse": 40.968102982220465,
+      "psnrBySeed": [
+        40.82220057505094,
+        41.06096862993303,
+        41.0249748278691
+      ],
+      "brotliKiB": 346.8053385416667,
+      "jsonKiB": 463.884765625,
+      "latentBytes": 349520,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2400,
+      "trainingSeconds": 269.25710000000026,
+      "normalMeanDegrees": 1.532890485420979
+    },
+    {
+      "material": "brick",
+      "variant": "hidden-16",
+      "meanPsnr": 38.5719947907186,
+      "psnrOfMeanMse": 38.55025693277859,
+      "psnrBySeed": [
+        38.231208666351584,
+        39.193276707198294,
+        38.29149899860592
+      ],
+      "brotliKiB": 168.6708984375,
+      "jsonKiB": 232.416015625,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 944,
+      "trainingSeconds": 262.6950333333363,
+      "normalMeanDegrees": 2.0589337763398854
+    },
+    {
+      "material": "brick",
+      "variant": "hidden-64",
+      "meanPsnr": 43.197178520604616,
+      "psnrOfMeanMse": 43.19329001706328,
+      "psnrBySeed": [
+        42.940797913770794,
+        43.29507195817777,
+        43.355665689865276
+      ],
+      "brotliKiB": 180.79361979166666,
+      "jsonKiB": 248.041015625,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 6848,
+      "trainingSeconds": 427.0475333333314,
+      "normalMeanDegrees": 1.0605717611288072
+    },
+    {
+      "material": "brick",
+      "variant": "activation-relu",
+      "meanPsnr": 41.58067864189818,
+      "psnrOfMeanMse": 41.57130887901925,
+      "psnrBySeed": [
+        41.815431627997654,
+        41.74445708347185,
+        41.18214721422505
+      ],
+      "brotliKiB": 172.14095052083334,
+      "jsonKiB": 236.2890625,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2400,
+      "trainingSeconds": 187.4897000000005,
+      "normalMeanDegrees": 0.9785723279906126
+    },
+    {
+      "material": "brick",
+      "variant": "relu-hidden-16",
+      "meanPsnr": 39.75918146729392,
+      "psnrOfMeanMse": 39.722837180259745,
+      "psnrBySeed": [
+        40.33505030052446,
+        39.93700356303646,
+        39.00549053832085
+      ],
+      "brotliKiB": 169.37630208333334,
+      "jsonKiB": 232.4140625,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 944,
+      "trainingSeconds": 183.82583333333085,
+      "normalMeanDegrees": 1.3524752183726008
+    },
+    {
+      "material": "brick",
+      "variant": "base-128",
+      "meanPsnr": 35.865709003830894,
+      "psnrOfMeanMse": 35.86075365955632,
+      "psnrBySeed": [
+        35.886668311368496,
+        36.10840310458412,
+        35.602055595540065
+      ],
+      "brotliKiB": 47.341145833333336,
+      "jsonKiB": 65.623046875,
+      "latentBytes": 43690,
+      "runtimeGridBytes": 174760,
+      "decoderMacs": 2400,
+      "trainingSeconds": 284.3571666666716,
+      "normalMeanDegrees": 2.836417588619846
+    },
+    {
+      "material": "brick",
+      "variant": "base-512",
+      "meanPsnr": 42.26446319859756,
+      "psnrOfMeanMse": 42.26081059180159,
+      "psnrBySeed": [
+        42.01456065455166,
+        42.371501308459365,
+        42.407327632781666
+      ],
+      "brotliKiB": 668.2298177083334,
+      "jsonKiB": 918.951171875,
+      "latentBytes": 699040,
+      "runtimeGridBytes": 2796160,
+      "decoderMacs": 2400,
+      "trainingSeconds": 256.4060333333338,
+      "normalMeanDegrees": 1.4047839386739998
+    },
+    {
+      "material": "brick",
+      "variant": "grid-channels-8-12",
+      "meanPsnr": 41.65338545124868,
+      "psnrOfMeanMse": 41.646010080701345,
+      "psnrBySeed": [
+        41.693786345933404,
+        41.940547613952305,
+        41.325822393860335
+      ],
+      "brotliKiB": 376.0703125,
+      "jsonKiB": 511.357421875,
+      "latentBytes": 384472,
+      "runtimeGridBytes": 1537888,
+      "decoderMacs": 3168,
+      "trainingSeconds": 331.15943333333234,
+      "normalMeanDegrees": 1.5518433787054662
+    },
+    {
+      "material": "brick",
+      "variant": "levels-2",
+      "meanPsnr": 40.575923875456105,
+      "psnrOfMeanMse": 40.55265592061269,
+      "psnrBySeed": [
+        40.378711978587745,
+        40.14487755539644,
+        41.20418209238413
+      ],
+      "brotliKiB": 171.20833333333334,
+      "jsonKiB": 234.9765625,
+      "latentBytes": 174080,
+      "runtimeGridBytes": 696320,
+      "decoderMacs": 2400,
+      "trainingSeconds": 267.470599999999,
+      "normalMeanDegrees": 1.5382394931645236
+    },
+    {
+      "material": "uv_grid",
+      "variant": "reference",
+      "meanPsnr": 47.61801441236928,
+      "psnrOfMeanMse": 47.608659922425375,
+      "psnrBySeed": [
+        47.63873639043239,
+        47.95598177083942,
+        47.25932507583601
+      ],
+      "brotliKiB": 173.72916666666666,
+      "jsonKiB": 235.9658203125,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2304,
+      "trainingSeconds": 371.81780000000197,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "meanPsnr": 48.79974854626162,
+      "psnrOfMeanMse": 48.79496280452501,
+      "psnrBySeed": [
+        48.83420034598561,
+        49.02998571297043,
+        48.53505957982881
+      ],
+      "brotliKiB": 174.86881510416666,
+      "jsonKiB": 235.9658203125,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2304,
+      "trainingSeconds": 377.853800000002,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "meanPsnr": 46.76079232275509,
+      "psnrOfMeanMse": 46.745738670871305,
+      "psnrBySeed": [
+        46.608146424404715,
+        46.41059689630236,
+        47.26363364755818
+      ],
+      "brotliKiB": 172.56608072916666,
+      "jsonKiB": 234.9404296875,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 1920,
+      "trainingSeconds": 404.41603333333387,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "meanPsnr": 47.40769377209821,
+      "psnrOfMeanMse": 47.40116525662622,
+      "psnrBySeed": [
+        47.73687555554426,
+        47.31143887767789,
+        47.17476688307249
+      ],
+      "brotliKiB": 172.54427083333334,
+      "jsonKiB": 234.962890625,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 1920,
+      "trainingSeconds": 317.3360999999965,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "meanPsnr": 47.33693072792406,
+      "psnrOfMeanMse": 47.33277805697355,
+      "psnrBySeed": [
+        47.437707979210714,
+        47.50100950621214,
+        47.072074698349326
+      ],
+      "brotliKiB": 172.4716796875,
+      "jsonKiB": 233.9365234375,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 1536,
+      "trainingSeconds": 421.25373333333187,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "g1-off",
+      "meanPsnr": 44.19939867039903,
+      "psnrOfMeanMse": 44.19827623126692,
+      "psnrBySeed": [
+        44.08999983045206,
+        44.17871356021482,
+        44.3294826205302
+      ],
+      "brotliKiB": 142.02701822916666,
+      "jsonKiB": 189.654296875,
+      "latentBytes": 139808,
+      "runtimeGridBytes": 559232,
+      "decoderMacs": 2176,
+      "trainingSeconds": 398.02686666666466,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "meanPsnr": 41.27145104037657,
+      "psnrOfMeanMse": 41.26313279662278,
+      "psnrBySeed": [
+        40.97985070379235,
+        41.630484076658576,
+        41.204018340678786
+      ],
+      "brotliKiB": 67.51595052083333,
+      "jsonKiB": 122.1845703125,
+      "latentBytes": 87380,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2304,
+      "trainingSeconds": 424.992900000001,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "meanPsnr": 49.887773552505244,
+      "psnrOfMeanMse": 49.82801860246363,
+      "psnrBySeed": [
+        50.362332009034574,
+        50.41443307748922,
+        48.88655557099193
+      ],
+      "brotliKiB": 347.3675130208333,
+      "jsonKiB": 463.5595703125,
+      "latentBytes": 349520,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2304,
+      "trainingSeconds": 381.95253333333136,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "hidden-16",
+      "meanPsnr": 44.992233549929075,
+      "psnrOfMeanMse": 44.98897077132277,
+      "psnrBySeed": [
+        45.14991047701368,
+        44.759912406103936,
+        45.066877766669606
+      ],
+      "brotliKiB": 166.77506510416666,
+      "jsonKiB": 232.2158203125,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 896,
+      "trainingSeconds": 395.0484666666662,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "hidden-64",
+      "meanPsnr": 47.88606687049305,
+      "psnrOfMeanMse": 47.8821138047617,
+      "psnrBySeed": [
+        47.790206337799255,
+        48.146354996710144,
+        47.72163927696976
+      ],
+      "brotliKiB": 182.267578125,
+      "jsonKiB": 247.4658203125,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 6656,
+      "trainingSeconds": 468.95953333333256,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "activation-relu",
+      "meanPsnr": 47.29149984238615,
+      "psnrOfMeanMse": 47.287145862029696,
+      "psnrBySeed": [
+        47.43599605159612,
+        47.420486556382606,
+        47.01801691917972
+      ],
+      "brotliKiB": 173.55143229166666,
+      "jsonKiB": 235.9638671875,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2304,
+      "trainingSeconds": 296.76926666666816,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "relu-hidden-16",
+      "meanPsnr": 47.212492650287494,
+      "psnrOfMeanMse": 47.19857564810905,
+      "psnrBySeed": [
+        46.731784400090405,
+        47.52532530954782,
+        47.380368241224254
+      ],
+      "brotliKiB": 169.23990885416666,
+      "jsonKiB": 232.2138671875,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 896,
+      "trainingSeconds": 334.47193333333234,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "base-128",
+      "meanPsnr": 45.88055685271839,
+      "psnrOfMeanMse": 45.8622595154694,
+      "psnrBySeed": [
+        46.45070648385256,
+        45.608114052284066,
+        45.58285002201855
+      ],
+      "brotliKiB": 46.225911458333336,
+      "jsonKiB": 65.2978515625,
+      "latentBytes": 43690,
+      "runtimeGridBytes": 174760,
+      "decoderMacs": 2304,
+      "trainingSeconds": 294.05973333333185,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "base-512",
+      "meanPsnr": 46.183351442286046,
+      "psnrOfMeanMse": 46.17635469756978,
+      "psnrBySeed": [
+        45.87886001329903,
+        46.48258259341611,
+        46.188611720142994
+      ],
+      "brotliKiB": 680.3981119791666,
+      "jsonKiB": 918.6259765625,
+      "latentBytes": 699040,
+      "runtimeGridBytes": 2796160,
+      "decoderMacs": 2304,
+      "trainingSeconds": 465.67886666666465,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "grid-channels-8-12",
+      "meanPsnr": 49.588596240957344,
+      "psnrOfMeanMse": 49.5763482931777,
+      "psnrBySeed": [
+        49.88297240211966,
+        49.74522330988122,
+        49.13759301087115
+      ],
+      "brotliKiB": 381.0374348958333,
+      "jsonKiB": 511.0322265625,
+      "latentBytes": 384472,
+      "runtimeGridBytes": 1537888,
+      "decoderMacs": 3072,
+      "trainingSeconds": 350.7285666666677,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "uv_grid",
+      "variant": "levels-2",
+      "meanPsnr": 46.82263171472344,
+      "psnrOfMeanMse": 46.817712824950355,
+      "psnrBySeed": [
+        46.57912709844886,
+        46.80376610033447,
+        47.085001945387006
+      ],
+      "brotliKiB": 173.43587239583334,
+      "jsonKiB": 234.6513671875,
+      "latentBytes": 174080,
+      "runtimeGridBytes": 696320,
+      "decoderMacs": 2304,
+      "trainingSeconds": 391.31276666666815,
+      "normalMeanDegrees": null
+    },
+    {
+      "material": "wood",
+      "variant": "reference",
+      "meanPsnr": 32.680232049594416,
+      "psnrOfMeanMse": 32.68010888641924,
+      "psnrBySeed": [
+        32.639509224388796,
+        32.71958477190814,
+        32.681602152486306
+      ],
+      "brotliKiB": 174.20540364583334,
+      "jsonKiB": 236.283203125,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2400,
+      "trainingSeconds": 331.45809999999904,
+      "normalMeanDegrees": 2.4719818656943544
+    },
+    {
+      "material": "wood",
+      "variant": "pe-cell_g0-concatenate_uint4",
+      "meanPsnr": 34.830059004519896,
+      "psnrOfMeanMse": 34.82719312358185,
+      "psnrBySeed": [
+        35.02028193662297,
+        34.63404258605417,
+        34.83585249088254
+      ],
+      "brotliKiB": 172.45540364583334,
+      "jsonKiB": 236.283203125,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2400,
+      "trainingSeconds": 283.455299999997,
+      "normalMeanDegrees": 2.0063672396700105
+    },
+    {
+      "material": "wood",
+      "variant": "pe-none_g0-concatenate_uint4",
+      "meanPsnr": 31.20112736424212,
+      "psnrOfMeanMse": 31.199417697181442,
+      "psnrBySeed": [
+        31.04737533763162,
+        31.210751266568202,
+        31.345255488526533
+      ],
+      "brotliKiB": 171.12565104166666,
+      "jsonKiB": 235.2578125,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2016,
+      "trainingSeconds": 335.5795666666627,
+      "normalMeanDegrees": 3.671867123339828
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-bilinear_uint4",
+      "meanPsnr": 32.86118366342138,
+      "psnrOfMeanMse": 32.860217204159554,
+      "psnrBySeed": [
+        32.98723152656185,
+        32.7712594019778,
+        32.825060061724486
+      ],
+      "brotliKiB": 173.40885416666666,
+      "jsonKiB": 235.2802734375,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2016,
+      "trainingSeconds": 231.66946666666618,
+      "normalMeanDegrees": 2.718477062772955
+    },
+    {
+      "material": "wood",
+      "variant": "pe-none_g0-bilinear_uint4",
+      "meanPsnr": 32.679463777979244,
+      "psnrOfMeanMse": 32.67732682499461,
+      "psnrBySeed": [
+        32.73716349917241,
+        32.809317174094026,
+        32.4919106606713
+      ],
+      "brotliKiB": 172.4638671875,
+      "jsonKiB": 234.25390625,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 1632,
+      "trainingSeconds": 276.1005666666652,
+      "normalMeanDegrees": 2.980829576311023
+    },
+    {
+      "material": "wood",
+      "variant": "g1-off",
+      "meanPsnr": 32.011449844896276,
+      "psnrOfMeanMse": 32.01108617413742,
+      "psnrBySeed": [
+        31.99785374482274,
+        31.950374458034126,
+        32.08612133183197
+      ],
+      "brotliKiB": 140.68229166666666,
+      "jsonKiB": 189.9716796875,
+      "latentBytes": 139808,
+      "runtimeGridBytes": 559232,
+      "decoderMacs": 2272,
+      "trainingSeconds": 294.84953333333135,
+      "normalMeanDegrees": 2.7096500360211833
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-concatenate_uint2",
+      "meanPsnr": 31.798680961839555,
+      "psnrOfMeanMse": 31.798631527355713,
+      "psnrBySeed": [
+        31.773452131142083,
+        31.82420766594879,
+        31.798383088427794
+      ],
+      "brotliKiB": 82.06998697916667,
+      "jsonKiB": 122.501953125,
+      "latentBytes": 87380,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2400,
+      "trainingSeconds": 302.1826000000015,
+      "normalMeanDegrees": 2.7754678939304087
+    },
+    {
+      "material": "wood",
+      "variant": "pe-tile_g0-concatenate_uint8",
+      "meanPsnr": 32.77794362165171,
+      "psnrOfMeanMse": 32.777935386043346,
+      "psnrBySeed": [
+        32.772013824530475,
+        32.771909751398304,
+        32.789907289026345
+      ],
+      "brotliKiB": 347.5143229166667,
+      "jsonKiB": 463.876953125,
+      "latentBytes": 349520,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2400,
+      "trainingSeconds": 311.84943333332984,
+      "normalMeanDegrees": 2.425073483375345
+    },
+    {
+      "material": "wood",
+      "variant": "hidden-16",
+      "meanPsnr": 31.181133710381882,
+      "psnrOfMeanMse": 31.177553651978975,
+      "psnrBySeed": [
+        31.405667652822594,
+        31.16340117641592,
+        30.97433230190713
+      ],
+      "brotliKiB": 170.40983072916666,
+      "jsonKiB": 232.408203125,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 944,
+      "trainingSeconds": 301.24423333333186,
+      "normalMeanDegrees": 3.420226153433393
+    },
+    {
+      "material": "wood",
+      "variant": "hidden-64",
+      "meanPsnr": 34.00677859335244,
+      "psnrOfMeanMse": 34.005122353558626,
+      "psnrBySeed": [
+        34.051011272612314,
+        33.84319100912932,
+        34.12613349831569
+      ],
+      "brotliKiB": 182.1103515625,
+      "jsonKiB": 248.033203125,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 6848,
+      "trainingSeconds": 509.07449999999756,
+      "normalMeanDegrees": 1.965899424995045
+    },
+    {
+      "material": "wood",
+      "variant": "activation-relu",
+      "meanPsnr": 32.42563081320689,
+      "psnrOfMeanMse": 32.42392949975519,
+      "psnrBySeed": [
+        32.3515131970442,
+        32.59756636281887,
+        32.3278128797576
+      ],
+      "brotliKiB": 174.716796875,
+      "jsonKiB": 236.28125,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 2400,
+      "trainingSeconds": 243.0630333333338,
+      "normalMeanDegrees": 2.279981188477597
+    },
+    {
+      "material": "wood",
+      "variant": "relu-hidden-16",
+      "meanPsnr": 31.068554492817075,
+      "psnrOfMeanMse": 31.068541556131002,
+      "psnrBySeed": [
+        31.053805293173987,
+        31.073624190996973,
+        31.078233994280264
+      ],
+      "brotliKiB": 171.44205729166666,
+      "jsonKiB": 232.40625,
+      "latentBytes": 174760,
+      "runtimeGridBytes": 699040,
+      "decoderMacs": 944,
+      "trainingSeconds": 236.17796666666618,
+      "normalMeanDegrees": 3.186006334672055
+    },
+    {
+      "material": "wood",
+      "variant": "base-128",
+      "meanPsnr": 29.30680452754756,
+      "psnrOfMeanMse": 29.30679595913952,
+      "psnrBySeed": [
+        29.315498332611515,
+        29.295047247890796,
+        29.309868002140366
+      ],
+      "brotliKiB": 48.4814453125,
+      "jsonKiB": 65.615234375,
+      "latentBytes": 43690,
+      "runtimeGridBytes": 174760,
+      "decoderMacs": 2400,
+      "trainingSeconds": 272.4919666666637,
+      "normalMeanDegrees": 4.070914874492002
+    },
+    {
+      "material": "wood",
+      "variant": "base-512",
+      "meanPsnr": 36.22513032262787,
+      "psnrOfMeanMse": 36.2250159775911,
+      "psnrBySeed": [
+        36.191383268622694,
+        36.21676472556464,
+        36.26724297369628
+      ],
+      "brotliKiB": 663.5716145833334,
+      "jsonKiB": 918.943359375,
+      "latentBytes": 699040,
+      "runtimeGridBytes": 2796160,
+      "decoderMacs": 2400,
+      "trainingSeconds": 294.96063333333035,
+      "normalMeanDegrees": 1.7678662483799812
+    },
+    {
+      "material": "wood",
+      "variant": "grid-channels-8-12",
+      "meanPsnr": 33.775125141595105,
+      "psnrOfMeanMse": 33.77503053851237,
+      "psnrBySeed": [
+        33.80747219416113,
+        33.73780605428921,
+        33.780097176334976
+      ],
+      "brotliKiB": 376.8736979166667,
+      "jsonKiB": 511.349609375,
+      "latentBytes": 384472,
+      "runtimeGridBytes": 1537888,
+      "decoderMacs": 3168,
+      "trainingSeconds": 450.568,
+      "normalMeanDegrees": 2.1165089137702373
+    },
+    {
+      "material": "wood",
+      "variant": "levels-2",
+      "meanPsnr": 32.7679813826107,
+      "psnrOfMeanMse": 32.76720392957803,
+      "psnrBySeed": [
+        32.659074976909054,
+        32.857253112822754,
+        32.7876160581003
+      ],
+      "brotliKiB": 172.26139322916666,
+      "jsonKiB": 234.96875,
+      "latentBytes": 174080,
+      "runtimeGridBytes": 696320,
+      "decoderMacs": 2400,
+      "trainingSeconds": 287.18846666666616,
+      "normalMeanDegrees": 2.393156700013607
+    }
+  ],
+  "analysisSha256": "45d9e799f09c3c4c13b4510fb959f0e13269525d6f3df6b0f91bbfbc2ea6e6b4"
+}

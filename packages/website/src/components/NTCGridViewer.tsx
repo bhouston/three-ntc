@@ -58,12 +58,16 @@ export function NTCGridViewer({ slots }: { slots: NTCGridSlot[] }) {
 
     const placeholderMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
 
-    const originX = ((Math.min(COLUMNS, slots.length) - 1) * SPACING) / 2;
     const originY = ((rows - 1) * SPACING) / 2;
+    const lastRowCount = slots.length - COLUMNS * (rows - 1);
 
     const meshes = slots.map((slot, i) => {
+      const row = Math.floor(i / COLUMNS);
+      const col = i % COLUMNS;
+      const rowCount = row === rows - 1 ? lastRowCount : COLUMNS;
+      const x = (col - (rowCount - 1) / 2) * SPACING;
       const mesh = new THREE.Mesh(geometry, placeholderMaterial);
-      mesh.position.set((i % COLUMNS) * SPACING - originX, originY - Math.floor(i / COLUMNS) * SPACING, 0);
+      mesh.position.set(x, originY - row * SPACING, 0);
       mesh.scale.setScalar(0.85);
       mesh.visible = Boolean(slot.material);
       scene.add(mesh);

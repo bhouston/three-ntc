@@ -50,6 +50,7 @@ interface NTCTextureModelLayout {
 	positionalEncodingPeriod: number;
 	inputSize: number;
 	positionalEncoding: boolean;
+	g0Sampling: 'bilinear' | 'concatenate';
 	dualGrid: boolean;
 	gridLevels: GridLevelLayout[];
 	totalLatents: number;
@@ -84,7 +85,7 @@ interface NTCGPUModelOptions extends NTCGridPyramidOptions {
  */
 function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextureModelLayout {
 
-	const { channels, lowResChannels, levels: requestedLevels, baseResolution, mipsPerLevel, hiddenSizes, hiddenActivation, outputChannels, textureResolution, positionalEncoding, dualGrid } = resolveNTCGridPyramidOptions( options );
+	const { channels, lowResChannels, levels: requestedLevels, baseResolution, mipsPerLevel, hiddenSizes, hiddenActivation, outputChannels, textureResolution, positionalEncoding, g0Sampling, dualGrid } = resolveNTCGridPyramidOptions( options );
 	// One entry per output channel naming its output nonlinearity (see
 	// ./NTCOutputActivations.js); undefined/omitted entries (the
 	// default, `options.channelActivations` unset) mean plain linear, i.e.
@@ -124,7 +125,7 @@ function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextu
 	// doc comment for the two widths: plain bilinear tap, or - when
 	// `positionalEncoding` is on - 4 concatenated raw taps + positional
 	// encoding).
-	const inputSize = computeDecoderInputSize( channels, positionalEncoding, dualGrid, lowResChannels );
+	const inputSize = computeDecoderInputSize( channels, positionalEncoding, dualGrid, lowResChannels, g0Sampling );
 	const sizes = [ inputSize, ...hiddenSizes, outputChannels ];
 	const mlpLayers: MLPLayerLayout[] = [];
 	let weightOffset = 0;
@@ -209,6 +210,7 @@ function computeTextureModelLayout( options: NTCGPUModelOptions = {} ): NTCTextu
 		positionalEncodingPeriod: options.positionalEncodingPeriod ?? 0,
 		inputSize,
 		positionalEncoding,
+		g0Sampling,
 		dualGrid,
 		gridLevels,
 		totalLatents,
@@ -295,6 +297,8 @@ class NTCGPUModel {
 	weightsLearningRateScale: number;
 	quantizationNoiseUniform: TSLNode;
 	stepUniform: TSLNode;
+	sampleOffsetUniform = uniform(0);
+	logicalBatchSize: number;
 	maxGradientNormUniform: TSLNode;
 	quantization: ResolvedNTCQuantizationConfig;
 	floatGradients: boolean;
@@ -308,6 +312,7 @@ class NTCGPUModel {
 		if (options.gradientPrecision !== undefined && !['float','fixed'].includes(options.gradientPrecision)) throw new Error('Invalid gradientPrecision');
 		this.floatGradients = options.gradientPrecision === 'float';
 		this.batchSize = options.batchSize || 4096;
+		this.logicalBatchSize = this.batchSize;
 		this.layout = computeTextureModelLayout( options );
 
 		const { totalWeights, totalLatents, activationStride } = this.layout;
@@ -434,7 +439,7 @@ class NTCGPUModel {
 		// The kernel accumulates the raw (un-batch-averaged) per-sample loss
 		// sum - see NeuralTextureGPUComputeTSL.js for why - so the mean loss is
 		// recovered here by dividing by batchSize as well as FIXED_POINT_SCALE.
-		const loss = this.floatGradients ? new Float32Array(buffer)[0] / this.batchSize : array[ 0 ] / ( FIXED_POINT_SCALE * this.batchSize );
+		const loss = this.floatGradients ? new Float32Array(buffer)[0] / this.logicalBatchSize : array[ 0 ] / ( FIXED_POINT_SCALE * this.logicalBatchSize );
 
 		( this.lossAttribute.array as Int32Array )[ 0 ] = 0;
 		this.lossAttribute.needsUpdate = true;

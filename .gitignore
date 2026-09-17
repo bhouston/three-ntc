@@ -14,3 +14,6 @@ coverage
 
 .pnpm-store/
 docs/metrics/*.log
+
+# Resumable benchmark snapshots, raw runs, and generated charts.
+output/benchmarks/

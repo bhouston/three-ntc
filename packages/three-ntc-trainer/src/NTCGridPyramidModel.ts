@@ -21,6 +21,8 @@ interface NTCGridPyramidOptions {
 	textureResolution?: number;
 	uvTransform?: any;
 	positionalEncoding?: boolean;
+	/** Independent of positional encoding; omitted preserves the legacy coupling. */
+	g0Sampling?: 'bilinear' | 'concatenate';
 	/** Zero retains grid-cell phase; eight selects the paper-style texel tile. */
 	positionalEncodingPeriod?: number;
 	dualGrid?: boolean;
@@ -39,15 +41,16 @@ interface ResolvedNTCGridPyramidOptions {
 	textureResolution: number | undefined;
 	uvTransform: any;
 	positionalEncoding: boolean;
+	g0Sampling: 'bilinear' | 'concatenate';
 	dualGrid: boolean;
 }
 
 /** Four G0 taps (with positional encoding), a bilinear G1 vector, and LOD.
  * Every feature level has its own independently trained half-resolution G1.
  */
-function computeDecoderInputSize( channels: number, positionalEncoding: boolean, dualGrid: boolean = false, lowResChannels = channels ): number {
+function computeDecoderInputSize( channels: number, positionalEncoding: boolean, dualGrid: boolean = false, lowResChannels = channels, g0Sampling = positionalEncoding ? 'concatenate' : 'bilinear' ): number {
 
-	return ( positionalEncoding ? channels * 4 + POSITIONAL_ENCODING_SIZE : channels ) + ( dualGrid ? lowResChannels : 0 ) + 1;
+	return ( g0Sampling === 'concatenate' ? channels * 4 : channels ) + ( positionalEncoding ? POSITIONAL_ENCODING_SIZE : 0 ) + ( dualGrid ? lowResChannels : 0 ) + 1;
 
 }
 
@@ -82,6 +85,8 @@ function computeDecoderInputSize( channels: number, positionalEncoding: boolean,
  */
 function resolveNTCGridPyramidOptions( options: NTCGridPyramidOptions = {} ): ResolvedNTCGridPyramidOptions {
 
+	if (options.g0Sampling !== undefined && !['bilinear','concatenate'].includes(options.g0Sampling))
+		throw new Error('g0Sampling must be bilinear or concatenate');
 	const textureResolution = options.textureResolution;
 
 	return {
@@ -107,6 +112,7 @@ function resolveNTCGridPyramidOptions( options: NTCGridPyramidOptions = {} ): Re
 		uvTransform: options.uvTransform || new Matrix3(),
 		// Optional (default off) - see computeDecoderInputSize's doc comment.
 		positionalEncoding: options.positionalEncoding === true,
+		g0Sampling: options.g0Sampling ?? (options.positionalEncoding ? 'concatenate' : 'bilinear'),
 		dualGrid: options.dualGrid === true
 
 	};
@@ -133,6 +139,7 @@ interface NTCGridPyramidModel {
 	quantizationRange?: Array<[ number, number ]> | null;
 	quantization?: { mode: string };
 	positionalEncoding: boolean;
+	g0Sampling: 'bilinear' | 'concatenate';
 	dualGrid: boolean;
 }
 
@@ -153,7 +160,7 @@ interface NTCGridPyramidModel {
  */
 function createNTCGridPyramidModel( options: NTCGridPyramidOptions, random: () => number ): NTCGridPyramidModel {
 
-	const { channels, lowResChannels, levels: requestedLevels, baseResolution, mipsPerLevel, hiddenSizes, hiddenActivation, outputChannels, textureResolution, uvTransform, positionalEncoding, dualGrid } = resolveNTCGridPyramidOptions( options );
+	const { channels, lowResChannels, levels: requestedLevels, baseResolution, mipsPerLevel, hiddenSizes, hiddenActivation, outputChannels, textureResolution, uvTransform, positionalEncoding, g0Sampling, dualGrid } = resolveNTCGridPyramidOptions( options );
 
 	const resolutions = computeGridLevels( baseResolution, requestedLevels, mipsPerLevel );
 	const levels = resolutions.length;
@@ -163,12 +170,12 @@ function createNTCGridPyramidModel( options: NTCGridPyramidOptions, random: () =
 	const lodOffset = computeFeatureLodOffset(resolvedTextureResolution,resolutions[0]);
 	const maxLod = Math.floor( Math.log2( Math.max( 1, resolvedTextureResolution ) ) );
 
-	const inputSize = computeDecoderInputSize( channels, positionalEncoding, dualGrid, lowResChannels );
+	const inputSize = computeDecoderInputSize( channels, positionalEncoding, dualGrid, lowResChannels, g0Sampling );
 	const decoder = createMLP( inputSize, hiddenSizes, outputChannels, random, hiddenActivation, 'linear' );
 
 	const lowResGrids = dualGrid ? resolutions.map(r => createLatentGrid(Math.max(1, Math.floor(r/2)), Math.max(1, Math.floor(r/2)), lowResChannels, random)) : [];
 
-	return { channels, lowResChannels, lowResGrids, levels, mipsPerLevel, resolutions, grids, decoder, hiddenSizes, hiddenActivation, outputChannels, textureResolution: resolvedTextureResolution, maxLod, lodOffset, positionalEncodingPeriod: options.positionalEncodingPeriod ?? 0, uvTransform, positionalEncoding, dualGrid };
+	return { channels, lowResChannels, lowResGrids, levels, mipsPerLevel, resolutions, grids, decoder, hiddenSizes, hiddenActivation, outputChannels, textureResolution: resolvedTextureResolution, maxLod, lodOffset, positionalEncodingPeriod: options.positionalEncodingPeriod ?? 0, uvTransform, positionalEncoding, g0Sampling, dualGrid };
 
 }
 

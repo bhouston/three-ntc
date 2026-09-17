@@ -32,6 +32,7 @@ export interface NTCManifest {
 		lodOffset?: number;
 		wrap?: string;
 		positionalEncoding?: boolean;
+		g0Sampling?: 'bilinear' | 'concatenate';
 		dualGrid?: boolean;
 	};
 	mlp: MLPBlock;
@@ -150,6 +151,7 @@ class NTCLoader extends Loader {
 			mipsPerLevel: manifest.latents.mipsPerLevel,
 			maxLod: manifest.latents.maxLod,
 			positionalEncodingPeriod: manifest.latents.positionalEncodingPeriod,
+			g0Sampling: manifest.latents.g0Sampling,
 			textureResolution: manifest.latents.textureResolution ?? 2 ** manifest.latents.maxLod,
 			lodOffset: manifest.latents.lodOffset ?? 0,
 			grids,
@@ -246,6 +248,8 @@ function validateManifest( manifest: NTCManifest ): void {
 	// at all: `mipsPerLevel` (with `latents.levels.length`) determines which
 	// stored grid a given LOD selects, and `maxLod` is the physical mip range
 	// the decoder's LOD input was normalized against.
+	if (manifest.latents.g0Sampling !== undefined && !['bilinear','concatenate'].includes(manifest.latents.g0Sampling))
+		throw new Error('THREE.NTCLoader: invalid latents.g0Sampling');
 	assertInteger( manifest.latents.mipsPerLevel, 'latents.mipsPerLevel', 1 );
 	assertInteger( manifest.latents.maxLod, 'latents.maxLod', 0 );
 

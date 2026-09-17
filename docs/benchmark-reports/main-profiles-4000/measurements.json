@@ -1,0 +1,1184 @@
+{
+  "sourceHash": "ff168d6f2bb8c987720a52c99b56ca9c7b47003d5ae92b9dbfedf6cb74c7b260",
+  "records": [
+    {
+      "material": "brick",
+      "profile": "library",
+      "psnr": 38.978310961621006,
+      "normalizedMse": 0.0001265228318650015,
+      "mip0Psnr": 39.14618535965636,
+      "equalMipPsnr": 35.203306374522214,
+      "storage": {
+        "jsonBytes": 99367,
+        "latentPayloadBytes": 69904,
+        "runtimeGridBytes": 139808,
+        "decoderParameters": 1578
+      },
+      "trainingSeconds": 141.38809999999964,
+      "exportDeltaDb": -0.02665141355949885,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 37.681553939137146,
+          "mip0ErrorShare": 0.4203242016577436,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "normal",
+          "mip0Psnr": 34.57424069149993,
+          "mip0ErrorShare": 0.5730921536724989,
+          "constantAtMip0": false,
+          "normalMeanDegrees": 1.9327110828181657
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 54.301971529940985,
+          "mip0ErrorShare": 0.0030508537062979087,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularIntensity",
+          "mip0Psnr": 56.68248225926671,
+          "mip0ErrorShare": 0.0017634790718903367,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 61.439353942662024,
+          "mip0ErrorShare": 0.0017693118915692644,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 1504,
+      "payloadPlusWeightsBytes": 73060
+    },
+    {
+      "material": "brick",
+      "profile": "paper",
+      "psnr": 42.572909238966226,
+      "normalizedMse": 5.529795568155033e-05,
+      "mip0Psnr": 44.092368272807214,
+      "equalMipPsnr": 37.901204922624665,
+      "storage": {
+        "jsonBytes": 537710,
+        "latentPayloadBytes": 384472,
+        "runtimeGridBytes": 1537888,
+        "decoderParameters": 8522
+      },
+      "trainingSeconds": 561.0521000000015,
+      "exportDeltaDb": 0.0004981748510246575,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 42.33346893983324,
+          "mip0ErrorShare": 0.4497914419838847,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "normal",
+          "mip0Psnr": 40.02944234857743,
+          "mip0ErrorShare": 0.5097093357043619,
+          "constantAtMip0": false,
+          "normalMeanDegrees": 1.2739969007191037
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 50.58642551010522,
+          "mip0ErrorShare": 0.022417866380687636,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularIntensity",
+          "mip0Psnr": 52.39905960453231,
+          "mip0ErrorShare": 0.014768312272281772,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 63.66130923014274,
+          "mip0ErrorShare": 0.0033130436587840034,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 8384,
+      "payloadPlusWeightsBytes": 401516
+    },
+    {
+      "material": "brick",
+      "profile": "website",
+      "psnr": 33.832502067837716,
+      "normalizedMse": 0.00041376122902271503,
+      "mip0Psnr": 33.899060258920834,
+      "equalMipPsnr": 33.3392547771342,
+      "storage": {
+        "jsonBytes": 33548,
+        "latentPayloadBytes": 21760,
+        "runtimeGridBytes": 174080,
+        "decoderParameters": 986
+      },
+      "trainingSeconds": 226.34610000000055,
+      "exportDeltaDb": -0.0007232919727755416,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 31.30994399532487,
+          "mip0ErrorShare": 0.5445438795063805,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "normal",
+          "mip0Psnr": 30.36030985255559,
+          "mip0ErrorShare": 0.45175715145246403,
+          "constantAtMip0": false,
+          "normalMeanDegrees": 3.1563757528867464
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 50.06632899343966,
+          "mip0ErrorShare": 0.002416980388574359,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularIntensity",
+          "mip0Psnr": 54.41587106455852,
+          "mip0ErrorShare": 0.0008878077246804123,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 62.713316731185714,
+          "mip0ErrorShare": 0.000394180927900638,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 944,
+      "payloadPlusWeightsBytes": 23732
+    },
+    {
+      "material": "checkerboard_normal",
+      "profile": "library",
+      "psnr": 67.71086579750519,
+      "normalizedMse": 1.694000055601945e-07,
+      "mip0Psnr": 67.69582990912224,
+      "equalMipPsnr": 66.77649340260045,
+      "storage": {
+        "jsonBytes": 99369,
+        "latentPayloadBytes": 69904,
+        "runtimeGridBytes": 139808,
+        "decoderParameters": 1578
+      },
+      "trainingSeconds": 104.36239999999944,
+      "exportDeltaDb": -0.48579535268426355,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 70.89150301444876,
+          "mip0ErrorShare": 0.14373215735352643,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "normal",
+          "mip0Psnr": 87.22396304338753,
+          "mip0ErrorShare": 0.0022295472582456555,
+          "constantAtMip0": true,
+          "normalMeanDegrees": 0.006006174793065583
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 72.14412486627614,
+          "mip0ErrorShare": 0.035906287528540595,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularIntensity",
+          "mip0Psnr": 66.05061837963818,
+          "mip0ErrorShare": 0.14605658867084925,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 64.1928623403689,
+          "mip0ErrorShare": 0.6720754191888381,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": true,
+      "decoderMacs": 1504,
+      "payloadPlusWeightsBytes": 73060
+    },
+    {
+      "material": "checkerboard_normal",
+      "profile": "paper",
+      "psnr": 65.42361383871977,
+      "normalizedMse": 2.868392749980517e-07,
+      "mip0Psnr": 65.31317672900781,
+      "equalMipPsnr": 65.19561393084588,
+      "storage": {
+        "jsonBytes": 537710,
+        "latentPayloadBytes": 384472,
+        "runtimeGridBytes": 1537888,
+        "decoderParameters": 8522
+      },
+      "trainingSeconds": 490.2,
+      "exportDeltaDb": -0.08778500473637507,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 68.45900452298827,
+          "mip0ErrorShare": 0.14539131859998156,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "normal",
+          "mip0Psnr": 73.69241083860581,
+          "mip0ErrorShare": 0.029047354481870496,
+          "constantAtMip0": true,
+          "normalMeanDegrees": 0.029131400999063622
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 63.800859507713774,
+          "mip0ErrorShare": 0.14165493923386152,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularIntensity",
+          "mip0Psnr": 63.02355277753952,
+          "mip0ErrorShare": 0.16941910968431176,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 62.97064287419407,
+          "mip0ErrorShare": 0.5144872779999746,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": true,
+      "decoderMacs": 8384,
+      "payloadPlusWeightsBytes": 401516
+    },
+    {
+      "material": "checkerboard_normal",
+      "profile": "website",
+      "psnr": 63.627396856908376,
+      "normalizedMse": 4.337708008984525e-07,
+      "mip0Psnr": 63.48539940256594,
+      "equalMipPsnr": 63.36853870415848,
+      "storage": {
+        "jsonBytes": 33548,
+        "latentPayloadBytes": 21760,
+        "runtimeGridBytes": 174080,
+        "decoderParameters": 986
+      },
+      "trainingSeconds": 91.283,
+      "exportDeltaDb": -0.16667810584768006,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 69.90405261989028,
+          "mip0ErrorShare": 0.06843148003105315,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "normal",
+          "mip0Psnr": 90.79539178459099,
+          "mip0ErrorShare": 0.0003715615427751913,
+          "constantAtMip0": true,
+          "normalMeanDegrees": 0.0034756132456429632
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 60.420497644891284,
+          "mip0ErrorShare": 0.20253037916436134,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularIntensity",
+          "mip0Psnr": 59.54383692507663,
+          "mip0ErrorShare": 0.24783135293807707,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 61.43664918099692,
+          "mip0ErrorShare": 0.48083522632373327,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": true,
+      "decoderMacs": 944,
+      "payloadPlusWeightsBytes": 23732
+    },
+    {
+      "material": "road_aggregate",
+      "profile": "library",
+      "psnr": 40.88900961979877,
+      "normalizedMse": 8.148900931972735e-05,
+      "mip0Psnr": 40.53536353002514,
+      "equalMipPsnr": 41.25508990483793,
+      "storage": {
+        "jsonBytes": 99365,
+        "latentPayloadBytes": 69904,
+        "runtimeGridBytes": 139808,
+        "decoderParameters": 1578
+      },
+      "trainingSeconds": 119.08710000000056,
+      "exportDeltaDb": -0.012311635664474352,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 38.735817437290024,
+          "mip0ErrorShare": 0.4540209195959544,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "normal",
+          "mip0Psnr": 36.25933714697453,
+          "mip0ErrorShare": 0.5353436232860028,
+          "constantAtMip0": false,
+          "normalMeanDegrees": 0.8969276387054823
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 53.09815606638444,
+          "mip0ErrorShare": 0.005542692003395872,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularIntensity",
+          "mip0Psnr": 55.99211248630188,
+          "mip0ErrorShare": 0.0028465912126911398,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 61.792142308029405,
+          "mip0ErrorShare": 0.002246173901955707,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 1504,
+      "payloadPlusWeightsBytes": 73060
+    },
+    {
+      "material": "road_aggregate",
+      "profile": "paper",
+      "psnr": 43.8593130969685,
+      "normalizedMse": 4.112147558533598e-05,
+      "mip0Psnr": 44.178349623618764,
+      "equalMipPsnr": 41.420724813083815,
+      "storage": {
+        "jsonBytes": 537710,
+        "latentPayloadBytes": 384472,
+        "runtimeGridBytes": 1537888,
+        "decoderParameters": 8522
+      },
+      "trainingSeconds": 589.4682000000012,
+      "exportDeltaDb": -0.0010463962585376407,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 40.91811381247485,
+          "mip0ErrorShare": 0.6355428480397813,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "normal",
+          "mip0Psnr": 41.82887485788839,
+          "mip0ErrorShare": 0.34354012729286226,
+          "constantAtMip0": false,
+          "normalMeanDegrees": 0.6114468953518728
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 54.01090208385754,
+          "mip0ErrorShare": 0.010393091576026428,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularIntensity",
+          "mip0Psnr": 56.760423564628,
+          "mip0ErrorShare": 0.005518138617439913,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 61.95483202550011,
+          "mip0ErrorShare": 0.005005794473889971,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 8384,
+      "payloadPlusWeightsBytes": 401516
+    },
+    {
+      "material": "road_aggregate",
+      "profile": "website",
+      "psnr": 36.47990617798475,
+      "normalizedMse": 0.00022491031934010393,
+      "mip0Psnr": 36.24411895750316,
+      "equalMipPsnr": 38.03413221037511,
+      "storage": {
+        "jsonBytes": 33548,
+        "latentPayloadBytes": 21760,
+        "runtimeGridBytes": 174080,
+        "decoderParameters": 986
+      },
+      "trainingSeconds": 147.8525,
+      "exportDeltaDb": -0.0006611334984043538,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 33.601428344061304,
+          "mip0ErrorShare": 0.5513029496013848,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "normal",
+          "mip0Psnr": 32.76135258611872,
+          "mip0ErrorShare": 0.445971014260647,
+          "constantAtMip0": false,
+          "normalMeanDegrees": 1.2961521745005797
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 62.349928796541505,
+          "mip0ErrorShare": 0.000245142728782888,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularIntensity",
+          "mip0Psnr": 70.48397036485564,
+          "mip0ErrorShare": 3.767166880199796e-05,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 57.13570266282174,
+          "mip0ErrorShare": 0.0024432217403831747,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 944,
+      "payloadPlusWeightsBytes": 23732
+    },
+    {
+      "material": "standard_surface_rotate_scale2d_test",
+      "profile": "library",
+      "psnr": 29.63656262507405,
+      "normalizedMse": 0.0010872858533976205,
+      "mip0Psnr": 29.67872575196629,
+      "equalMipPsnr": 30.635114035330787,
+      "storage": {
+        "jsonBytes": 99163,
+        "latentPayloadBytes": 69904,
+        "runtimeGridBytes": 139808,
+        "decoderParameters": 1479
+      },
+      "trainingSeconds": 247.80759999999964,
+      "exportDeltaDb": -0.11329638690754962,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 26.00194302979073,
+          "mip0ErrorShare": 0.9993128844108543,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 53.60121354290166,
+          "mip0ErrorShare": 0.0005789661606749848,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 65.65871561204601,
+          "mip0ErrorShare": 0.00010814942847076081,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 1408,
+      "payloadPlusWeightsBytes": 72862
+    },
+    {
+      "material": "standard_surface_rotate_scale2d_test",
+      "profile": "paper",
+      "psnr": 33.890699200158004,
+      "normalizedMse": 0.0004082536535153246,
+      "mip0Psnr": 35.582406902645744,
+      "equalMipPsnr": 32.47393625266697,
+      "storage": {
+        "jsonBytes": 537254,
+        "latentPayloadBytes": 384472,
+        "runtimeGridBytes": 1537888,
+        "decoderParameters": 8327
+      },
+      "trainingSeconds": 1075.201200000001,
+      "exportDeltaDb": -0.0018779871034482198,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 31.937911876251952,
+          "mip0ErrorShare": 0.99191102480115,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 48.40318980791503,
+          "mip0ErrorShare": 0.007461457497319207,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 63.92637923711419,
+          "mip0ErrorShare": 0.0006275177015307444,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 8192,
+      "payloadPlusWeightsBytes": 401126
+    },
+    {
+      "material": "standard_surface_rotate_scale2d_test",
+      "profile": "website",
+      "psnr": 26.415963297715628,
+      "normalizedMse": 0.0022824626012137687,
+      "mip0Psnr": 26.28511137803837,
+      "equalMipPsnr": 28.100704086804754,
+      "storage": {
+        "jsonBytes": 33476,
+        "latentPayloadBytes": 21760,
+        "runtimeGridBytes": 174080,
+        "decoderParameters": 935
+      },
+      "trainingSeconds": 381.8705,
+      "exportDeltaDb": -0.0004237568997211838,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 22.6131155766165,
+          "mip0ErrorShare": 0.9982120193471499,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 45.66867511241118,
+          "mip0ErrorShare": 0.0016464387788444044,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 61.09649411169496,
+          "mip0ErrorShare": 0.0001415418740057756,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 896,
+      "payloadPlusWeightsBytes": 23630
+    },
+    {
+      "material": "uv_grid",
+      "profile": "library",
+      "psnr": 53.67455915771345,
+      "normalizedMse": 4.290857425299154e-06,
+      "mip0Psnr": 53.97359709579555,
+      "equalMipPsnr": 46.4482516151087,
+      "storage": {
+        "jsonBytes": 99034,
+        "latentPayloadBytes": 69904,
+        "runtimeGridBytes": 139808,
+        "decoderParameters": 1479
+      },
+      "trainingSeconds": 279.67729999999983,
+      "exportDeltaDb": -0.5077320572116051,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 50.3859805199675,
+          "mip0ErrorShare": 0.9790049153289646,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 68.74697928320434,
+          "mip0ErrorShare": 0.0047595264126066746,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 68.18915697883659,
+          "mip0ErrorShare": 0.016235558258428717,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 1408,
+      "payloadPlusWeightsBytes": 72862
+    },
+    {
+      "material": "uv_grid",
+      "profile": "paper",
+      "psnr": 48.08438469930175,
+      "normalizedMse": 1.5543954991617548e-05,
+      "mip0Psnr": 48.998428765660776,
+      "equalMipPsnr": 40.171517638501406,
+      "storage": {
+        "jsonBytes": 537121,
+        "latentPayloadBytes": 384472,
+        "runtimeGridBytes": 1537888,
+        "decoderParameters": 8327
+      },
+      "trainingSeconds": 745.1394000000004,
+      "exportDeltaDb": -0.0022215654283854747,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 45.33568524401123,
+          "mip0ErrorShare": 0.9960876760131558,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 70.40313684744535,
+          "mip0ErrorShare": 0.0010337872029237225,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 70.7269430773164,
+          "mip0ErrorShare": 0.002878536783920452,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 8192,
+      "payloadPlusWeightsBytes": 401126
+    },
+    {
+      "material": "uv_grid",
+      "profile": "website",
+      "psnr": 40.20463810952695,
+      "normalizedMse": 9.539732325553934e-05,
+      "mip0Psnr": 40.18734836382861,
+      "equalMipPsnr": 36.26772375559577,
+      "storage": {
+        "jsonBytes": 33343,
+        "latentPayloadBytes": 21760,
+        "runtimeGridBytes": 174080,
+        "decoderParameters": 935
+      },
+      "trainingSeconds": 292.45910000000055,
+      "exportDeltaDb": -0.0015869232429039926,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 36.51060336641375,
+          "mip0ErrorShare": 0.9993042039699868,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 69.38306684197462,
+          "mip0ErrorShare": 0.00017192146852485862,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 69.31530740774443,
+          "mip0ErrorShare": 0.000523874561488347,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 896,
+      "payloadPlusWeightsBytes": 23630
+    },
+    {
+      "material": "velvet",
+      "profile": "library",
+      "psnr": 32.71912589847022,
+      "normalizedMse": 0.0005346719616276811,
+      "mip0Psnr": 32.44456621513337,
+      "equalMipPsnr": 35.644862779796725,
+      "storage": {
+        "jsonBytes": 99588,
+        "latentPayloadBytes": 69904,
+        "runtimeGridBytes": 139808,
+        "decoderParameters": 1644
+      },
+      "trainingSeconds": 184.98229999999887,
+      "exportDeltaDb": -0.004783448912561994,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 30.09000841339239,
+          "mip0ErrorShare": 0.42992805784390065,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 53.13988217260939,
+          "mip0ErrorShare": 0.0007100471003297495,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularIntensity",
+          "mip0Psnr": 33.8569586729213,
+          "mip0ErrorShare": 0.06019764592523244,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 30.08477395282997,
+          "mip0ErrorShare": 0.43044655354378664,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "sheenColor",
+          "mip0Psnr": 37.47588602980245,
+          "mip0ErrorShare": 0.07848886107042678,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "sheenRoughness",
+          "mip0Psnr": 58.05753843463889,
+          "mip0ErrorShare": 0.0002288345163237074,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 1568,
+      "payloadPlusWeightsBytes": 73192
+    },
+    {
+      "material": "velvet",
+      "profile": "website",
+      "psnr": 32.434894788478736,
+      "normalizedMse": 0.0005708349049640273,
+      "mip0Psnr": 32.126330709271,
+      "equalMipPsnr": 35.63263610098006,
+      "storage": {
+        "jsonBytes": 33683,
+        "latentPayloadBytes": 21760,
+        "runtimeGridBytes": 174080,
+        "decoderParameters": 1020
+      },
+      "trainingSeconds": 230.28520000000017,
+      "exportDeltaDb": -7.537528015433281e-05,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 29.826077893503644,
+          "mip0ErrorShare": 0.4245856287914898,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 46.46125044556656,
+          "mip0ErrorShare": 0.0030713321107662824,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularIntensity",
+          "mip0Psnr": 33.304715082625066,
+          "mip0ErrorShare": 0.0635302137613691,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 29.825977506391254,
+          "mip0ErrorShare": 0.4245954431961461,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "sheenColor",
+          "mip0Psnr": 36.886461756418015,
+          "mip0ErrorShare": 0.08354623898406477,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "sheenRoughness",
+          "mip0Psnr": 53.06636658956541,
+          "mip0ErrorShare": 0.0006711431561639751,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 976,
+      "payloadPlusWeightsBytes": 23800
+    },
+    {
+      "material": "wood",
+      "profile": "library",
+      "psnr": 28.869567957483042,
+      "normalizedMse": 0.0012973083226984004,
+      "mip0Psnr": 28.64324573962896,
+      "equalMipPsnr": 32.63579569290232,
+      "storage": {
+        "jsonBytes": 99355,
+        "latentPayloadBytes": 69904,
+        "runtimeGridBytes": 139808,
+        "decoderParameters": 1578
+      },
+      "trainingSeconds": 163.7635,
+      "exportDeltaDb": -0.007692452439723496,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 27.874767822382857,
+          "mip0ErrorShare": 0.35807091533460955,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "normal",
+          "mip0Psnr": 24.371651011565348,
+          "mip0ErrorShare": 0.5347976232125576,
+          "constantAtMip0": false,
+          "normalMeanDegrees": 4.291053900625268
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 28.404732235332975,
+          "mip0ErrorShare": 0.10564558454275272,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "metalness",
+          "mip0Psnr": 48.55102931564373,
+          "mip0ErrorShare": 0.0010214606536444657,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 56.74538415297512,
+          "mip0ErrorShare": 0.0004644162564356149,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 1504,
+      "payloadPlusWeightsBytes": 73060
+    },
+    {
+      "material": "wood",
+      "profile": "paper",
+      "psnr": 34.258893616745056,
+      "normalizedMse": 0.00037506854034616527,
+      "mip0Psnr": 35.229829569316244,
+      "equalMipPsnr": 36.27537607740735,
+      "storage": {
+        "jsonBytes": 537702,
+        "latentPayloadBytes": 384472,
+        "runtimeGridBytes": 1537888,
+        "decoderParameters": 8522
+      },
+      "trainingSeconds": 685.9929000000004,
+      "exportDeltaDb": -0.001062141752775858,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 32.97881230788914,
+          "mip0ErrorShare": 0.5037591886947431,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "normal",
+          "mip0Psnr": 32.66733439393887,
+          "mip0ErrorShare": 0.3608107871896735,
+          "constantAtMip0": false,
+          "normalMeanDegrees": 2.054062278962671
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 34.091763580811744,
+          "mip0ErrorShare": 0.12995907120318856,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "metalness",
+          "mip0Psnr": 48.594700267988415,
+          "mip0ErrorShare": 0.004608004877750089,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 60.64119567670186,
+          "mip0ErrorShare": 0.0008629480346447459,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 8384,
+      "payloadPlusWeightsBytes": 401516
+    },
+    {
+      "material": "wood",
+      "profile": "website",
+      "psnr": 29.011220188037882,
+      "normalizedMse": 0.0012556771207453733,
+      "mip0Psnr": 28.792004290630786,
+      "equalMipPsnr": 33.36315233977715,
+      "storage": {
+        "jsonBytes": 33540,
+        "latentPayloadBytes": 21760,
+        "runtimeGridBytes": 174080,
+        "decoderParameters": 986
+      },
+      "trainingSeconds": 187.16690000000037,
+      "exportDeltaDb": -0.00022849659455914662,
+      "properties": [
+        {
+          "key": "albedo",
+          "mip0Psnr": 27.861918187082033,
+          "mip0ErrorShare": 0.3716463441742806,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "normal",
+          "mip0Psnr": 24.45018127936596,
+          "mip0ErrorShare": 0.5435159542431992,
+          "constantAtMip0": false,
+          "normalMeanDegrees": 3.844117924354979
+        },
+        {
+          "key": "roughness",
+          "mip0Psnr": 29.60102623769895,
+          "mip0ErrorShare": 0.08300376751103754,
+          "constantAtMip0": false,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "metalness",
+          "mip0Psnr": 47.062684028366974,
+          "mip0ErrorShare": 0.0014891279880108355,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        },
+        {
+          "key": "specularColor",
+          "mip0Psnr": 58.18746764231608,
+          "mip0ErrorShare": 0.0003448060834719417,
+          "constantAtMip0": true,
+          "normalMeanDegrees": null
+        }
+      ],
+      "constantReference": false,
+      "decoderMacs": 944,
+      "payloadPlusWeightsBytes": 23732
+    }
+  ],
+  "comparisons": [
+    {
+      "material": "brick",
+      "baseline": "website",
+      "candidate": "library",
+      "deltaDb": 5.14580889378329,
+      "errorReductionPercent": 69.42129349242252,
+      "fileRatio": 2.9619351377131276
+    },
+    {
+      "material": "brick",
+      "baseline": "library",
+      "candidate": "paper",
+      "deltaDb": 3.59459827734522,
+      "errorReductionPercent": 56.29408948058272,
+      "fileRatio": 5.411353869997082
+    },
+    {
+      "material": "uv_grid",
+      "baseline": "website",
+      "candidate": "library",
+      "deltaDb": 13.469921048186507,
+      "errorReductionPercent": 95.50211968337382,
+      "fileRatio": 2.970158653990343
+    },
+    {
+      "material": "uv_grid",
+      "baseline": "library",
+      "candidate": "paper",
+      "deltaDb": -5.590174458411703,
+      "errorReductionPercent": -262.2575502035899,
+      "fileRatio": 5.423601995274351
+    },
+    {
+      "material": "road_aggregate",
+      "baseline": "website",
+      "candidate": "library",
+      "deltaDb": 4.409103441814018,
+      "errorReductionPercent": 63.76822123643795,
+      "fileRatio": 2.9618755216406343
+    },
+    {
+      "material": "road_aggregate",
+      "baseline": "library",
+      "candidate": "paper",
+      "deltaDb": 2.970303477169729,
+      "errorReductionPercent": 49.53739660278206,
+      "fileRatio": 5.411462788708298
+    },
+    {
+      "material": "checkerboard_normal",
+      "baseline": "website",
+      "candidate": "library",
+      "deltaDb": 4.083468940596816,
+      "errorReductionPercent": 60.94711649347468,
+      "fileRatio": 2.9619947537856204
+    },
+    {
+      "material": "checkerboard_normal",
+      "baseline": "library",
+      "candidate": "paper",
+      "deltaDb": -2.2872519587854185,
+      "errorReductionPercent": -69.32660305971854,
+      "fileRatio": 5.41124495567028
+    },
+    {
+      "material": "standard_surface_rotate_scale2d_test",
+      "baseline": "website",
+      "candidate": "library",
+      "deltaDb": 3.2205993273584212,
+      "errorReductionPercent": 52.36347562411654,
+      "fileRatio": 2.9622117337794243
+    },
+    {
+      "material": "standard_surface_rotate_scale2d_test",
+      "baseline": "library",
+      "candidate": "paper",
+      "deltaDb": 4.254136575083955,
+      "errorReductionPercent": 62.45204034986867,
+      "fileRatio": 5.417887720218227
+    },
+    {
+      "material": "wood",
+      "baseline": "website",
+      "candidate": "library",
+      "deltaDb": -0.14165223055483978,
+      "errorReductionPercent": -3.315438440760521,
+      "fileRatio": 2.962283840190817
+    },
+    {
+      "material": "wood",
+      "baseline": "library",
+      "candidate": "paper",
+      "deltaDb": 5.389325659262013,
+      "errorReductionPercent": 71.08871239135944,
+      "fileRatio": 5.41192692869005
+    },
+    {
+      "material": "velvet",
+      "baseline": "website",
+      "candidate": "library",
+      "deltaDb": 0.28423110999148093,
+      "errorReductionPercent": 6.335096719186273,
+      "fileRatio": 2.956625003711071
+    }
+  ],
+  "failed": [
+    "velvet__profile-paper-equal-budget__seed-1"
+  ],
+  "aggregateMatchedNonconstant": {
+    "website": {
+      "n": 5,
+      "normalizedMse": 0.0008544417187155,
+      "psnrOfMeanMse": 30.68317555065508,
+      "meanTrainingSeconds": 247.1390200000003
+    },
+    "library": {
+      "n": 5,
+      "normalizedMse": 0.0005193793749412097,
+      "psnrOfMeanMse": 32.84515300619446,
+      "meanTrainingSeconds": 190.34471999999994
+    },
+    "paper": {
+      "n": 5,
+      "normalizedMse": 0.00017905711602399875,
+      "psnrOfMeanMse": 37.470084147328095,
+      "meanTrainingSeconds": 731.3707600000009
+    }
+  }
+}

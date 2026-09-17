@@ -1,4 +1,4 @@
-import { float, vec4 } from 'three/tsl';
+import { float, vec2, vec4 } from 'three/tsl';
 import { expect, it } from 'vitest';
 import { getRenderer } from '../../../test/gpu-helpers.js';
 import { NTCGPUModel } from './NTCGPUModel.js';
@@ -51,4 +51,25 @@ it('a fixed degenerate quantization range stays finite on the GPU', async () => 
   const values=new Float32Array(await renderer.getArrayBufferAsync(gpu.activationsAttribute));
   expect(values[0]).toBe(0.25);
   source.dispose();gpu.dispose();
+});
+
+
+it('concatenated G0 applies noise to each stored tap and disables it for frozen adaptation', async () => {
+  const renderer=await getRenderer();
+  const options={gridChannels:1,levels:1,baseResolution:32,textureResolution:32,
+    g0Sampling:'concatenate' as const,hiddenSizes:[],batchSize:1,outputChannels:4,
+    quantization:{mode:'uint4',method:'noise' as const}};
+  const cpu=createNTCGridPyramidModel(options,createRandom(1));cpu.grids[0].data.fill(0.02);
+  const gpu=new NTCGPUModel(options);gpu.initFromCPUModel(cpu);
+  const source=await bakeColorNodeToTexture(renderer,vec4(0),32);
+  try {
+    const batch=createTextureTrainBatchComputeNode(gpu,[source.texture],{uv:vec2(5.5/32,7.5/32),lod:float(0)});
+    renderer.compute(batch);
+    const actual=new Float32Array(await renderer.getArrayBufferAsync(gpu.activationsAttribute));
+    const offsets=[7*32+5,7*32+6,8*32+5,8*32+6];
+    offsets.forEach((offset,i)=>expect(actual[i]).toBeCloseTo(0.02+(trainingRandom(offset,1,11)-0.5)/16,7));
+    gpu.quantizationNoiseUniform.value=0;renderer.compute(batch);
+    const frozen=new Float32Array(await renderer.getArrayBufferAsync(gpu.activationsAttribute));
+    for(let i=0;i<4;i++)expect(frozen[i]).toBeCloseTo(0.02,7);
+  } finally {source.dispose();gpu.dispose();}
 });

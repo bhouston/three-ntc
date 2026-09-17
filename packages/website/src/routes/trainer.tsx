@@ -25,6 +25,7 @@ import {
 } from 'three-ntc-trainer';
 import { buildChannelActivations, MAX_TOTAL_CHANNELS, NTCNodeMaterial, type NTCSamplingMode } from 'three-ntc';
 
+import { WEBSITE_TRAINING_DEFAULTS } from '../lib/training-defaults';
 import { SamplingModeSelect } from '@/components/SamplingModeSelect';
 import { ModelSizeSummary } from '@/components/ModelSizeSummary';
 import { NTCViewer, type NTCViewerShape } from '@/components/NTCViewer';
@@ -87,15 +88,7 @@ type FormValues = {
 };
 
 const DEFAULT_VALUES: FormValues = {
-  bakeResolution: 1024,
-  preset: 'mobile-fast',
-  ...getNTCProfileControls('mobile-fast')!,
-  positionalEncoding: true,
-  dualGrid: true,
-  batchSize: 8192,
-  iterations: 10000,
-  learningRate: 0.01,
-  quantization: 'uint2',
+  ...WEBSITE_TRAINING_DEFAULTS,
   shape: 'torus',
   samplingMode: 'nearest',
   lodBias: DEFAULT_LOD_BIAS,

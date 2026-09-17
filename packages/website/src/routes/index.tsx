@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { NTCGridViewer, type NTCGridSlot } from '@/components/NTCGridViewer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { EXAMPLE_FILES, loadNtcFromUrl } from '@/lib/ntc-examples';
+import { EXAMPLE_FILES, parseNtc } from '@/lib/ntc-examples';
 import { seoMeta } from '@/lib/seo';
 
 export const Route = createFileRoute('/')({
@@ -20,31 +20,36 @@ export const Route = createFileRoute('/')({
 
 const NTC_PAPER_URL = 'https://research.nvidia.com/labs/rtr/neural_texture_compression/';
 
-// 3x3 grid, empty center slot - EXAMPLE_FILES has 8 entries, one per
-// remaining cell.
-const GRID_CENTER_INDEX = 4;
+// 3 columns, EXAMPLE_FILES has 8 entries: two full rows of 3, then a
+// centered row of 2.
 
 function HomePage() {
   const [slots, setSlots] = useState<NTCGridSlot[]>(() =>
-    Array.from({ length: 9 }, () => ({ label: '', material: null })),
+    EXAMPLE_FILES.map(() => ({ label: '', material: null })),
   );
 
   useEffect(() => {
     let cancelled = false;
-    const gridIndices = Array.from({ length: 9 }, (_, i) => i).filter((i) => i !== GRID_CENTER_INDEX);
 
-    // Kick every file's load off at once, then fill the whole grid in one
-    // shot once they've all resolved, rather than trickling in one at a time.
-    void Promise.all(EXAMPLE_FILES.map((file) => loadNtcFromUrl(file.value))).then((loaded) => {
-      if (cancelled) return;
-      setSlots((prev) => {
-        const next = [...prev];
-        loaded.forEach((result, fileIndex) => {
-          next[gridIndices[fileIndex]] = { label: EXAMPLE_FILES[fileIndex].label, material: result.material };
+    // Fetch every file's text in parallel (cheap network round-trips), but
+    // parse/build each material in series so they appear one at a time
+    // instead of all popping in together - gets the first material on
+    // screen sooner.
+    void (async () => {
+      const texts = await Promise.all(
+        EXAMPLE_FILES.map((file) => fetch(file.value).then((res) => res.text())),
+      );
+      for (let i = 0; i < texts.length; i++) {
+        if (cancelled) return;
+        const { material } = await parseNtc(texts[i]);
+        if (cancelled) return;
+        setSlots((prev) => {
+          const next = [...prev];
+          next[i] = { label: EXAMPLE_FILES[i].label, material };
+          return next;
         });
-        return next;
-      });
-    });
+      }
+    })();
 
     return () => {
       cancelled = true;

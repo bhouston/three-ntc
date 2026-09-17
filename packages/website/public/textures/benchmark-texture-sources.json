@@ -1,0 +1,26 @@
+[
+  {
+    "file": "hardwood2_diffuse.jpg",
+    "source": "https://raw.githubusercontent.com/mrdoob/three.js/r186/examples/textures/hardwood2_diffuse.jpg",
+    "sha256": "3986fe3bd7d3c24b18e7da17ae72bbef9385dbc355c931c52a04dbfe1412c802",
+    "bytes": 413689
+  },
+  {
+    "file": "hardwood2_bump.jpg",
+    "source": "https://raw.githubusercontent.com/mrdoob/three.js/r186/examples/textures/hardwood2_bump.jpg",
+    "sha256": "0f07254a3eb31274b7f7cc71968b74a5a39a799d33e8b290c4b8dca6ce43654d",
+    "bytes": 118085
+  },
+  {
+    "file": "hardwood2_roughness.jpg",
+    "source": "https://raw.githubusercontent.com/mrdoob/three.js/r186/examples/textures/hardwood2_roughness.jpg",
+    "sha256": "bdce31ae1138fd110703f5fb37a4979b4b03cd6a057f58897c16d27839d7d17b",
+    "bytes": 146048
+  },
+  {
+    "file": "crown.png",
+    "source": "local three.js-v2-basic-ntc/examples/textures/crown.png",
+    "sha256": "edb10b2ac81a6dc2516ac2dc6a2151a6358e26941299071abcbd9ad2883c66aa",
+    "bytes": 337770
+  }
+]

@@ -36,6 +36,7 @@ export interface NTCCpuModel {
 	// `computeDecoderInputSize` doc comment and `evaluateNeuralTextureRaw`
 	// below.
 	positionalEncoding?: boolean;
+	g0Sampling?: 'bilinear' | 'concatenate';
 	// Optional (default false/absent) - the paper's G0/G1 pair, see
 	// `computeDecoderInputSize` and `sampleFeatures` below.
 	dualGrid?: boolean;
@@ -66,12 +67,13 @@ function gridFeatures(uv: any, grid: NTCGrid, texture: any, concatenate: boolean
 
 function sampleFeatures(uv: any, model: NTCCpuModel, textures: any[], lod: any): any[] {
 	const selected=selectFeatureLevelTSL(lod,model.grids.length,model.mipsPerLevel,model.lodOffset);
-	const highWidth=model.positionalEncoding ? 4*model.channels+12 : model.channels;
+	const concatenate = (model.g0Sampling ?? (model.positionalEncoding ? 'concatenate' : 'bilinear')) === 'concatenate';
+	const highWidth=(concatenate ? 4*model.channels : model.channels)+(model.positionalEncoding ? 12 : 0);
 	const lowChannels=model.lowResGrids?.[0]?.channels ?? model.channels;
 	const features:any[]=Array.from({length:highWidth+(model.dualGrid?lowChannels:0)},()=>float(0));
 	for(let g=0;g<model.grids.length;g++) {
 		const gate=selected.equal(int(g)).select(1,0);
-		const high=gridFeatures(uv,model.grids[g],textures[g],!!model.positionalEncoding);
+		const high=gridFeatures(uv,model.grids[g],textures[g],concatenate);
 		if(model.positionalEncoding) {
 			const size = floor(float(model.textureResolution ?? 2 ** model.maxLod).div(pow(2,lod))).max(1);
 			const phase = uv.mul(size).div(model.positionalEncodingPeriod ?? 1);

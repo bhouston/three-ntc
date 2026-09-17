@@ -1,3 +1,4 @@
+import { readFileSync, writeFileSync, renameSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
@@ -5,6 +6,9 @@ import { webdriverio } from '@vitest/browser-webdriverio';
 
 const safari = process.env.NTC_BROWSER === 'safari';
 const webkit = process.env.NTC_BROWSER === 'webkit';
+const headed = process.env.NTC_GPU_HEADED === '1';
+// The chromium channel selects the full browser, not chromium-headless-shell.
+const chromiumChannel = process.env.NTC_BROWSER_CHANNEL ?? (process.platform === 'win32' ? 'chromium' : undefined);
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
@@ -13,9 +17,11 @@ const root = fileURLToPath(new URL('.', import.meta.url));
 // NTC_GPU_BACKEND=metal to test Apple hardware explicitly; profiles record
 // the actual adapter so software/hardware timings cannot be confused.
 const chromiumWebGPUArgs = [
-  '--headless=new',
+  ...(!headed ? ['--headless=new'] : []),
+  '--enable-gpu',
   '--enable-unsafe-webgpu',
-  ...(process.env.NTC_GPU_BACKEND === 'metal' ? ['--use-angle=metal'] : ['--enable-features=Vulkan']),
+  ...(process.env.NTC_GPU_BACKEND === 'metal' ? ['--use-angle=metal']
+    : process.env.NTC_GPU_BACKEND === 'native' || process.platform === 'win32' ? [] : ['--enable-features=Vulkan']),
   '--ignore-gpu-blocklist',
   ...(process.env.CI ? ['--use-angle=swiftshader', '--use-vulkan=swiftshader'] : []),
 ];
@@ -47,19 +53,29 @@ export default defineConfig({
         test: {
           name: 'gpu',
           fileParallelism: !safari,
-          include: ['packages/**/*.gpu.test.ts'],
+          include: ['packages/**/*.gpu.test.ts', ...(process.env.NTC_BENCHMARK_CASE ? ['benchmarks/ntc/run-case.gpu.test.ts'] : [])],
           exclude: ['**/node_modules/**', '**/dist/**'],
           testTimeout: 120_000,
           hookTimeout: 120_000,
           browser: {
-            commands: { benchmarkConfig: async () => ({iterations:Number(process.env.NTC_BENCH_ITERATIONS || 420),physical:process.env.NTC_BENCH_PHYSICAL === '1',period:Number(process.env.NTC_BENCH_PE_PERIOD || 0)}), recordMetric: async (_context, metric) => { console.log('NTC_METRIC ' + JSON.stringify(metric)); } },
+            commands: {
+              ntcBenchmarkCase: async () => JSON.parse(readFileSync(process.env.NTC_BENCHMARK_CASE!, 'utf8')),
+              ntcBenchmarkProgress: async (_context, progress) => {
+                const path=process.env.NTC_BENCHMARK_RESULT!+'.progress.json';
+                writeFileSync(path,JSON.stringify(progress));
+                console.log('NTC_PROGRESS '+JSON.stringify(progress));
+              },
+              ntcBenchmarkRecord: async (_context, record) => {
+                const path=process.env.NTC_BENCHMARK_RESULT!;
+                writeFileSync(path+'.tmp',JSON.stringify(record)); renameSync(path+'.tmp',path);
+              }, benchmarkConfig: async () => ({iterations:Number(process.env.NTC_BENCH_ITERATIONS || 420),physical:process.env.NTC_BENCH_PHYSICAL === '1',period:Number(process.env.NTC_BENCH_PE_PERIOD || 0)}), recordMetric: async (_context, metric) => { console.log('NTC_METRIC ' + JSON.stringify(metric)); } },
             enabled: true,
-            headless: !safari,
+            headless: !safari && !headed,
             screenshotFailures: false,
             provider: safari
               ? webdriverio({ logLevel: 'error', connectionRetryCount: 0, connectionRetryTimeout: 60_000 })
               : playwright({
-                  launchOptions: { args: webkit ? [] : chromiumWebGPUArgs },
+                  launchOptions: { ...(webkit ? {} : { channel: chromiumChannel }), args: webkit ? [] : chromiumWebGPUArgs },
                   contextOptions: { deviceScaleFactor: Number(process.env.NTC_DEVICE_SCALE_FACTOR || 1) },
                 }),
             instances: [{ browser: safari ? 'safari' : webkit ? 'webkit' : 'chromium' }],

@@ -122,21 +122,24 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 	//
 	// `dualGrid` appends one more `channels`-wide plain bilinear tap of the
 	// matching half-resolution G1 grid after those.
-	const g0Width = positionalEncoding ? channels * 4 + POSITIONAL_ENCODING_SIZE : channels;
+	const concatenateG0 = layout.g0Sampling === 'concatenate';
+	const g0TapWidth = concatenateG0 ? channels * 4 : channels;
+	const g0Width = g0TapWidth + (positionalEncoding ? POSITIONAL_ENCODING_SIZE : 0);
 	const featureWidth = g0Width + ( dualGrid ? lowResChannels : 0 );
 
 
 	return Fn( () => {
 
 		const sampleIdx = int( instanceIndex );
-		const randomUV = samples.uv ?? trainingUVTSL( sampleIdx, stepUniform );
+		const globalSampleIdx = sampleIdx.add(int(gpuModel.sampleOffsetUniform));
+		const randomUV = samples.uv ?? trainingUVTSL( globalSampleIdx, stepUniform );
 		const actBase = sampleIdx.mul( int( activationStride ) );
 
 		// This sample's stochastically chosen, exact-integer training LOD,
 		// across the model's full physical mip range - see
 		// sampleTrainingLod's doc comment - and the *stored* grid level it
 		// maps onto (see this function's doc comment and NTCMipBands.js).
-		const lod = samples.lod ?? trainingLodTSL( sampleIdx, stepUniform, maxLod );
+		const lod = samples.lod ?? trainingLodTSL( globalSampleIdx, stepUniform, maxLod );
 		// Train exact source texels; bilinear targets blur away high frequencies.
 		const sourceSize = textureSize(texture(sourceTextures[0]), int(lod));
 		const uv = samples.uv ?? floor(randomUV.mul(sourceSize)).add(0.5).div(sourceSize);
@@ -238,7 +241,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 				continue;
 			}
 
-			if ( positionalEncoding ) {
+			if ( concatenateG0 ) {
 
 				const offs = [ off0, off1, off2, off3 ];
 
@@ -246,21 +249,12 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 					for ( let c = 0; c < channels; c ++ ) {
 
-						const raw_c = latentsStorage.element( offs[ t ].add( c ) );
-						// QAT forward quantize (STE), same as the bilinear path
-						// below - see its comment.
-						const quantized_c = quantizeLatent !== null ?
-							quantizeLatent( raw_c, quantizationRangeUniforms[ g ].min, quantizationRangeUniforms[ g ].max ) :
-							raw_c;
-
-						a0Vars[ t * channels + c ].addAssign( quantized_c.mul( weight ) );
+						a0Vars[ t * channels + c ].addAssign( readTap( offs[ t ], c ).mul( weight ) );
 
 					}
 
 				}
 
-				selTx!.addAssign( tx.mul( weight ) );
-				selTy!.addAssign( ty.mul( weight ) );
 
 			} else {
 
@@ -268,6 +262,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 
 			}
 
+			if (positionalEncoding) { selTx!.addAssign(tx.mul(weight)); selTy!.addAssign(ty.mul(weight)); }
 		}
 
 		// Tiled positional encoding (see NTCPositionalEncodingTSL.js) of the
@@ -281,7 +276,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 			const pe = computeTiledPositionalEncodingTSL(
 				layout.positionalEncodingPeriod ? phase.x : selTx!,
 				layout.positionalEncodingPeriod ? phase.y : selTy! );
-			for ( let k = 0; k < pe.length; k ++ ) a0Vars[ channels * 4 + k ].assign( pe[ k ] );
+			for ( let k = 0; k < pe.length; k ++ ) a0Vars[ g0TapWidth + k ].assign( pe[ k ] );
 
 		}
 
@@ -456,7 +451,7 @@ function createTextureTrainBatchComputeNode( gpuModel: NTCGPUModel, sourceTextur
 				continue;
 			}
 
-			if ( positionalEncoding ) {
+			if ( concatenateG0 ) {
 
 				const offs = [ taps.off0, taps.off1, taps.off2, taps.off3 ];
 
