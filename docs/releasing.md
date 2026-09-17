@@ -40,7 +40,9 @@ Open a PR from `dev` to `main`; review CI, then **merge commit** it. The release
 workflow runs the same quality gates again, builds, restores the previous
 release changelog, and runs semantic-release. Only release-worthy commits
 produce a version. Chore/docs-only changes may deploy the demo without an npm
-release. The first workflow setup is a chore and does not itself request a bump.
+release. The workflow setup commit is a chore. Existing Conventional Commits since
+`v0.1.0` already request a minor release, so the first merge to main is expected
+to publish **0.2.0** for both packages. Configure npm trust before that merge.
 
 The `npm` environment and workflow permissions apply only to the publish job.
 PR jobs have read-only access. The workflow never uses a long-lived npm token.
