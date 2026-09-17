@@ -33,11 +33,21 @@ export default defineConfig({
     },
   },
   test: {
+    coverage: {
+      provider: 'v8',
+      reportOnFailure: true,
+      include: ['packages/three-ntc/src/**/*.ts', 'packages/three-ntc-trainer/src/**/*.ts'],
+      exclude: ['**/*.test.ts'],
+      reporter: ['text', 'json-summary', 'lcov', 'html'],
+      thresholds: { statements: 19, branches: 13, functions: 18, lines: 19 },
+    },
     projects: [
       {
         extends: true,
         test: {
           name: 'unit',
+          // Coverage instrumentation slows the deterministic sampling stress test.
+          testTimeout: 30_000,
           include: ['packages/**/*.test.ts'],
           exclude: ['**/node_modules/**', '**/dist/**', '**/*.gpu.test.ts'],
         },
