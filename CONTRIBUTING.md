@@ -6,9 +6,8 @@ Read this file before starting a task. Do not commit directly to `main` or `dev`
 1. Before implementing a feature or fix, create a GitHub issue (or reuse the
    supplied issue). Follow the feature template: description, motivation,
    constraints, acceptance criteria. Agents may use `gh issue create`.
-2. Branch from current `origin/main` using `<type>/<issue>-<short-description>`,
-   for example `feature/42-batch-export`. Allowed branch types are `feature`,
-   `fix`, `docs`, `chore`, `refactor`, `test`, `perf`, and `ci`.
+2. Branch from current `origin/main`. Any branch name is fine; there is no
+   required naming convention.
 3. Use Conventional Commits for every commit and the PR title:
    `type(optional-scope): description`. Types include `feat`, `fix`, `perf`,
    `docs`, `chore`, `refactor`, `test`, `style`, `build`, `ci`, and `revert`.
