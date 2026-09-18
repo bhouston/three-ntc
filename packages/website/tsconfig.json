@@ -2,7 +2,6 @@
   "extends": "../../tsconfig.node.json",
   "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
-    "composite": true,
     "rootDir": ".",
     "noEmit": true,
     "jsx": "react-jsx",
@@ -13,6 +12,5 @@
     "paths": {
       "@/*": ["./src/*"]
     }
-  },
-  "references": [{ "path": "../three-ntc" }, { "path": "../three-ntc-trainer" }]
+  }
 }

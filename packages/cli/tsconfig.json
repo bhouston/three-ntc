@@ -1,11 +1,3 @@
 {
-  "extends": "../../tsconfig.node.json",
-  "compilerOptions": {
-    "composite": true,
-    "paths": {
-      "three-ntc-trainer": ["../three-ntc-trainer/src/index.ts"],
-      "three-ntc": ["../three-ntc/src/index.ts"]
-    }
-  },
-  "references": [{ "path": "../three-ntc" }, { "path": "../three-ntc-trainer" }]
+  "extends": "../../tsconfig.node.json"
 }

@@ -1,12 +1,7 @@
 {
   "extends": "../../tsconfig.node.json",
   "compilerOptions": {
-    "composite": true,
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "noUncheckedIndexedAccess": false,
-    "paths": {
-      "three-ntc": ["../three-ntc/src/index.ts"]
-    }
-  },
-  "references": [{ "path": "../three-ntc" }]
+    "noUncheckedIndexedAccess": false
+  }
 }
