@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "fflate": "^0.8.2",
-    "three-ntc": "workspace:*"
+    "three-ntc": "workspace:^"
   },
   "peerDependencies": {
     "three": ">=0.180.0"
