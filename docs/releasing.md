@@ -75,8 +75,10 @@ release; full audit is advisory, while production audit blocks CI. Upgrade and
 make the full audit blocking when a compatible patched version is available.
 
 `pnpm release:check` tests version analysis (including `!` and breaking footers),
-shared version preparation, and workspace dependency conversion without publishing.
-`npm pack --dry-run` can inspect prepared artifacts in an isolated checkout.
+release document preparation, and pnpm's native `workspace:` resolution without
+publishing. `pnpm --dir <pkgRoot> pack --dry-run` can inspect prepared artifacts
+in an isolated checkout (plain `pnpm pack <dir>` ignores a directory argument;
+`--dir` is required to target a specific workspace package).
 Never run the real release command as a local packaging test.
 
 Coverage is uploaded as a CI artifact and summarized in checks; the README badge

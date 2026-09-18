@@ -56,7 +56,9 @@ jobs:
         with:
           node-version-file: ".nvmrc"
           cache: pnpm
-      # Node 26 ships npm with OIDC support. Do not configure registry-url or NPM_TOKEN.
+      # @anolilab/semantic-release-pnpm exchanges its own OIDC token with pnpm
+      # for trusted publishing; it does not rely on npm CLI's OIDC support.
+      # Do not configure registry-url or NPM_TOKEN.
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - name: Restore generated changelog from the previous release
