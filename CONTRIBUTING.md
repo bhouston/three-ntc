@@ -24,8 +24,8 @@ Read this file before starting a task. Do not commit directly to `main` or `dev`
    hosted SwiftShader GPU checks are advisory.
 5. Push the branch and open a PR **against `main`** with `Closes #<issue>` and
    validation results. Use the PR template. Keep each feature PR focused.
-   Squash feature PRs using the validated Conventional Commit title, or retain
-   their validated commits with a merge commit. Do not bypass required checks.
+   PRs are merged with merge commits; do not squash. Do not bypass required
+   checks.
    Merging does not publish anything; it only runs CI.
 6. Releases are manual. When `main` has release-worthy commits ready to ship,
    the maintainer runs `gh workflow run release.yml --ref main` (or the
