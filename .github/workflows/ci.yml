@@ -39,6 +39,15 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Verify published packages include dist
+        run: |
+          for pkg in packages/three-ntc packages/three-ntc-trainer; do
+            (cd "$pkg" && pnpm pack --dry-run) | grep -qx 'dist/index.js' || {
+              echo "::error::dist/index.js missing from the packed tarball for $pkg; the publish step would ship a broken package."
+              exit 1
+            }
+          done
+
       - name: Type check
         run: pnpm tsc
 
