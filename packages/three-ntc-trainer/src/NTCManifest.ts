@@ -12,16 +12,39 @@ import {
 } from 'three-ntc';
 import { LATENT_CODECS, encodeMLPLayersBase64, type LatentDtype } from 'three-ntc';
 import { computeLatentRanges, type GridLevelLayout } from './NTCQuantization.js';
-import type { NTCGridPyramidModel } from './NTCGridPyramidModel.js';
 import type { LatentGrid } from './NTCGridModel.js';
+import type { ThreeMath } from './ThreeTypes.js';
 
-/** `cpuModel` as consumed by `encodeNTC`: the trained model plus its post-training `quantization` metadata (see `NTCTrainer.train`'s return value). */
-type EncodableCpuModel = NTCGridPyramidModel & {
+/**
+ * `cpuModel` as consumed by `encodeNTC` - deliberately a minimal structural
+ * type (not `NTCGridPyramidModel` directly) so it also accepts a real
+ * `NTCNodeMaterial.cpuModel` (three-ntc's stricter `NTCCpuModel`, e.g.
+ * `decoder.layers[].weights` as `Float32Array`): `encodeNTC` only ever
+ * reads these fields, and only ever indexes/lengths the layer arrays (see
+ * the `Float32Array.from` adapter below), so either shape works.
+ */
+interface EncodableCpuModel {
+  channels: number;
+  mipsPerLevel: number;
+  maxLod: number;
+  textureResolution?: number;
+  positionalEncodingPeriod?: number;
+  lodOffset?: number;
+  grids: LatentGrid[];
+  lowResGrids?: LatentGrid[];
+  decoder: {
+    layers: Array<{ inputSize: number; outputSize: number; weights: ArrayLike<number>; biases: ArrayLike<number> }>;
+  };
+  outputChannels: number;
+  uvTransform?: ThreeMath;
+  positionalEncoding?: boolean;
+  dualGrid?: boolean;
+  quantizationRange?: Array<[number, number]> | null;
   quantization?: { mode?: string };
-};
+}
 
 interface EncodeNTCOptions {
-  uvTransform?: NTCGridPyramidModel['uvTransform'];
+  uvTransform?: ThreeMath;
   wrap?: string;
   name?: string;
   source?: string;

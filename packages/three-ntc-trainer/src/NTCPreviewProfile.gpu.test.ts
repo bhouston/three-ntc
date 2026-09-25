@@ -111,7 +111,7 @@ it('profiles five default-size training steps with two live physical preview upd
         if (material) material.updateFromModel(p.cpuModel);
         else {
           material = new NTCNodeMaterial(
-            { ...p.cpuModel, wrap: 'repeat' },
+            p.cpuModel,
             {
               activeChannels: layout.channels,
               constantValues: Object.fromEntries(CHANNELS.map((c) => [c.key, c.defaultValue])),

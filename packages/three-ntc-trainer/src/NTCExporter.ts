@@ -9,7 +9,6 @@ import type { NTCLayoutChannel } from 'three-ntc';
 interface NTCExportableMaterial {
   cpuModel: EncodableCpuModel;
   activeChannels: NTCLayoutChannel[];
-  _constantValues?: Record<string, unknown>;
   side?: unknown;
   transparent?: boolean;
 }
@@ -50,9 +49,16 @@ class NTCExporter {
       );
     }
 
+    // `_constantValues` is a private field on the real `NTCNodeMaterial`
+    // class (three-ntc), so `NTCExportableMaterial` deliberately doesn't
+    // declare it - TS forbids naming a class's private member on an
+    // unrelated structural type. Read defensively through an inline shape
+    // instead of widening the whole parameter back to `any`.
+    const constantValues = (material as unknown as { _constantValues?: Record<string, unknown> })._constantValues || {};
+
     const channelClassification = {
       activeChannels: material.activeChannels,
-      constantValues: material._constantValues || {},
+      constantValues,
       totalChannels: material.cpuModel.outputChannels,
       packCount: Math.ceil(material.cpuModel.outputChannels / 4),
       renderFlags: { side: material.side, transparent: material.transparent },

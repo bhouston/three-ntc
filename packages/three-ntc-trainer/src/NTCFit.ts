@@ -85,19 +85,14 @@ async function fitNTCMaterial(renderer: ThreeRenderer, material: ThreeMaterial, 
   const rebuild = (cpuModel: NTCGridPyramidModel) => {
     const previous = current;
     // `NTCNodeMaterial`'s `NTCCpuModel` type (see `three-ntc`'s
-    // NTCDecoderTSL.ts) declares two things this package's trained
-    // `cpuModel` doesn't literally match: a required `wrap` that nothing
-    // here sets or that `NTCNodeMaterial` itself reads (defaulted here
-    // purely to satisfy the type, matching `NTCManifest.encodeNTC`'s own
-    // `options.wrap || 'repeat'` default), and `decoder.layers[].weights`/
-    // `.biases` typed as `Float32Array` where this package's `MLP` keeps
-    // plain `number[]` while training - both are index/length-compatible
-    // with every consumer (`packLayerWeightsMat4` accepts either), so this
-    // is a type-shape adapter, not a value change.
+    // NTCDecoderTSL.ts) types `decoder.layers[].weights`/`.biases` as
+    // `Float32Array` where this package's `MLP` keeps plain `number[]`
+    // while training - both are index/length-compatible with every
+    // consumer (`packLayerWeightsMat4` accepts either), so this is a
+    // type-shape adapter, not a value change.
     current = new NTCNodeMaterial(
       {
         ...cpuModel,
-        wrap: 'repeat',
         decoder: {
           layers: cpuModel.decoder.layers.map((layer) => ({
             ...layer,

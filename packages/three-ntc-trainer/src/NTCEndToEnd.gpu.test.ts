@@ -52,7 +52,7 @@ async function bakeAlbedo(material: ThreeMaterial): Promise<Float32Array> {
 }
 
 function renderAlbedo(cpuModel: NTCGridPyramidModel, classification: NTCChannelClassification): Promise<Float32Array> {
-  const material = new NTCNodeMaterial({ ...cpuModel, wrap: 'repeat' }, classification, {
+  const material = new NTCNodeMaterial(cpuModel, classification, {
     debugView: 'albedo',
     lodNode: float(0),
   });
