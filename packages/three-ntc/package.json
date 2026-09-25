@@ -44,5 +44,8 @@
   },
   "peerDependencies": {
     "three": ">=0.180.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

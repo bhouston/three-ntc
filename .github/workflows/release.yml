@@ -1,54 +1,57 @@
 name: Release
+
 on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: Run semantic-release in dry-run mode (no publish, no tag, no GitHub release).
+        description: 'Validate and preview the release without publishing'
         type: boolean
         default: false
+
 permissions:
   contents: read
+
 concurrency:
-  group: npm-release
+  group: release
   cancel-in-progress: false
+
 jobs:
   guard:
-    name: Validate ref
     runs-on: ubuntu-latest
     steps:
-      - name: Reject dispatches not targeting main
+      - name: Require dispatch against main
+        if: github.ref != 'refs/heads/main'
         run: |
-          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
-            echo "::error::release.yml may only be dispatched against refs/heads/main (got ${{ github.ref }})."
-            exit 1
-          fi
+          echo "::error::Release must be dispatched with ref=main (got ${{ github.ref }})."
+          exit 1
+
   checks:
     needs: guard
-    permissions:
-      contents: write
     uses: ./.github/workflows/ci.yml
-    with:
-      # The separate main CI run already executes the advisory GPU suite.
-      # Publish after required gates, without duplicating that slow suite.
-      skip-gpu: true
+    secrets: inherit
+
   release:
-    needs: checks
+    needs: [guard, checks]
     runs-on: ubuntu-latest
     environment: npm
     permissions:
       contents: write
       id-token: write
+    env:
+      HUSKY: '0'
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
-      - name: Confirm main has not advanced since this dispatch was validated
+          persist-credentials: false
+      - name: Verify main has not advanced since dispatch
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          current=$(gh api repos/${{ github.repository }}/git/refs/heads/main --jq .object.sha)
-          if [ "$current" != "${{ github.sha }}" ]; then
-            echo "::error::main advanced after this dispatch was validated (dispatched ${{ github.sha }}, now $current). Re-run the workflow to validate and release the new tip."
+          head="$(gh api "repos/${{ github.repository }}/git/ref/heads/main" --jq .object.sha)"
+          if [ "$head" != "$GITHUB_SHA" ]; then
+            echo "::error::main moved from $GITHUB_SHA to $head after dispatch; dispatch the release again."
             exit 1
           fi
       - uses: pnpm/action-setup@v5
@@ -56,25 +59,14 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: pnpm
-      # @anolilab/semantic-release-pnpm exchanges its own OIDC token with pnpm
-      # for trusted publishing; it does not rely on npm CLI's OIDC support.
-      # Do not configure registry-url or NPM_TOKEN.
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      - name: Restore generated changelog from the previous release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          tag=$(git describe --tags --match 'v[0-9]*' --abbrev=0)
-          if [ "$tag" != "v0.1.0" ]; then
-            gh release download "$tag" --pattern CHANGELOG.md --clobber
-          fi
       - name: Release
+        run: pnpm release ${{ inputs.dry_run && '--dry-run' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            pnpm release --dry-run | tee "$GITHUB_STEP_SUMMARY"
-          else
-            pnpm release | tee "$GITHUB_STEP_SUMMARY"
-          fi
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+      - name: Summary
+        if: inputs.dry_run
+        run: echo "Dry run complete; nothing was published and no tag was created." >> "$GITHUB_STEP_SUMMARY"
