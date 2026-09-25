@@ -41,27 +41,34 @@ import {
   normalizeSpaceName,
   toBooleanNode,
   toVec3Channels,
+  type TSLNode,
 } from '../MaterialXUtils.js';
 import { MaterialXLogCodes } from '../MaterialXLog.js';
+import type { MaterialXNode } from '../MaterialXDocument.js';
+import type { MXElement } from '../MaterialXNodeLibrary.js';
+import type { mxHextileCoord, mxHextileComputeBlendWeights } from '../MaterialXHextile.js';
 
 export interface MaterialXCompileContext {
-  compileRegistry: Map<string, (nodeX: any, out: any, compileContext: MaterialXCompileContext) => any>;
-  nodeLibrary: Record<string, any>;
-  mxToBottomLeftUvSpace: (uvNode: any) => any;
-  mxFromBottomLeftUvSpace: (uvNode: any) => any;
-  getTexcoordNode: (index?: number) => any;
-  mxTransformUv: (...args: any[]) => any;
-  mxHextileCoord: (...args: any[]) => any;
-  mxHextileComputeBlendWeights: (...args: any[]) => any;
+  compileRegistry: Map<
+    string,
+    (nodeX: MaterialXNode, out: string | null, compileContext: MaterialXCompileContext) => TSLNode
+  >;
+  nodeLibrary: Record<string, MXElement>;
+  mxToBottomLeftUvSpace: (uvNode: TSLNode) => TSLNode;
+  mxFromBottomLeftUvSpace: (uvNode: TSLNode) => TSLNode;
+  getTexcoordNode: (index?: number) => TSLNode;
+  mxTransformUv: (...args: TSLNode[]) => TSLNode;
+  mxHextileCoord: typeof mxHextileCoord;
+  mxHextileComputeBlendWeights: typeof mxHextileComputeBlendWeights;
   invertConstantMatrixValues: (values: number[], size: number) => number[] | null;
   IDENTITY_MAT3_VALUES: number[];
   IDENTITY_MAT4_VALUES: number[];
 }
 
 const register = (
-  registry: Map<string, any>,
+  registry: Map<string, TSLNode>,
   categories: string[],
-  handler: (nodeX: any, out: any, compileContext: MaterialXCompileContext) => any,
+  handler: (nodeX: MaterialXNode, out: string | null, compileContext: MaterialXCompileContext) => TSLNode,
 ) => {
   for (const category of categories) {
     registry.set(category, handler);
@@ -85,9 +92,9 @@ const SWITCH_MAX_INDEX = 10;
 
 const getDefaultUvNode = (compileContext: MaterialXCompileContext) => compileContext.getTexcoordNode(0);
 
-const toBooleanMaskNode = (node: any) => asDynamic(toBooleanNode(node)).select(float(1), float(0));
+const toBooleanMaskNode = (node: TSLNode) => asDynamic(toBooleanNode(node)).select(float(1), float(0));
 
-const getTextureAddressMode = (nodeX: any, inputName: string): string => {
+const getTextureAddressMode = (nodeX: MaterialXNode, inputName: string): string => {
   const value = nodeX.getInputValueByName(inputName);
   if (value === null || value === undefined || value === '') return 'periodic';
 
@@ -95,7 +102,7 @@ const getTextureAddressMode = (nodeX: any, inputName: string): string => {
   return TEXTURE_ADDRESS_MODES.has(mode) ? mode : 'periodic';
 };
 
-const getTextureAddressModes = (nodeX: any) => ({
+const getTextureAddressModes = (nodeX: MaterialXNode) => ({
   u: getTextureAddressMode(nodeX, 'uaddressmode'),
   v: getTextureAddressMode(nodeX, 'vaddressmode'),
 });
@@ -107,14 +114,14 @@ const getZeroNodeForType = (type: string) => {
   return float(0);
 };
 
-const toTextureDefaultNode = (node: any, type: string) => {
+const toTextureDefaultNode = (node: TSLNode, type: string) => {
   if (type === 'vector2') return vec4(node, 0, 1);
   if (type === 'vector3' || type === 'color3') return vec4(node, 1);
   if (type === 'vector4' || type === 'color4') return vec4(node);
   return vec4(node, 0, 0, 1);
 };
 
-const getTextureInputs = (nodeX: any, compileContext: MaterialXCompileContext) => {
+const getTextureInputs = (nodeX: MaterialXNode, compileContext: MaterialXCompileContext) => {
   const file = nodeX.getChildByName('file');
   const uvNode = nodeX.getNodeByName('texcoord') || getDefaultUvNode(compileContext);
   const textureFile = file ? file.getTexture() : null;
@@ -124,10 +131,10 @@ const getTextureInputs = (nodeX: any, compileContext: MaterialXCompileContext) =
 };
 
 const applyTextureAddressModeDefault = (
-  node: any,
-  uvNode: any,
+  node: TSLNode,
+  uvNode: TSLNode,
   addressModes: { u: string; v: string },
-  defaultNode: any,
+  defaultNode: TSLNode,
 ) => {
   let outsideBounds = null;
 
@@ -139,19 +146,19 @@ const applyTextureAddressModeDefault = (
   if (addressModes.v === 'constant') {
     const v = element(uvNode, 1);
     const vOutsideBounds = v.lessThan(0).or(v.greaterThan(1));
-    outsideBounds = outsideBounds ? (outsideBounds as any).or(vOutsideBounds) : vOutsideBounds;
+    outsideBounds = outsideBounds ? asDynamic(outsideBounds).or(vOutsideBounds) : vOutsideBounds;
   }
 
-  return outsideBounds ? (outsideBounds as any).select(defaultNode, node) : node;
+  return outsideBounds ? asDynamic(outsideBounds).select(defaultNode, node) : node;
 };
 
 const sampleTexture = (
-  textureFile: any,
-  uvNode: any,
+  textureFile: TSLNode,
+  uvNode: TSLNode,
   compileContext: MaterialXCompileContext,
-  fallback: any,
+  fallback: TSLNode,
   addressModes: { u: string; v: string } | null = null,
-  defaultNode: any = fallback,
+  defaultNode: TSLNode = fallback,
 ) => {
   if (!textureFile) return fallback;
 
@@ -160,12 +167,12 @@ const sampleTexture = (
   return addressModes ? applyTextureAddressModeDefault(sampled, textureUvNode, addressModes, defaultNode) : sampled;
 };
 
-const applyTextureColorSpace = (node: any, file: any) => {
+const applyTextureColorSpace = (node: TSLNode, file: MaterialXNode | undefined) => {
   const colorSpaceNode = file ? file.getColorSpaceNode() : null;
   return colorSpaceNode ? colorSpaceNode(node) : node;
 };
 
-const compileConvertNode = (nodeX: any) => {
+const compileConvertNode = (nodeX: MaterialXNode) => {
   const input = nodeX.getNodeByName('in');
   const inputElement = nodeX.getChildByName('in');
   const inputType = inputElement ? inputElement.type : null;
@@ -185,21 +192,21 @@ const compileConvertNode = (nodeX: any) => {
     return nodeClass(inputMask);
   }
 
-  if (SCALAR_TYPES.has(inputType) && THREE_COMPONENT_TYPES.has(nodeX.type)) {
+  if (inputType !== null && SCALAR_TYPES.has(inputType) && THREE_COMPONENT_TYPES.has(nodeX.type)) {
     const componentCount = getComponentCountForType(nodeX.type);
     return nodeClass(...Array(componentCount).fill(input));
   }
 
-  if (THREE_COMPONENT_TYPES.has(inputType) && SCALAR_TYPES.has(nodeX.type)) {
+  if (inputType !== null && THREE_COMPONENT_TYPES.has(inputType) && SCALAR_TYPES.has(nodeX.type)) {
     return nodeClass(element(input, 0));
   }
 
   return nodeClass(input);
 };
 
-const compileConstantNode = (nodeX: any) => nodeX.getNodeByName('value');
+const compileConstantNode = (nodeX: MaterialXNode) => nodeX.getNodeByName('value');
 
-const compileArtisticIorNode = (nodeX: any, out: any) => {
+const compileArtisticIorNode = (nodeX: MaterialXNode, out: string | null) => {
   const reflectivity = clamp(
     nodeX.getNodeByName('reflectivity') || vec3(0.944, 0.776, 0.373),
     vec3(0, 0, 0),
@@ -220,7 +227,7 @@ const compileArtisticIorNode = (nodeX: any, out: any) => {
   return out === 'extinction' ? extinction : ior;
 };
 
-const compileBooleanConditionalNode = (nodeX: any) => {
+const compileBooleanConditionalNode = (nodeX: MaterialXNode) => {
   if (nodeX.type !== 'boolean') return null;
 
   const value1Default = nodeX.element === 'ifequal' ? float(0) : float(1);
@@ -235,14 +242,14 @@ const compileBooleanConditionalNode = (nodeX: any) => {
   return null;
 };
 
-const compileClampNode = (nodeX: any) => {
+const compileClampNode = (nodeX: MaterialXNode) => {
   const inNode = nodeX.getNodeByName('in') || float(0);
   const low = nodeX.getNodeByName('low') || float(0);
   const high = nodeX.getNodeByName('high') || float(1);
   return min(max(inNode, low), high);
 };
 
-const compileNormalizeNode = (nodeX: any) => {
+const compileNormalizeNode = (nodeX: MaterialXNode) => {
   const inNode = nodeX.getNodeByName('in') || getZeroNodeForType(nodeX.type);
   const zeroNode = getZeroNodeForType(nodeX.type);
   const lengthSquared = dot(inNode, inNode);
@@ -251,7 +258,7 @@ const compileNormalizeNode = (nodeX: any) => {
   return abs(lengthSquared).lessThan(float(1e-8)).select(zeroNode, normalized);
 };
 
-const compileRemapNode = (nodeX: any) => {
+const compileRemapNode = (nodeX: MaterialXNode) => {
   const inNode = nodeX.getNodeByName('in') || float(0);
   const inLow = nodeX.getNodeByName('inlow') || float(0);
   const inHigh = nodeX.getNodeByName('inhigh') || float(1);
@@ -264,7 +271,7 @@ const compileRemapNode = (nodeX: any) => {
   return isDegenerate.select(outLow, remapped);
 };
 
-const compileRangeNode = (nodeX: any) => {
+const compileRangeNode = (nodeX: MaterialXNode) => {
   const inNode = nodeX.getNodeByName('in') || float(0);
   const inLow = nodeX.getNodeByName('inlow') || float(0);
   const inHigh = nodeX.getNodeByName('inhigh') || float(1);
@@ -288,10 +295,10 @@ const compileRangeNode = (nodeX: any) => {
   return asDynamic(toBooleanNode(doClamp)).select(clamped, result);
 };
 
-const getSwitchBranchNode = (nodeX: any, index: number) =>
+const getSwitchBranchNode = (nodeX: MaterialXNode, index: number) =>
   nodeX.getNodeByName(`in${index}`) || getZeroNodeForType(nodeX.type);
 
-const compileSwitchNode = (nodeX: any) => {
+const compileSwitchNode = (nodeX: MaterialXNode) => {
   const fallbackNode = getSwitchBranchNode(nodeX, SWITCH_MIN_INDEX);
   const whichInput = nodeX.getNodeByName('which');
   const switchIndex = add(floor(float(whichInput === undefined || whichInput === null ? 0 : whichInput)), 1);
@@ -306,35 +313,35 @@ const compileSwitchNode = (nodeX: any) => {
   return result;
 };
 
-const compileSpaceInputNode = (nodeX: any, objectNode: any, worldNode: any) => {
+const compileSpaceInputNode = (nodeX: MaterialXNode, objectNode: TSLNode, worldNode: TSLNode) => {
   const rawSpace = nodeX.getInputValueByName('space') ?? nodeX.getAttribute('space');
   const space = normalizeSpaceName(rawSpace, 'object');
   return space === 'world' ? worldNode : objectNode;
 };
 
-const compileNormalizedSpaceInputNode = (nodeX: any, objectNode: any, worldNode: any) =>
+const compileNormalizedSpaceInputNode = (nodeX: MaterialXNode, objectNode: TSLNode, worldNode: TSLNode) =>
   normalize(compileSpaceInputNode(nodeX, objectNode, worldNode));
 
-const compileTexcoordNode = (nodeX: any, compileContext: MaterialXCompileContext) => {
+const compileTexcoordNode = (nodeX: MaterialXNode, compileContext: MaterialXCompileContext) => {
   const indexNode = nodeX.getChildByName('index');
-  const index = indexNode ? parseInt(indexNode.value, 10) : 0;
+  const index = indexNode?.value ? parseInt(indexNode.value, 10) : 0;
   return compileContext.getTexcoordNode(index);
 };
 
-const compileGeomColorNode = (nodeX: any) => {
+const compileGeomColorNode = (nodeX: MaterialXNode) => {
   const indexNode = nodeX.getChildByName('index');
-  const index = indexNode ? parseInt(indexNode.value, 10) : 0;
+  const index = indexNode?.value ? parseInt(indexNode.value, 10) : 0;
   return vertexColor(index);
 };
 
-const compileImageLikeNode = (nodeX: any, compileContext: MaterialXCompileContext) => {
+const compileImageLikeNode = (nodeX: MaterialXNode, compileContext: MaterialXCompileContext) => {
   const { file, uvNode, textureFile, defaultNode, addressModes } = getTextureInputs(nodeX, compileContext);
   const textureDefault = toTextureDefaultNode(defaultNode, nodeX.type);
   const node = sampleTexture(textureFile, uvNode, compileContext, textureDefault, addressModes, textureDefault);
   return applyTextureColorSpace(node, file);
 };
 
-const compileTiledImageNode = (nodeX: any, compileContext: MaterialXCompileContext) => {
+const compileTiledImageNode = (nodeX: MaterialXNode, compileContext: MaterialXCompileContext) => {
   const { file, uvNode, textureFile, defaultNode, addressModes } = getTextureInputs(nodeX, compileContext);
   const textureDefault = toTextureDefaultNode(defaultNode, nodeX.type);
   if (!textureFile) {
@@ -348,7 +355,11 @@ const compileTiledImageNode = (nodeX: any, compileContext: MaterialXCompileConte
   return applyTextureColorSpace(node, file);
 };
 
-const compileHexTiledNormalMapNode = (nodeX: any, compileContext: MaterialXCompileContext, sampleNode: any) => {
+const compileHexTiledNormalMapNode = (
+  nodeX: MaterialXNode,
+  compileContext: MaterialXCompileContext,
+  sampleNode: TSLNode,
+) => {
   const normalMapNodeElement = compileContext.nodeLibrary.normalmap;
   const strengthNode = nodeX.getNodeByName('strength') || float(1);
 
@@ -380,7 +391,11 @@ const compileHexTiledNormalMapNode = (nodeX: any, compileContext: MaterialXCompi
   return normalMapNodeElement.nodeFunc(...args);
 };
 
-const compileHexTiledTextureNode = (nodeX: any, compileContext: MaterialXCompileContext, category: string) => {
+const compileHexTiledTextureNode = (
+  nodeX: MaterialXNode,
+  compileContext: MaterialXCompileContext,
+  category: string,
+) => {
   const file = nodeX.getChildByName('file');
   if (!file) {
     nodeX.materialX.log.add(
@@ -490,7 +505,7 @@ const compileHexTiledTextureNode = (nodeX: any, compileContext: MaterialXCompile
   return blended;
 };
 
-const compileGltfTextureNode = (nodeX: any, compileContext: MaterialXCompileContext, category: string) => {
+const compileGltfTextureNode = (nodeX: MaterialXNode, compileContext: MaterialXCompileContext, category: string) => {
   const { file, uvNode, textureFile, addressModes } = getTextureInputs(nodeX, compileContext);
   let transformedUv = uvNode;
   const place2d = compileContext.nodeLibrary.place2d;
@@ -547,7 +562,11 @@ const compileGltfTextureNode = (nodeX: any, compileContext: MaterialXCompileCont
   return node;
 };
 
-const compileGltfColorImageNode = (nodeX: any, out: any, compileContext: MaterialXCompileContext) => {
+const compileGltfColorImageNode = (
+  nodeX: MaterialXNode,
+  out: string | null,
+  compileContext: MaterialXCompileContext,
+) => {
   const { file, uvNode, textureFile, addressModes } = getTextureInputs(nodeX, compileContext);
   let transformedUv = uvNode;
   const place2d = compileContext.nodeLibrary.place2d;
@@ -584,7 +603,11 @@ const compileGltfColorImageNode = (nodeX: any, out: any, compileContext: Materia
   return toVec3Channels(modulated);
 };
 
-const compileGltfAnisotropyImageNode = (nodeX: any, out: any, compileContext: MaterialXCompileContext) => {
+const compileGltfAnisotropyImageNode = (
+  nodeX: MaterialXNode,
+  out: string | null,
+  compileContext: MaterialXCompileContext,
+) => {
   const { uvNode, textureFile, addressModes } = getTextureInputs(nodeX, compileContext);
   const defaultInput = nodeX.getNodeByName('default') || vec3(1, 0.5, 1);
   const fallback = vec4(element(defaultInput, 0), element(defaultInput, 1), element(defaultInput, 2), 1);
@@ -603,7 +626,7 @@ const compileGltfAnisotropyImageNode = (nodeX: any, out: any, compileContext: Ma
   return anisotropyStrengthOut;
 };
 
-const compileGltfIridescenceThicknessNode = (nodeX: any, compileContext: MaterialXCompileContext) => {
+const compileGltfIridescenceThicknessNode = (nodeX: MaterialXNode, compileContext: MaterialXCompileContext) => {
   const { uvNode, textureFile, addressModes } = getTextureInputs(nodeX, compileContext);
   const fallback = vec4(0, 0, 0, 1);
   const sampled = sampleTexture(textureFile, uvNode, compileContext, fallback, addressModes, fallback);
@@ -613,7 +636,7 @@ const compileGltfIridescenceThicknessNode = (nodeX: any, compileContext: Materia
   return add(thicknessMin, mul(sampledThickness, sub(thicknessMax, thicknessMin)));
 };
 
-const compileTransformMatrixNode = (nodeX: any, compileContext: MaterialXCompileContext) => {
+const compileTransformMatrixNode = (nodeX: MaterialXNode, compileContext: MaterialXCompileContext) => {
   const nodeDefName = nodeX.getAttribute('nodedef');
   const inNode = nodeX.getNodeByName('in') || float(0);
   const matrixNode =
@@ -639,10 +662,10 @@ const compileTransformMatrixNode = (nodeX: any, compileContext: MaterialXCompile
   return mul(matrixNode, vec4(element(inNode, 0), element(inNode, 1), element(inNode, 2), element(inNode, 3)));
 };
 
-const compileCreateMatrixNode = (nodeX: any) => {
+const compileCreateMatrixNode = (nodeX: MaterialXNode) => {
   if (nodeX.type === 'matrix44') {
     const vector3Input = nodeX.getAttribute('nodedef') === 'ND_creatematrix_vector3_matrix44';
-    const toVec4Input = (name: string, fallback: any, w: number) => {
+    const toVec4Input = (name: string, fallback: TSLNode, w: number) => {
       const input = nodeX.getNodeByName(name) || fallback;
       return vector3Input ? vec4(element(input, 0), element(input, 1), element(input, 2), w) : input;
     };
@@ -660,17 +683,28 @@ const compileCreateMatrixNode = (nodeX: any) => {
   return mat3(in1, in2, in3);
 };
 
-const getMatrixElement = (matrixNode: any, row: number, column: number) => element(element(matrixNode, column), row);
+const getMatrixElement = (matrixNode: TSLNode, row: number, column: number) =>
+  element(element(matrixNode, column), row);
 
-const determinant2 = (a: any, b: any, c: any, d: any) => sub(mul(a, d), mul(b, c));
+const determinant2 = (a: TSLNode, b: TSLNode, c: TSLNode, d: TSLNode) => sub(mul(a, d), mul(b, c));
 
-const determinant3 = (m00: any, m01: any, m02: any, m10: any, m11: any, m12: any, m20: any, m21: any, m22: any) =>
+const determinant3 = (
+  m00: TSLNode,
+  m01: TSLNode,
+  m02: TSLNode,
+  m10: TSLNode,
+  m11: TSLNode,
+  m12: TSLNode,
+  m20: TSLNode,
+  m21: TSLNode,
+  m22: TSLNode,
+) =>
   add(
     sub(mul(m00, determinant2(m11, m12, m21, m22)), mul(m01, determinant2(m10, m12, m20, m22))),
     mul(m02, determinant2(m10, m11, m20, m21)),
   );
 
-const compileInvertMatrix3Node = (matrixNode: any) => {
+const compileInvertMatrix3Node = (matrixNode: TSLNode) => {
   const m00 = getMatrixElement(matrixNode, 0, 0);
   const m01 = getMatrixElement(matrixNode, 0, 1);
   const m02 = getMatrixElement(matrixNode, 0, 2);
@@ -705,8 +739,8 @@ const compileInvertMatrix3Node = (matrixNode: any) => {
   );
 };
 
-const compileInvertMatrix4Node = (matrixNode: any) => {
-  const m: any[][] = [];
+const compileInvertMatrix4Node = (matrixNode: TSLNode) => {
+  const m: TSLNode[][] = [];
   for (let row = 0; row < 4; row++) {
     m[row] = [];
     for (let column = 0; column < 4; column++) {
@@ -730,7 +764,7 @@ const compileInvertMatrix4Node = (matrixNode: any) => {
     );
   };
 
-  const cofactors: any[][] = [];
+  const cofactors: TSLNode[][] = [];
   for (let row = 0; row < 4; row++) {
     cofactors[row] = [];
     for (let column = 0; column < 4; column++) {
@@ -743,7 +777,7 @@ const compileInvertMatrix4Node = (matrixNode: any) => {
     add(mul(m[0][0], cofactors[0][0]), mul(m[0][1], cofactors[0][1])),
     add(mul(m[0][2], cofactors[0][2]), mul(m[0][3], cofactors[0][3])),
   );
-  const values: any[] = [];
+  const values: TSLNode[] = [];
   for (let column = 0; column < 4; column++) {
     for (let row = 0; row < 4; row++) {
       values.push(div(cofactors[column][row], determinant));
@@ -753,7 +787,7 @@ const compileInvertMatrix4Node = (matrixNode: any) => {
   return mat4(...values);
 };
 
-const compileInvertMatrixNode = (nodeX: any, compileContext: MaterialXCompileContext) => {
+const compileInvertMatrixNode = (nodeX: MaterialXNode, compileContext: MaterialXCompileContext) => {
   const inInput = nodeX.getChildByName('in');
   const matrixType = inInput ? inInput.type : null;
   const isMatrixType = matrixType === 'matrix33' || matrixType === 'matrix44';
@@ -789,7 +823,10 @@ const compileInvertMatrixNode = (nodeX: any, compileContext: MaterialXCompileCon
 };
 
 function createMaterialXCompileRegistry() {
-  const registry = new Map<string, (nodeX: any, out: any, compileContext: MaterialXCompileContext) => any>();
+  const registry = new Map<
+    string,
+    (nodeX: MaterialXNode, out: string | null, compileContext: MaterialXCompileContext) => TSLNode
+  >();
   register(registry, ['convert'], (nodeX) => compileConvertNode(nodeX));
   register(registry, ['constant'], (nodeX) => compileConstantNode(nodeX));
   register(registry, ['artistic_ior'], (nodeX, out) => compileArtisticIorNode(nodeX, out));
@@ -829,7 +866,7 @@ function createMaterialXCompileRegistry() {
   return registry;
 }
 
-function compileNodeFromRegistry(nodeX: any, out: any, compileContext: MaterialXCompileContext) {
+function compileNodeFromRegistry(nodeX: MaterialXNode, out: string | null, compileContext: MaterialXCompileContext) {
   const handler = compileContext.compileRegistry.get(nodeX.element);
   if (handler) {
     return handler(nodeX, out, compileContext);

@@ -1,6 +1,49 @@
 import { DoubleSide } from 'three/webgpu';
 import { MaterialXLogCodes, type MaterialXLog } from './MaterialXLog.js';
 import { float, color, mul, clamp, vec2, cos, sin, pow, mix, element, transformNormalToView } from 'three/tsl';
+import { asDynamic, type TSLNode } from './MaterialXUtils.js';
+
+/**
+ * Minimal shape of the TSL node-material properties this module assigns.
+ * three ships no public TypeScript declarations for `MeshPhysicalNodeMaterial`
+ * (see three-shims.d.ts), so this models only the surface these mapping
+ * functions actually write to.
+ */
+interface SurfaceMaterial {
+  colorNode?: TSLNode;
+  opacityNode?: TSLNode;
+  roughnessNode?: TSLNode;
+  metalnessNode?: TSLNode;
+  specularIntensityNode?: TSLNode;
+  specularColorNode?: TSLNode;
+  iorNode?: TSLNode;
+  anisotropyNode?: TSLNode;
+  anisotropyRotationNode?: TSLNode;
+  transmissionNode?: TSLNode;
+  transmissionColorNode?: TSLNode;
+  thicknessNode?: TSLNode;
+  thickness?: number;
+  iridescenceNode?: TSLNode;
+  iridescenceIORNode?: TSLNode;
+  iridescenceThicknessNode?: TSLNode;
+  sheenNode?: TSLNode;
+  sheenRoughnessNode?: TSLNode;
+  clearcoatNode?: TSLNode;
+  clearcoatRoughnessNode?: TSLNode;
+  clearcoatNormalNode?: TSLNode;
+  normalNode?: TSLNode;
+  emissiveNode?: TSLNode;
+  aoNode?: TSLNode;
+  alphaTestNode?: TSLNode;
+  alphaTest?: number;
+  attenuationDistanceNode?: TSLNode;
+  attenuationColorNode?: TSLNode;
+  dispersionNode?: TSLNode;
+  transparent?: boolean;
+  side?: TSLNode;
+}
+
+type SurfaceInputs = Record<string, TSLNode>;
 
 const mappedStandardSurfaceInputs = new Set([
   'base',
@@ -94,7 +137,7 @@ const mappedOpenPbrInputs = new Set([
 ]);
 
 function warnIgnoredInputs(
-  inputs: Record<string, any>,
+  inputs: SurfaceInputs,
   mappedInputs: Set<string>,
   log: MaterialXLog,
   surfaceCategory: string,
@@ -111,58 +154,59 @@ function warnIgnoredInputs(
   }
 }
 
-function hasNodeValue(value: any): boolean {
+function hasNodeValue(value: TSLNode): boolean {
   return value !== undefined && value !== null;
 }
 
-function getConstNumber(node: any): number | null {
+function getConstNumber(node: TSLNode): number | null {
   if (typeof node === 'number') return node;
   if (!node || typeof node !== 'object') return null;
 
-  let cursor = node;
-  const visited = new Set();
+  let cursor: TSLNode = node;
+  const visited = new Set<TSLNode>();
   while (cursor && typeof cursor === 'object') {
     if (visited.has(cursor)) break;
     visited.add(cursor);
-    if (typeof cursor.value === 'number') return cursor.value;
-    cursor = cursor.node;
+    const dynamicCursor = asDynamic(cursor);
+    if (typeof dynamicCursor.value === 'number') return dynamicCursor.value;
+    cursor = dynamicCursor.node;
   }
 
   return null;
 }
 
-function isConstNear(node: any, target: number, epsilon = 1e-6): boolean {
+function isConstNear(node: TSLNode, target: number, epsilon = 1e-6): boolean {
   const value = getConstNumber(node);
   if (value === null) return false;
   return Math.abs(value - target) <= epsilon;
 }
 
-function isEffectivelyZero(node: any, epsilon = 1e-6): boolean {
+function isEffectivelyZero(node: TSLNode, epsilon = 1e-6): boolean {
   return isConstNear(node, 0, epsilon);
 }
 
-function isEffectivelyOne(node: any, epsilon = 1e-6): boolean {
+function isEffectivelyOne(node: TSLNode, epsilon = 1e-6): boolean {
   return isConstNear(node, 1, epsilon);
 }
 
-function isEnabledWeightNode(node: any): boolean {
+function isEnabledWeightNode(node: TSLNode): boolean {
   if (hasNodeValue(node) === false) return false;
   return isEffectivelyZero(node) === false;
 }
 
-function setAnisotropy(material: any, strengthNode: any, rotationNode: any): void {
+function setAnisotropy(material: SurfaceMaterial, strengthNode: TSLNode, rotationNode: TSLNode): void {
   if (!hasNodeValue(strengthNode) && !hasNodeValue(rotationNode)) return;
   if (isEffectivelyZero(strengthNode) && isEffectivelyZero(rotationNode)) return;
   const strength = hasNodeValue(strengthNode) ? strengthNode : float(0);
   const rotation = hasNodeValue(rotationNode) ? rotationNode : float(0);
-  material.anisotropyNode = vec2(cos(rotation), sin(rotation)).mul(strength);
+  material.anisotropyNode = asDynamic(vec2(cos(rotation), sin(rotation))).mul(strength);
   material.anisotropyRotationNode = rotation;
 }
 
 function setTransmissionFlags(
-  material: any,
-  transmissionNode: any,
-  opacityNode: any,
+  material: SurfaceMaterial,
+  transmissionNode: TSLNode,
+  opacityNode: TSLNode,
   allowOpacityTransparency = true,
 ): void {
   if (allowOpacityTransparency && hasNodeValue(opacityNode) && isEffectivelyOne(opacityNode) === false) {
@@ -175,14 +219,14 @@ function setTransmissionFlags(
   }
 }
 
-function toAttenuationDistance(distanceNode: any, hasAttenuationColorInput: boolean): any {
+function toAttenuationDistance(distanceNode: TSLNode, hasAttenuationColorInput: boolean): TSLNode {
   if (hasNodeValue(distanceNode)) return distanceNode;
   // When attenuation tint is authored without a distance, default to a
   // finite value so absorption tinting is visible.
   return hasAttenuationColorInput ? float(1) : undefined;
 }
 
-function buildGltfOpacityNode(alphaNode: any, alphaModeNode: any): any {
+function buildGltfOpacityNode(alphaNode: TSLNode, alphaModeNode: TSLNode): TSLNode {
   const alphaMode = getConstNumber(alphaModeNode);
   const roundedMode = alphaMode === null ? 2 : Math.round(alphaMode);
   const alpha = alphaNode ?? float(1);
@@ -192,7 +236,12 @@ function buildGltfOpacityNode(alphaNode: any, alphaModeNode: any): any {
   return alpha;
 }
 
-function applyStandardSurface(material: any, inputs: Record<string, any>, log: MaterialXLog, nodeName: string): void {
+function applyStandardSurface(
+  material: SurfaceMaterial,
+  inputs: SurfaceInputs,
+  log: MaterialXLog,
+  nodeName: string,
+): void {
   let colorNode = null;
   if (inputs.base && inputs.base_color) colorNode = mul(inputs.base, inputs.base_color);
   else if (inputs.base) colorNode = inputs.base;
@@ -292,7 +341,12 @@ function applyStandardSurface(material: any, inputs: Record<string, any>, log: M
   warnIgnoredInputs(inputs, mappedStandardSurfaceInputs, log, 'standard_surface', nodeName);
 }
 
-function applyGltfPbrSurface(material: any, inputs: Record<string, any>, log: MaterialXLog, nodeName: string): void {
+function applyGltfPbrSurface(
+  material: SurfaceMaterial,
+  inputs: SurfaceInputs,
+  log: MaterialXLog,
+  nodeName: string,
+): void {
   const alphaModeLiteral = getConstNumber(inputs.alpha_mode);
   const alphaMode = alphaModeLiteral === null ? 2 : Math.round(alphaModeLiteral);
   const isAlphaMaskMode = alphaMode === 1;
@@ -389,7 +443,12 @@ function applyGltfPbrSurface(material: any, inputs: Record<string, any>, log: Ma
   warnIgnoredInputs(inputs, mappedGltfPbrInputs, log, 'gltf_pbr', nodeName);
 }
 
-function applyOpenPbrSurface(material: any, inputs: Record<string, any>, log: MaterialXLog, nodeName: string): void {
+function applyOpenPbrSurface(
+  material: SurfaceMaterial,
+  inputs: SurfaceInputs,
+  log: MaterialXLog,
+  nodeName: string,
+): void {
   const baseWeight = inputs.base_weight || float(1);
   const baseColor = inputs.base_color || color(0.8, 0.8, 0.8);
   const coatEnabled = isEnabledWeightNode(inputs.coat_weight);
@@ -418,12 +477,12 @@ function applyOpenPbrSurface(material: any, inputs: Record<string, any>, log: Ma
   if (coatEnabled) {
     const coatWeightNode = inputs.coat_weight || float(0);
     if (hasNodeValue(inputs.coat_ior)) {
-      const coatIorNode = inputs.coat_ior;
+      const coatIorNode = asDynamic(inputs.coat_ior);
       const coatIorMinusOne = coatIorNode.sub(float(1));
       const coatIorPlusOne = coatIorNode.add(float(1));
       const coatF0Node = coatIorMinusOne.div(coatIorPlusOne);
       const normalizedClearcoatNode = coatF0Node.mul(coatF0Node).div(float(0.04));
-      material.clearcoatNode = clamp(coatWeightNode.mul(normalizedClearcoatNode), float(0), float(1));
+      material.clearcoatNode = clamp(asDynamic(coatWeightNode).mul(normalizedClearcoatNode), float(0), float(1));
     } else {
       material.clearcoatNode = coatWeightNode;
     }
@@ -458,7 +517,7 @@ function applyOpenPbrSurface(material: any, inputs: Record<string, any>, log: Ma
     isEffectivelyZero(transmissionDepthNode) === false
   ) {
     material.thicknessNode = hasNodeValue(inputs.geometry_thin_walled)
-      ? inputs.geometry_thin_walled.select(float(0), transmissionDepthNode)
+      ? asDynamic(inputs.geometry_thin_walled).select(float(0), transmissionDepthNode)
       : transmissionDepthNode;
     material.attenuationDistanceNode = transmissionDepthNode;
   } else if (transmissionEnabled) {
@@ -472,7 +531,9 @@ function applyOpenPbrSurface(material: any, inputs: Record<string, any>, log: Ma
     hasNodeValue(inputs.transmission_dispersion_scale) &&
     isEffectivelyZero(inputs.transmission_dispersion_scale) === false
   ) {
-    material.dispersionNode = inputs.transmission_dispersion_scale.mul(float(20)).div(transmissionDispersionAbbe);
+    material.dispersionNode = asDynamic(inputs.transmission_dispersion_scale)
+      .mul(float(20))
+      .div(transmissionDispersionAbbe);
   }
 
   if (hasNodeValue(inputs.geometry_opacity) && isEffectivelyOne(inputs.geometry_opacity) === false) {
@@ -484,7 +545,7 @@ function applyOpenPbrSurface(material: any, inputs: Record<string, any>, log: Ma
   if (thinFilmEnabled) {
     material.iridescenceNode = inputs.thin_film_weight;
     if (hasNodeValue(inputs.thin_film_thickness) && isConstNear(inputs.thin_film_thickness, 0.5) === false) {
-      material.iridescenceThicknessNode = inputs.thin_film_thickness.mul(float(1000));
+      material.iridescenceThicknessNode = asDynamic(inputs.thin_film_thickness).mul(float(1000));
     }
 
     if (hasNodeValue(inputs.thin_film_ior) && isConstNear(inputs.thin_film_ior, 1.4) === false) {

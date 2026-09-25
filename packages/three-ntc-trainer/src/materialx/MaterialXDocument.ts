@@ -530,7 +530,7 @@ class MaterialXNode {
   setMaterial(material: TSLNode): void {
     const mapper = getSurfaceMapper(this.element);
     if (mapper) {
-      mapper.apply(material, this.getNodes(), this.materialX.log, this.name);
+      mapper.apply(asDynamic(material), this.getNodes(), this.materialX.log, this.name);
     } else {
       this.materialX.log.add(
         MaterialXLogCodes.UNSUPPORTED_NODE,
