@@ -35,7 +35,7 @@ import {
   type MaterialXCompileContext,
 } from './compile/MaterialXCompileRegistry.js';
 import { parseMaterialXNodeTree, parseMaterialXText } from './parse/MaterialXParser.js';
-import { getSurfaceMapper } from './MaterialXSurfaceMappings.js';
+import { getSurfaceMapper, type SurfaceMaterial } from './MaterialXSurfaceMappings.js';
 import { MtlXLibrary } from './MaterialXNodeLibrary.js';
 import { mxHextileCoord, mxHextileComputeBlendWeights } from './MaterialXHextile.js';
 import { asDynamic, toBooleanNode, type TSLNode } from './MaterialXUtils.js';
@@ -56,6 +56,19 @@ interface ThreeLoader {
   load(url: string, onLoad: (data: unknown) => void, onProgress: undefined, onError: () => void): void;
   setPath(path: string): void;
   setOptions(options: Record<string, unknown>): void;
+}
+
+/**
+ * The materials MaterialXDocument#parse() produces. Concrete rather than an
+ * opaque TSLNode so downstream consumers (e.g. the website's material
+ * picker) can narrow it without an upstream `any`/`unknown` leaking through
+ * `MaterialXParseResult.materials`.
+ */
+export interface MaterialXCompiledMaterial extends SurfaceMaterial {
+  name: string;
+  isMeshPhysicalNodeMaterial?: boolean;
+  materialXSurfaceShaderNode?: MaterialXNode;
+  materialXDocument?: MaterialXDocument;
 }
 
 const colorSpaceLib: Record<string, (node: TSLNode) => TSLNode> = {
@@ -540,8 +553,8 @@ class MaterialXNode {
     }
   }
 
-  toBasicMaterial(): TSLNode {
-    const material = new MeshBasicNodeMaterial();
+  toBasicMaterial(): MaterialXCompiledMaterial {
+    const material = asDynamic(new MeshBasicNodeMaterial()) as MaterialXCompiledMaterial;
     material.name = this.name;
 
     for (const nodeX of this.children.toReversed()) {
@@ -566,8 +579,8 @@ class MaterialXNode {
     return null;
   }
 
-  toPhysicalMaterial(): TSLNode {
-    const material = asDynamic(new MeshPhysicalNodeMaterial());
+  toPhysicalMaterial(): MaterialXCompiledMaterial {
+    const material = asDynamic(new MeshPhysicalNodeMaterial()) as MaterialXCompiledMaterial;
     material.name = this.name;
 
     for (const nodeX of this.children) {
@@ -592,8 +605,8 @@ class MaterialXNode {
     return material;
   }
 
-  toMaterials(materialName: string | null = null): Record<string, TSLNode> {
-    const materials: Record<string, TSLNode> = {};
+  toMaterials(materialName: string | null = null): Record<string, MaterialXCompiledMaterial> {
+    const materials: Record<string, MaterialXCompiledMaterial> = {};
     const surfaceMaterials = this.children.filter((nodeX) => nodeX.element === 'surfacematerial');
 
     let selectedSurfaceMaterials = surfaceMaterials;
@@ -610,14 +623,14 @@ class MaterialXNode {
 
     for (const nodeX of selectedSurfaceMaterials) {
       const material = nodeX.toPhysicalMaterial();
-      materials[asDynamic(material).name] = material;
+      materials[material.name] = material;
     }
 
     if (Object.keys(materials).length === 0) {
       for (const nodeX of this.children) {
         if (nodeX.element === 'nodegraph') {
           const material = nodeX.toBasicMaterial();
-          materials[asDynamic(material).name] = material;
+          materials[material.name] = material;
         }
       }
     }
@@ -632,7 +645,7 @@ class MaterialXNode {
 }
 
 export interface MaterialXParseResult {
-  materials: Record<string, TSLNode>;
+  materials: Record<string, MaterialXCompiledMaterial>;
   log: import('./MaterialXLog.js').MaterialXLogEntry[];
   errors: import('./MaterialXLog.js').MaterialXLogEntry[];
   warnings: import('./MaterialXLog.js').MaterialXLogEntry[];

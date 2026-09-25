@@ -9,7 +9,7 @@ import { asDynamic, type TSLNode } from './MaterialXUtils.js';
  * (see three-shims.d.ts), so this models only the surface these mapping
  * functions actually write to.
  */
-interface SurfaceMaterial {
+export interface SurfaceMaterial {
   colorNode?: TSLNode;
   opacityNode?: TSLNode;
   roughnessNode?: TSLNode;
