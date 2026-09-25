@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
-import { DefaultLoadingManager, MeshStandardMaterial } from 'three';
+import { DefaultLoadingManager, MeshStandardMaterial, Scene, Camera } from 'three';
 import { WebGPURenderer } from 'three/webgpu';
 import { NTCLoader, NTCNodeMaterial, type NTCSamplingMode } from 'three-ntc';
 import { expect, it } from 'vitest';
@@ -10,6 +10,19 @@ import { NTCViewer } from './NTCViewer.js';
 import { NTCGridViewer } from './NTCGridViewer.js';
 import brick from '../../public/ntc/brick.ntc?raw';
 import hdrUrl from '../../public/textures/equirectangular/san_giuseppe_bridge_2k.hdr?url';
+
+// This `three` version ships no type declarations (see three-shims.d.ts), so
+// every import from it is `any`; deriving instance types from the
+// classes/namespace themselves keeps these annotations honest instead of
+// writing `any` outright.
+type Renderer = InstanceType<typeof WebGPURenderer>;
+type ThreeScene = InstanceType<typeof Scene>;
+type ThreeCamera = InstanceType<typeof Camera>;
+
+/** The subset of a WebGPU `GPUDevice`'s lost-context info this harness reads. */
+interface DeviceLostInfo {
+  message: string;
+}
 
 // Long enough to expose queue buildup after the initial pipeline compilation.
 const frameCount = 120;
@@ -37,11 +50,11 @@ it.each(cases)(
     const material = new NTCNodeMaterial(cpuModel, channelClassification, { samplingMode });
     const teacherMaterial = new MeshStandardMaterial({ color: 0x995533 });
     DefaultLoadingManager.setURLModifier((url) => (url.startsWith('/textures/') ? hdrUrl : url));
-    const prototype = WebGPURenderer.prototype as any,
+    const prototype = WebGPURenderer.prototype,
       render = prototype.render;
     const frames: { intervalMs: number; completedMs: number }[] = [];
     const errors: string[] = [];
-    let renderer: any,
+    let renderer: Renderer | undefined,
       lastFrame = 0,
       active = true;
     let finish!: () => void;
@@ -57,11 +70,11 @@ it.each(cases)(
       heartbeatGaps.push(now - lastHeartbeat);
       lastHeartbeat = now;
     }, 16);
-    const onError = (event: any) => {
+    const onError = (event: { error: { message: string } }) => {
       errors.push(event.error.message);
       finish();
     };
-    prototype.render = function (scene: any, camera: any, ...rest: any[]) {
+    prototype.render = function (scene: ThreeScene, camera: ThreeCamera, ...rest: unknown[]) {
       const start = performance.now();
       const result = render.call(this, scene, camera, ...rest);
       if (active && fixture.contains(this.domElement) && scene.environment && frames.length < frameCount) {
@@ -70,7 +83,7 @@ it.each(cases)(
           // eslint-disable-next-line typescript/no-this-alias -- captures the dynamic `this` from the monkey-patched render call for reuse across later frames
           renderer = this;
           renderer.backend.device.addEventListener('uncapturederror', onError);
-          renderer.backend.device.lost.then((info: any) => {
+          renderer.backend.device.lost.then((info: DeviceLostInfo) => {
             if (active) {
               errors.push(`Device lost: ${info.message}`);
               finish();
@@ -110,6 +123,10 @@ it.each(cases)(
       expect(renderer.samples).toBe(0);
       expect(heartbeatGaps.length).toBeGreaterThan(0);
       const steadyFrames = frames.slice(warmupFrames);
+      // `recordMetric` is a custom vitest browser command registered at
+      // runtime (see vitest.config.ts) - it has no static type in vitest's
+      // own `BrowserCommands` interface.
+      // oxlint-disable-next-line typescript/no-explicit-any -- untyped custom vitest browser command, see comment above
       await (commands as any).recordMetric({
         kind: 'react-brick-viewer',
         viewer,
