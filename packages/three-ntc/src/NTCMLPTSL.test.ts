@@ -10,7 +10,7 @@ describe('NTCMLPTSL', () => {
   it('packs weights and biases into fp32 mat4/vec4 blocks', () => {
     const inputSize = 6;
     const outputSize = 5;
-    const weights = new Array(outputSize * inputSize);
+    const weights: number[] = Array.from({ length: outputSize * inputSize });
 
     for (let o = 0; o < outputSize; o++) {
       for (let i = 0; i < inputSize; i++) weights[o * inputSize + i] = o * inputSize + i + 1;

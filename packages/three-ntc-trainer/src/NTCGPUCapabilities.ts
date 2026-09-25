@@ -53,6 +53,7 @@ export async function validateGPUDispatch(device: any, dispatch: () => void): Pr
     dispatch();
   } finally {
     const error = await device.popErrorScope();
+    // eslint-disable-next-line eslint/no-unsafe-finally -- intentional: always surface a validation error, even if `dispatch()` threw synchronously
     if (error) throw new Error(`NTCTrainer: training GPU dispatch failed: ${error.message}`);
   }
 }

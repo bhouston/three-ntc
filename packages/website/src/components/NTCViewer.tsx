@@ -194,6 +194,7 @@ export function NTCViewer({
       renderer.setAnimationLoop(null);
       controls.dispose();
       mesh.geometry.dispose();
+      // eslint-disable-next-line no-unused-expressions -- conditional dispose call, not an unused expression
       mesh.material?.dispose && mesh.material.dispose();
       envTexture?.dispose();
       label.geometry.dispose();
@@ -208,6 +209,7 @@ export function NTCViewer({
       labelRef.current = null;
       teacherLabelRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time mount setup; cameraDistance and shape only seed the initial scene
   }, []);
 
   // Swaps the neural preview material - disposes the previous one, since
@@ -231,6 +233,9 @@ export function NTCViewer({
 
   // Toggles side-by-side layout: two smaller, offset meshes when a teacher
   // material is present, one centered mesh otherwise.
+  // Deliberately keyed on presence, not identity: swapping the teacher material
+  // shouldn't re-run the side-by-side layout toggle.
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     const mesh = meshRef.current;
     const teacherMesh = teacherMeshRef.current;
@@ -258,6 +263,7 @@ export function NTCViewer({
       teacherLabel.visible = false;
     }
   }, [Boolean(teacherMaterial)]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   useEffect(() => {
     const mesh = meshRef.current;

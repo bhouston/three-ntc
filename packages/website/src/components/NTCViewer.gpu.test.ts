@@ -72,6 +72,7 @@ it.each(cases)(
       ) {
         if (!renderer) {
           firstFrameMs = start - mountedAt;
+          // eslint-disable-next-line typescript/no-this-alias -- captures the dynamic `this` from the monkey-patched render call for reuse across later frames
           renderer = this;
           renderer.backend.device.addEventListener("uncapturederror", onError);
           renderer.backend.device.lost.then((info: any) => {

@@ -95,18 +95,16 @@ class NTCLoader extends Loader {
 		onError?: ( err: unknown ) => void
 	): void {
 
-		const scope = this;
-
 		const loader = new FileLoader( this.manager );
 		loader.setPath( this.path );
 		loader.setResponseType( 'json' );
 		loader.setRequestHeader( this.requestHeader );
 		loader.setWithCredentials( this.withCredentials );
-		loader.load( url, function ( json: unknown ) {
+		loader.load( url, ( json: unknown ) => {
 
 			try {
 
-				const asset = scope.parse( json as NTCManifest | string );
+				const asset = this.parse( json as NTCManifest | string );
 				if ( onLoad ) onLoad( asset );
 
 			} catch ( e ) {
@@ -121,7 +119,7 @@ class NTCLoader extends Loader {
 
 				}
 
-				scope.manager.itemError( url );
+				this.manager.itemError( url );
 
 			}
 

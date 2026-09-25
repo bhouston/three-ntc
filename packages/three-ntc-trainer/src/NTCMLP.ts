@@ -28,8 +28,8 @@ function createMLP( inputSize: number, hiddenLayers: number[], outputSize: numbe
 		const isLinearOutput = isOutputLayer && activation === 'linear';
 		const isLinearRgb = isLinearOutput && output === 3;
 		const scale = Math.sqrt( 2 / input ) * ( isLinearRgb ? LINEAR_RGB_OUTPUT_HE_SCALE : ( isLinearOutput ? LINEAR_SCALAR_OUTPUT_HE_SCALE : 1 ) );
-		const weights = new Array( input * output );
-		const biases = new Array( output ).fill( isLinearRgb ? LINEAR_RGB_OUTPUT_BIAS : 0 );
+		const weights: number[] = Array.from( { length: input * output } );
+		const biases: number[] = Array.from( { length: output }, () => ( isLinearRgb ? LINEAR_RGB_OUTPUT_BIAS : 0 ) );
 
 		for ( let j = 0; j < weights.length; j ++ ) {
 
@@ -59,8 +59,8 @@ function forwardMLP( mlp: MLP, input: number[] ) {
 
 	for ( const layer of mlp.layers ) {
 
-		const next = new Array( layer.outputSize );
-		const pre = new Array( layer.outputSize );
+		const next: number[] = Array.from( { length: layer.outputSize } );
+		const pre: number[] = Array.from( { length: layer.outputSize } );
 
 		for ( let output = 0; output < layer.outputSize; output ++ ) {
 

@@ -223,6 +223,7 @@ class MaterialXNode {
 
 	getNodeGraph(): MaterialXNode | null {
 
+		// eslint-disable-next-line typescript/no-this-alias -- walks the node's own parent chain, not a closure capture
 		let nodeX: MaterialXNode | null = this;
 		while ( nodeX !== null ) {
 
@@ -237,6 +238,7 @@ class MaterialXNode {
 
 	getRoot(): MaterialXNode {
 
+		// eslint-disable-next-line typescript/no-this-alias -- walks the node's own parent chain, not a closure capture
 		let nodeX: MaterialXNode = this;
 		while ( nodeX.parent !== null ) {
 
