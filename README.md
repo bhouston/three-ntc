@@ -51,8 +51,28 @@ pnpm install
 pnpm dev
 ```
 
+## Testing and quality gates
+
+- `pnpm test` runs `tsc` then `vitest run --project unit --coverage`. Unit coverage
+  includes all runtime and trainer TypeScript source, including GPU paths that unit
+  tests don't execute. Gates are statements 19%, branches 13%, functions 18%, lines 19%,
+  based on measured coverage rather than an artificial promise — raise them as CPU/GPU
+  coverage improves, and don't lower them or exclude files just to pass.
+- `pnpm test:gpu` runs the WebGPU suite in headless Chromium (`pnpm test:gpu:safari` for
+  Safari). Hosted runners have no GPU, so CI falls back to SwiftShader software Vulkan;
+  that job is advisory (`continue-on-error`) until it proves stable.
+- `pnpm size` gates minified gzip ESM bundle size with `three` external: 11,000 bytes for
+  `three-ntc`, 52,000 bytes for `three-ntc-trainer`. Explain intentional limit changes in
+  the PR.
+- `pnpm audit --prod --audit-level high` blocks CI on high/critical production
+  dependency advisories. The full development audit currently reports two high-severity
+  `extract-zip@2.0.1` advisories via WebdriverIO/Puppeteer with no patched registry
+  release yet, so it stays advisory (`continue-on-error`) until one ships.
+- `pnpm release:check` tests release-version analysis and packaging without publishing.
+
 ## Contributing and releases
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the shared issue, branch, PR and commit
-workflow, [release setup](docs/releasing.md) for npm trusted publishing, and
-[SECURITY.md](SECURITY.md) for private vulnerability reports.
+workflow, [release setup](docs/releasing.md) for npm trusted publishing and the
+two-package (runtime + trainer) release config, and [SECURITY.md](SECURITY.md) for
+private vulnerability reports.
