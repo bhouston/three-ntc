@@ -1,19 +1,23 @@
+import { Matrix3 } from 'three';
+import type { ThreeMath } from './ThreeTypes.js';
+
 // The raw, uncompiled MaterialX document graph API this module walks
 // (`getChildByName`/`hasReference`/`referencePath`/`isConst`/`getVector`,
 // plus `element`/`nodePath`/`children`/`uvSpace`/`getMaterialXNode`) lives in
 // the MaterialX loader port (`./materialx/`, ported separately) - typed
 // loosely here rather than importing its concrete types, since this module
 // only ever touches a handful of duck-typed members.
+//
+// oxlint-disable-next-line typescript/no-explicit-any -- duck-typed MaterialX document-graph node; see comment above.
 type MaterialXDocument = any;
+// oxlint-disable-next-line typescript/no-explicit-any -- duck-typed MaterialX document-graph node; see comment above.
 type MaterialXNode = any;
-
-import { Matrix3 } from 'three';
 
 /**
  * Infers the combined UV transform a MaterialX-authored albedo graph applies
  * before its image lookup(s) - e.g. a `<place2d>` doing tiling/rotation, or a
  * `<rotate2d>` chained with a plain `<multiply>`/`<add>` for scale/offset -
- * and folds it into a single `THREE.any` suitable for `NTCNodeMaterial`'s
+ * and folds it into a single `THREE.Matrix3` suitable for `NTCNodeMaterial`'s
  * `uvTransform` / `NTCTextureSource.bakeColorNodeToTexture`'s inverse bake
  * (see NTCFormat.js's `decodeUvTransform`/`encodeUvTransform` for how this
  * round-trips through a `.ntc` file).
@@ -55,9 +59,9 @@ import { Matrix3 } from 'three';
  *   handling of the `texcoord` root.
  * - Animation and per-pixel/procedural UV manipulation are out of scope -
  *   only a plain affine (rotate/scale/offset) composition is representable
- *   as a `any` in the first place.
+ *   as a `THREE.Matrix3` in the first place.
  *
- * Falls back to an identity `any` (this module's stated default) the
+ * Falls back to an identity `THREE.Matrix3` (this module's stated default) the
  * moment any of the above is violated, rather than partially applying a
  * transform it isn't confident about.
  */
@@ -65,7 +69,7 @@ function inferAlbedoUvTransform(
   materialX: MaterialXDocument,
   surfaceShaderNode: MaterialXNode,
   options: { baseColorInputName?: string; maxNodes?: number } = {},
-): any {
+): ThreeMath {
   const { baseColorInputName = 'base_color', maxNodes = 64 } = options;
 
   if (!surfaceShaderNode) return new Matrix3();
@@ -118,10 +122,10 @@ function findImageNode(materialX: MaterialXDocument, rootChild: MaterialXNode, m
 /**
  * Walks backward from an `<image>`/`<tiledimage>` node's `texcoord` input
  * through the recognized UV-transform node chain (see this module's doc
- * comment), concatenating each node's affine effect via `any.multiply`
+ * comment), concatenating each node's affine effect via `THREE.Matrix3.multiply`
  * in the order encountered - which, since this walk visits nodes from the
  * image lookup *back toward* the UV source, is exactly the right order for
- * `any.multiply` (`this = this * m`, right-multiply) to build up
+ * `THREE.Matrix3.multiply` (`this = this * m`, right-multiply) to build up
  * `finalMatrix = nodeClosestToImage * ... * nodeClosestToSource`, matching
  * how the actual node graph evaluates (source first, image-adjacent node
  * last).
@@ -130,7 +134,7 @@ function inferUvTransformFromImageNode(
   materialX: MaterialXDocument,
   imageNode: MaterialXNode,
   options: { maxSteps?: number } = {},
-): any {
+): ThreeMath {
   const { maxSteps = 8 } = options;
 
   const matrix = new Matrix3();
@@ -355,7 +359,7 @@ function buildNodeTransformFn(node: MaterialXNode): Affine2DFn | null {
 }
 
 /**
- * Recovers the 2D affine `any` for a plain `(x, y) => [x2, y2]`
+ * Recovers the 2D affine `THREE.Matrix3` for a plain `(x, y) => [x2, y2]`
  * function, by evaluating it at three points - `(0,0)`, `(1,0)`, `(0,1)` -
  * rather than hand-deriving the matrix algebraically for every node type:
  * `fn(0,0)` is the translation, and `fn(1,0) - fn(0,0)` / `fn(0,1) -
@@ -364,7 +368,7 @@ function buildNodeTransformFn(node: MaterialXNode): Affine2DFn | null {
  * recognizes (rotate/scale/offset compositions), since none of them involve
  * `x`/`y` in a nonlinear way.
  */
-function affineFromSamples(fn: Affine2DFn): any {
+function affineFromSamples(fn: Affine2DFn): ThreeMath {
   const [ox, oy] = fn(0, 0);
   const [x1, y1] = fn(1, 0);
   const [x2, y2] = fn(0, 1);

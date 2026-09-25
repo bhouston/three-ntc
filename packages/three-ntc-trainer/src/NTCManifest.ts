@@ -2,9 +2,31 @@
 // live in the sibling `three-ntc` runtime package, since NTCLoader (runtime,
 // no training dependencies) needs them too.
 
-import { FORMAT, VERSION, getChannel, encodeUvTransform, isIdentityUvTransform } from 'three-ntc';
+import {
+  FORMAT,
+  VERSION,
+  getChannel,
+  encodeUvTransform,
+  isIdentityUvTransform,
+  type NTCChannelClassification,
+} from 'three-ntc';
 import { LATENT_CODECS, encodeMLPLayersBase64, type LatentDtype } from 'three-ntc';
 import { computeLatentRanges, type GridLevelLayout } from './NTCQuantization.js';
+import type { NTCGridPyramidModel } from './NTCGridPyramidModel.js';
+import type { LatentGrid } from './NTCGridModel.js';
+
+/** `cpuModel` as consumed by `encodeNTC`: the trained model plus its post-training `quantization` metadata (see `NTCTrainer.train`'s return value). */
+type EncodableCpuModel = NTCGridPyramidModel & {
+  quantization?: { mode?: string };
+};
+
+interface EncodeNTCOptions {
+  uvTransform?: NTCGridPyramidModel['uvTransform'];
+  wrap?: string;
+  name?: string;
+  source?: string;
+  quantizationRanges?: Array<[number, number]>;
+}
 
 /**
  * A `.ntc` (Neural Texture Compression) asset is one shared mip pyramid of
@@ -30,17 +52,21 @@ import { computeLatentRanges, type GridLevelLayout } from './NTCQuantization.js'
  * Channel keys identify reconstruction semantics. Per-asset encodings preserve
  * trained output activations independently of future vocabulary defaults.
  */
-function encodeNTC(cpuModel: any, channelClassification: any, options: any = {}): any {
+function encodeNTC(
+  cpuModel: EncodableCpuModel,
+  channelClassification: NTCChannelClassification,
+  options: EncodeNTCOptions = {},
+) {
   const ranges = resolveQuantizationRanges(cpuModel, options);
   const uvTransform = options.uvTransform || cpuModel.uvTransform;
   // Latent bit depth follows the QAT mode the model was trained with;
   // 'none' (no QAT) keeps the pre-existing uint8 default.
   const mode = cpuModel.quantization?.mode;
-  const dtype: LatentDtype = mode in LATENT_CODECS ? mode : 'uint8';
+  const dtype: LatentDtype = mode !== undefined && mode in LATENT_CODECS ? (mode as LatentDtype) : 'uint8';
   const encodeLatents = LATENT_CODECS[dtype].encode;
 
   const allGrids = [...cpuModel.grids, ...(cpuModel.lowResGrids || [])];
-  const encodedGrids = allGrids.map((grid: any, index: number) => {
+  const encodedGrids = allGrids.map((grid, index: number) => {
     const [min, max] = ranges[index];
 
     return {
@@ -93,7 +119,19 @@ function encodeNTC(cpuModel: any, channelClassification: any, options: any = {})
     // NTCFormat.isIdentityUvTransform's doc comment on why this is an
     // additive/optional field rather than a VERSION bump.
     uvTransform: uvTransform && !isIdentityUvTransform(uvTransform) ? encodeUvTransform(uvTransform) : undefined,
-    mlp: encodeMLPLayersBase64(cpuModel.decoder.layers),
+    // `three-ntc`'s `encodeMLPLayersBase64` types its `weights`/`biases` as
+    // `Float32Array` (its own binary-codec representation); this trainer's
+    // `MLP` keeps them as plain `number[]` while training. Both are
+    // index/length-compatible - `encodeMLPLayersBase64` only ever reads
+    // `.length` and `[i]` - so this wrap is a type-shape adapter, not a
+    // value change.
+    mlp: encodeMLPLayersBase64(
+      cpuModel.decoder.layers.map((layer) => ({
+        ...layer,
+        weights: Float32Array.from(layer.weights),
+        biases: Float32Array.from(layer.biases),
+      })),
+    ),
     // See NTCSource.resolveRenderFlags's doc comment - `side`/
     // `transparent` aren't channels (nothing for the network to fit), but
     // still need to round-trip so a loaded material's transmission pass
@@ -103,10 +141,10 @@ function encodeNTC(cpuModel: any, channelClassification: any, options: any = {})
     // constant-only classification) round-trips as a plain `null`.
     renderFlags: channelClassification.renderFlags || null,
     channels: {
-      activeKeys: channelClassification.activeChannels.map((channel: any) => channel.key),
+      activeKeys: channelClassification.activeChannels.map((channel) => channel.key),
       // Persist output nonlinearities so changing training defaults never reinterprets old weights.
       encodings: Object.fromEntries(
-        channelClassification.activeChannels.map((channel: any) => [
+        channelClassification.activeChannels.map((channel) => [
           channel.key,
           { activation: channel.activation ?? getChannel(channel.key).activation ?? 'linear' },
         ]),
@@ -132,7 +170,7 @@ function encodeNTC(cpuModel: any, channelClassification: any, options: any = {})
  * 'uint8'` (see NTCTrainer.js's `quantization` option). Prefer training
  * with QAT enabled when export-time compactness matters.
  */
-function resolveQuantizationRanges(cpuModel: any, options: any): Array<[number, number]> {
+function resolveQuantizationRanges(cpuModel: EncodableCpuModel, options: EncodeNTCOptions): Array<[number, number]> {
   if (options.quantizationRanges) return options.quantizationRanges;
   if (cpuModel.quantizationRange) return cpuModel.quantizationRange;
 
@@ -149,7 +187,7 @@ function resolveQuantizationRanges(cpuModel: any, options: any): Array<[number, 
  * uses) - so a plain export-time min/max scan can reuse that shared helper
  * instead of re-deriving its own reduction loop.
  */
-function concatenateGridData(grids: any[]): { flat: Float32Array; gridLevels: GridLevelLayout[] } {
+function concatenateGridData(grids: LatentGrid[]): { flat: Float32Array; gridLevels: GridLevelLayout[] } {
   let offset = 0;
   const gridLevels: GridLevelLayout[] = [];
 
@@ -168,3 +206,4 @@ function concatenateGridData(grids: any[]): { flat: Float32Array; gridLevels: Gr
 }
 
 export { FORMAT, VERSION, encodeNTC };
+export type { EncodableCpuModel, EncodeNTCOptions };

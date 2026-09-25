@@ -1,4 +1,5 @@
 import { wgslFn, bitcast, atomicLoad } from 'three/tsl';
+import type { TSLNode } from './ThreeTypes.js';
 
 // Store IEEE-754 bits in an integer atomic, avoiding fixed-point overflow and
 // per-sample truncation. Retry weak CAS until this contribution is committed.
@@ -16,9 +17,9 @@ fn ntcAtomicAddFloat(destination: ptr<storage, atomic<i32>, read_write>, value: 
 }
 `;
 const addFloat = wgslFn(FLOAT_ATOMIC_WGSL);
-export function atomicAddFloat(destination: any, value: any): void {
+export function atomicAddFloat(destination: TSLNode, value: TSLNode): void {
   addFloat(destination, value).toVar();
 }
-export function atomicLoadFloat(destination: any): any {
+export function atomicLoadFloat(destination: TSLNode): TSLNode {
   return bitcast(atomicLoad(destination), 'float');
 }

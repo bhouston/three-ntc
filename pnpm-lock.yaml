@@ -111,6 +111,9 @@ importers:
         specifier: workspace:^
         version: link:../three-ntc
     devDependencies:
+      '@webgpu/types':
+        specifier: ^0.1.74
+        version: 0.1.74
       three:
         specifier: ^0.186.0
         version: 0.186.0
@@ -2764,6 +2767,9 @@ packages:
   '@wdio/utils@9.31.7':
     resolution: {integrity: sha512-tl4YCHX4yoGTzQXyzxArquNaju26Kl71UxNkLe/5vxRD98UlsjMhU5TqNlll+5DqvxiFa79fpc06HU/cHB6vJg==}
     engines: {node: '>=18.20.0'}
+
+  '@webgpu/types@0.1.74':
+    resolution: {integrity: sha512-lgiI4hbuLcI9unnm2cL/tvCaQU45dp0xcLWJh5uB/9MBGvIA4F8XIk7nSiBeg+K4xWGYwgZKn80LmERI5CxoTA==}
 
   '@zip.js/zip.js@2.13.1':
     resolution: {integrity: sha512-D+iRyi2/uBCXPDQBhz2Z+Emcj2Cd8K/FG0y0l8WFeZJAZiP46m7cCajsGW3ktSq1HWov3nogZxyQ3FBisxOQSQ==}
@@ -8639,6 +8645,8 @@ snapshots:
       - bare-buffer
       - react-native-b4a
       - supports-color
+
+  '@webgpu/types@0.1.74': {}
 
   '@zip.js/zip.js@2.13.1': {}
 

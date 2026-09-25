@@ -10,6 +10,7 @@ import {
   MAX_GRID_RESOLUTION,
   type LatentGrid,
 } from './NTCGridModel.js';
+import type { ThreeMath } from './ThreeTypes.js';
 
 interface NTCGridPyramidOptions {
   // Feature-vector width per grid cell - the paper's "grid channels"
@@ -26,7 +27,7 @@ interface NTCGridPyramidOptions {
   hiddenActivation?: string;
   outputChannels?: number;
   textureResolution?: number;
-  uvTransform?: any;
+  uvTransform?: ThreeMath;
   positionalEncoding?: boolean;
   /** Zero retains grid-cell phase; eight selects the paper-style texel tile. */
   positionalEncodingPeriod?: number;
@@ -44,7 +45,7 @@ interface ResolvedNTCGridPyramidOptions {
   hiddenActivation: string;
   outputChannels: number;
   textureResolution: number | undefined;
-  uvTransform: any;
+  uvTransform: ThreeMath;
   positionalEncoding: boolean;
   dualGrid: boolean;
 }
@@ -139,7 +140,7 @@ interface NTCGridPyramidModel {
   maxLod: number;
   lodOffset: number;
   positionalEncodingPeriod: number;
-  uvTransform: any;
+  uvTransform: ThreeMath;
   quantizationRange?: Array<[number, number]> | null;
   quantization?: { mode: string };
   positionalEncoding: boolean;

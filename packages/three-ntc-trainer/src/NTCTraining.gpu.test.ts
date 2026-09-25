@@ -9,6 +9,7 @@
 // scatter (the one piece that depends on the sample UV) is checked by
 // finite differences of the kernel's own loss.
 import { float, uv, vec2, vec4 } from 'three/tsl';
+import { StorageBufferAttribute } from 'three/webgpu';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { bakeColorNodeToTexture } from './NTCTextureSource.js';
@@ -18,7 +19,7 @@ import { createNTCGridPyramidModel } from './NTCGridPyramidModel.js';
 import { createRandom } from './NTCTrainingUtils.js';
 import { QUANTIZATION_SCHEMES } from './NTCQuantization.js';
 import { FIXED_POINT_SCALE, GRADIENT_NORM_SCALE } from './NTCGPUTrainingConstants.js';
-import { createResetGradientNormComputeNode } from './NTCGPUKernelsTSL.js';
+import { createResetGradientNormComputeNode, type AdamParameterBuffers } from './NTCGPUKernelsTSL.js';
 import {
   createAccumulateGradientNormComputeNode,
   createTextureAdamLatentsComputeNode,
@@ -33,8 +34,9 @@ import {
   getRenderer,
   maxAbsDiff,
 } from '../../../test/gpu-helpers.js';
+import type { ThreeRenderer } from './ThreeTypes.js';
 
-let renderer: any;
+let renderer: ThreeRenderer;
 beforeAll(async () => {
   renderer = await getRenderer();
 });
@@ -54,16 +56,16 @@ async function constantTexture(size = 32) {
 
 /** Builds a CPU model + matching GPU model + the four training kernels, ready to step. */
 function setup(options: Record<string, unknown>, seed = 3) {
-  const cpuModel = createNTCGridPyramidModel(options as any, createRandom(seed));
-  const gpuModel = new NTCGPUModel(options as any);
+  const cpuModel = createNTCGridPyramidModel(options, createRandom(seed));
+  const gpuModel = new NTCGPUModel(options);
   gpuModel.initFromCPUModel(cpuModel);
   return { cpuModel, gpuModel };
 }
 
-async function readF32(attribute: any): Promise<Float32Array> {
+async function readF32(attribute: InstanceType<typeof StorageBufferAttribute>): Promise<Float32Array> {
   return new Float32Array(await renderer.getArrayBufferAsync(attribute));
 }
-async function readGrad(attribute: any): Promise<Float32Array> {
+async function readGrad(attribute: InstanceType<typeof StorageBufferAttribute>): Promise<Float32Array> {
   const raw = new Int32Array(await renderer.getArrayBufferAsync(attribute));
   return Float32Array.from(raw, (v) => v / FIXED_POINT_SCALE);
 }
@@ -222,7 +224,7 @@ describe('train-batch kernel', () => {
       const gradLatents = await readGrad(gpuModel.latentsBuffers.gradAttribute);
       const gradWeights = await readGrad(gpuModel.weightsBuffers.gradAttribute);
 
-      const check = async (buffers: any, grad: Float32Array, indices: number[]) => {
+      const check = async (buffers: AdamParameterBuffers, grad: Float32Array, indices: number[]) => {
         const values = buffers.attribute.array as Float32Array;
         for (const i of indices) {
           const h = 1e-2;
@@ -294,7 +296,7 @@ describe('train-batch kernel', () => {
     renderer.compute(adamLatents);
 
     // Step 1: mHat = g, vHat = g^2  =>  value -= lr * g / (|g| + eps).
-    const expectAdam = async (buffers: any, grads: Float32Array, old: Float32Array) => {
+    const expectAdam = async (buffers: AdamParameterBuffers, grads: Float32Array, old: Float32Array) => {
       const values = await readF32(buffers.attribute);
       const m = await readF32(buffers.mAttribute);
       const v = await readF32(buffers.vAttribute);
@@ -386,7 +388,7 @@ describe('NTCTrainer', () => {
     expect(result.quantization.mode).toBe('uint4');
     expect(result.iterations).toBe(40); // Includes the final 5% frozen adaptation.
     const quantize = QUANTIZATION_SCHEMES.uint4.quantizeForwardCPU;
-    result.cpuModel.grids.forEach((grid: any, g: number) => {
+    result.cpuModel.grids.forEach((grid, g: number) => {
       const [lo, hi] = result.quantizationRange![g];
       expect(hi).toBeGreaterThan(lo);
       for (const value of grid.data) expect(Math.abs(value - quantize(value, lo, hi))).toBeLessThan(1e-6);

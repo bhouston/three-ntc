@@ -1,4 +1,6 @@
 import { float, min, max, round } from 'three/tsl';
+import type { TSLNode, ThreeRenderer } from './ThreeTypes.js';
+import type { NTCGPUModel } from './NTCGPUModel.js';
 
 // Uniform scalar codecs are shared by forward STE and the final hard-rounding
 // step. Noise QAT adds one bin-width of uniform noise to each stored feature,
@@ -19,7 +21,7 @@ function createUniformScheme(bits: number) {
 
       return lo + (Math.round(t * maxLevel) / maxLevel) * range;
     },
-    quantizeForwardTSL: (xNode: any, minNode: any, maxNode: any) => {
+    quantizeForwardTSL: (xNode: TSLNode, minNode: TSLNode, maxNode: TSLNode) => {
       const range = maxNode.sub(minNode);
       const t = min(float(1.0), max(float(0.0), xNode.sub(minNode).div(range.max(1e-20))));
 
@@ -36,7 +38,7 @@ const QUANTIZATION_SCHEMES: Record<
   string,
   {
     quantizeForwardCPU: (x: number, lo?: number, hi?: number) => number;
-    quantizeForwardTSL: (xNode: any, minNode?: any, maxNode?: any) => any;
+    quantizeForwardTSL: (xNode: TSLNode, minNode?: TSLNode, maxNode?: TSLNode) => TSLNode;
   }
 > = {
   none: {
@@ -140,7 +142,6 @@ function resolveQuantizationConfig(
 interface GridLevelLayout {
   offset: number;
   floatCount: number;
-  [key: string]: unknown;
 }
 
 /**
@@ -210,7 +211,7 @@ function computeLatentRanges(
  * quantization is disabled or the range is a fixed tuple - only `'auto'`
  * ever needs re-measuring.
  */
-async function refreshGPUQuantizationRange(gpuModel: any, renderer: any): Promise<void> {
+async function refreshGPUQuantizationRange(gpuModel: NTCGPUModel, renderer: ThreeRenderer): Promise<void> {
   if (gpuModel.quantization.mode === 'none' || gpuModel.quantization.range !== 'auto') return;
 
   const buffer = await renderer.getArrayBufferAsync(gpuModel.latentsBuffers.attribute);

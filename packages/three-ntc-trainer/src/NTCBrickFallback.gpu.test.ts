@@ -3,27 +3,37 @@ import { commands } from 'vitest/browser';
 import { buildChannelActivations } from 'three-ntc';
 import { getRenderer } from '../../../test/gpu-helpers.js';
 import { MaterialXLoader, classifyMaterialChannels, bakeMaterialToTextures, NTCTrainer } from './index.js';
+import type { MaterialXParseResult } from './materialx/MaterialXDocument.js';
 import brick from '../../website/public/materialx/brick.mtlx?raw';
 
 it('trains the default brick with identical results after an atomic compiler failure', async () => {
   const renderer = await getRenderer();
-  const asset: any = new MaterialXLoader().parseBuffer(new TextEncoder().encode(brick).buffer, 'brick.mtlx', {
-    uvSpace: 'top-left',
-    throwOnErrors: true,
-  });
+  const asset: MaterialXParseResult = new MaterialXLoader().parseBuffer(
+    new TextEncoder().encode(brick).buffer,
+    'brick.mtlx',
+    { uvSpace: 'top-left', throwOnErrors: true },
+  );
   if (asset.texturesReady) await asset.texturesReady;
-  const material: any = Object.values(asset.materials ?? asset)[0];
+  const material = Object.values(asset.materials ?? asset)[0];
   const classification = classifyMaterialChannels(material);
   const targets = await bakeMaterialToTextures(renderer, material, 1024, classification.activeChannels);
   const device = renderer.backend.device;
   const createPipeline = device.createComputePipelineAsync.bind(device);
-  const compiler = vi.spyOn(device, 'createComputePipelineAsync').mockImplementation((descriptor: any) => {
-    if (descriptor.label === 'NTC float accumulation capability check') {
-      return Promise.reject(new Error('field may not be qualified with an address space'));
-    }
-    return createPipeline(descriptor);
-  });
-  const metrics: any[] = [];
+  const compiler = vi
+    .spyOn(device, 'createComputePipelineAsync')
+    .mockImplementation((descriptor: GPUComputePipelineDescriptor) => {
+      if (descriptor.label === 'NTC float accumulation capability check') {
+        return Promise.reject(new Error('field may not be qualified with an address space'));
+      }
+      return createPipeline(descriptor);
+    });
+  const metrics: Array<{
+    gradientPrecision: 'fixed' | 'auto';
+    iterations: number;
+    firstLoss: number;
+    lastLoss: number | undefined;
+    trainingMs: number;
+  }> = [];
   const weights: number[][] = [];
   try {
     for (const gradientPrecision of ['fixed', 'auto'] as const) {
@@ -42,7 +52,7 @@ it('trains the default brick with identical results after an atomic compiler fai
         iterations: 10000,
         learningRate: 0.01,
         seed: 1,
-        quantization: { mode: 'uint8' } as any,
+        quantization: { mode: 'uint8' },
       });
       const losses: number[] = [];
       const start = performance.now();

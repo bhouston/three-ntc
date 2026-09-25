@@ -1,11 +1,25 @@
 import { bitangentWorld, float, tangentWorld, vec4 } from 'three/tsl';
 import { bakeColorNodeToTexture } from './NTCTextureSource.js';
-import { CHANNELS, FRAME_VIEWS, layoutChannels, buildDebugViewColorNode, buildFrameViewColorNode } from 'three-ntc';
+import {
+  CHANNELS,
+  FRAME_VIEWS,
+  layoutChannels,
+  buildDebugViewColorNode,
+  buildFrameViewColorNode,
+  type NTCChannel,
+} from 'three-ntc';
 import { constantToNode } from 'three-ntc';
+import type { TSLNode, ThreeRenderer, ThreeMaterial, ThreeMath } from './ThreeTypes.js';
 
-type TSLNode = any;
-type MaterialLike = any;
-type ChannelDescriptor = any;
+type MaterialLike = ThreeMaterial;
+/**
+ * `NTCChannel` (from `three-ntc`) plus the two caller-only fields a custom
+ * channel array may set (see `classifyMaterialChannels`'s doc comment):
+ * `alwaysConstant`/`constantValue` are never set by the built-in `CHANNELS`
+ * vocabulary, so they aren't part of the shared `NTCChannel` type - they're
+ * an extension this trainer's classification step alone understands.
+ */
+type ChannelDescriptor = NTCChannel & { alwaysConstant?: boolean; constantValue?: unknown };
 
 /**
  * Resolves every channel in a channel array (see NTCFormat.
@@ -193,11 +207,11 @@ function buildPackedColorNodes(activeChannels: ChannelDescriptor[], material: Ma
  * map onto them).
  */
 async function bakeMaterialToTextures(
-  renderer: any,
+  renderer: ThreeRenderer,
   material: MaterialLike,
   resolution: number,
   activeChannels: ChannelDescriptor[],
-  uvTransform: any = null,
+  uvTransform: ThreeMath | null = null,
 ) {
   const colorNodes = buildPackedColorNodes(activeChannels, material);
   const renderTargets = [];

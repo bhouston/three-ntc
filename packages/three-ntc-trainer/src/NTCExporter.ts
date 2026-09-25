@@ -1,4 +1,18 @@
-import { encodeNTC } from './NTCManifest.js';
+import { encodeNTC, type EncodableCpuModel } from './NTCManifest.js';
+import type { NTCLayoutChannel } from 'three-ntc';
+
+/**
+ * The minimal shape `NTCExporter.parse` needs off a trained material - an
+ * `NTCNodeMaterial` instance satisfies this, but so does any object
+ * exposing the same fields (see the class doc comment above).
+ */
+interface NTCExportableMaterial {
+  cpuModel: EncodableCpuModel;
+  activeChannels: NTCLayoutChannel[];
+  _constantValues?: Record<string, unknown>;
+  side?: unknown;
+  transparent?: boolean;
+}
 
 /**
  * An exporter for `.ntc` (Neural Texture Compression) assets.
@@ -29,7 +43,7 @@ class NTCExporter {
    * @param options - The export options.
    * @return The `.ntc` manifest - JSON-serializable as-is (`JSON.stringify( manifest )`).
    */
-  parse(material: any, options: NTCExporterOptions = {}): any {
+  parse(material: NTCExportableMaterial, options: NTCExporterOptions = {}) {
     if (!material || !material.cpuModel || !material.activeChannels) {
       throw new Error(
         'THREE.NTCExporter: material must be a trained NTCNodeMaterial (missing cpuModel/activeChannels).',

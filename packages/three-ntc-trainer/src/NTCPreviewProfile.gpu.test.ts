@@ -19,17 +19,18 @@ import { CHANNELS, getChannel, layoutChannels, NTCNodeMaterial } from 'three-ntc
 import { summarizeTimings } from '../../../test/performance-metrics.js';
 import { NTCTrainer } from './NTCTrainer.js';
 import { readRenderTargetFloats } from '../../../test/gpu-helpers.js';
+import type { ThreeRenderer } from './ThreeTypes.js';
 
 it('profiles five default-size training steps with two live physical preview updates', async () => {
   // Match the website's separate training and viewing devices and model shape.
-  const training = new WebGPURenderer({ antialias: false }) as any;
-  const viewing = new WebGPURenderer({ antialias: false }) as any;
+  const training: ThreeRenderer = new WebGPURenderer({ antialias: false });
+  const viewing: ThreeRenderer = new WebGPURenderer({ antialias: false });
   await Promise.all([training.init(), viewing.init()]);
   const errors: string[] = [];
   const listeners = [training, viewing].map((renderer) => {
-    const listener = (event: any) => errors.push(event.error.message);
+    const listener = (event: GPUUncapturedErrorEvent) => errors.push(event.error.message);
     renderer.backend.device.addEventListener('uncapturederror', listener);
-    renderer.backend.device.lost.then((info: any) => {
+    renderer.backend.device.lost.then((info: GPUDeviceLostInfo) => {
       if (info.reason !== 'destroyed') errors.push(`Device lost: ${info.message}`);
     });
     return listener;
@@ -71,7 +72,7 @@ it('profiles five default-size training steps with two live physical preview upd
   camera.position.z = 2;
   scene.add(new AmbientLight(0xffffff, 1));
   let material: NTCNodeMaterial | undefined;
-  const progress: any[] = [],
+  const progress: Array<{ iteration: number; loss: number; submissionMs: number; completedMs: number }> = [],
     completions: Promise<void>[] = [];
   let lastHeartbeat = performance.now(),
     maxHeartbeatGap = 0,
@@ -86,7 +87,7 @@ it('profiles five default-size training steps with two live physical preview upd
     create = device.createShaderModule.bind(device);
   let shaderModules = 0,
     initialShaderModules = 0;
-  device.createShaderModule = (d: any) => {
+  device.createShaderModule = (d: GPUShaderModuleDescriptor) => {
     shaderModules++;
     return create(d);
   };
@@ -110,7 +111,7 @@ it('profiles five default-size training steps with two live physical preview upd
         if (material) material.updateFromModel(p.cpuModel);
         else {
           material = new NTCNodeMaterial(
-            p.cpuModel,
+            { ...p.cpuModel, wrap: 'repeat' },
             {
               activeChannels: layout.channels,
               constantValues: Object.fromEntries(CHANNELS.map((c) => [c.key, c.defaultValue])),
@@ -155,7 +156,7 @@ it('profiles five default-size training steps with two live physical preview upd
     expect(shaderModules).toBe(initialShaderModules);
     expect(heartbeats).toBeGreaterThan(0);
     expect(animationIntervals.length).toBeGreaterThan(0);
-    await (commands as any).recordMetric({
+    await commands.recordMetric({
       kind: 'training-preview-profile',
       userAgent: navigator.userAgent,
       animationIntervals,

@@ -24,10 +24,7 @@ describe('NTCProfiles', () => {
 
     for (const name of NTC_PROFILE_NAMES) {
       const profile = NTC_PROFILES[name];
-      const model = createNTCGridPyramidModel(
-        { channels: 4, outputChannels: 3, ...getNTCProfile(name) } as any,
-        () => 0.5,
-      );
+      const model = createNTCGridPyramidModel({ channels: 4, outputChannels: 3, ...getNTCProfile(name) }, () => 0.5);
 
       expect(model.hiddenSizes).toEqual(profile.hiddenSizes);
       expect(model.hiddenActivation).toBe(profile.hiddenActivation);
