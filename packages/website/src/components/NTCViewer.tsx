@@ -4,6 +4,14 @@ import { WebGPURenderer } from 'three/webgpu';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 
+// This `three` version ships no type declarations (see three-shims.d.ts), so
+// every import from it is `any`; deriving instance types from the namespace
+// itself keeps these annotations honest instead of writing `any` outright.
+type Mesh = InstanceType<typeof THREE.Mesh>;
+type Texture = InstanceType<typeof THREE.Texture>;
+type Material = InstanceType<typeof THREE.Material>;
+type BufferGeometry = InstanceType<typeof THREE.BufferGeometry>;
+
 // Same environment map the three.js NTC examples use, for a matching look.
 const HDR_ENVIRONMENT_URL = '/textures/equirectangular/san_giuseppe_bridge_2k.hdr';
 
@@ -31,7 +39,7 @@ export type NTCViewerShape = 'torus' | 'sphere' | 'plane';
 // in the scene and pans/rotates/zooms with the meshes. Faces +z (the
 // camera's start orientation) and is never re-oriented after that - per
 // product decision, it doesn't need to billboard as the user orbits.
-function makeTextLabel(text: string): any {
+function makeTextLabel(text: string): Mesh {
   const fontSize = 64;
   const canvas = document.createElement('canvas');
   const measureCtx = canvas.getContext('2d')!;
@@ -64,7 +72,7 @@ function makeTextLabel(text: string): any {
   return mesh;
 }
 
-function buildShapeGeometry(shape: NTCViewerShape): any {
+function buildShapeGeometry(shape: NTCViewerShape): BufferGeometry {
   const geometry =
     shape === 'torus'
       ? new THREE.TorusGeometry(0.7, 0.28, 32, 96)
@@ -94,16 +102,16 @@ export function NTCViewer({
   shape = 'sphere',
   cameraDistance = 3,
 }: {
-  material: any;
-  teacherMaterial?: any;
+  material: Material | null;
+  teacherMaterial?: Material | null;
   shape?: NTCViewerShape;
   cameraDistance?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const meshRef = useRef<any>(null);
-  const teacherMeshRef = useRef<any>(null);
-  const labelRef = useRef<any>(null);
-  const teacherLabelRef = useRef<any>(null);
+  const meshRef = useRef<Mesh | null>(null);
+  const teacherMeshRef = useRef<Mesh | null>(null);
+  const labelRef = useRef<Mesh | null>(null);
+  const teacherLabelRef = useRef<Mesh | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -156,9 +164,9 @@ export function NTCViewer({
     teacherLabelRef.current = teacherLabel;
 
     let disposed = false;
-    let envTexture: any = null;
+    let envTexture: Texture | null = null;
 
-    new HDRLoader().load(HDR_ENVIRONMENT_URL, (texture: any) => {
+    new HDRLoader().load(HDR_ENVIRONMENT_URL, (texture: Texture) => {
       if (disposed) return;
       texture.mapping = THREE.EquirectangularReflectionMapping;
       envTexture = texture;

@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useForm, useStore } from '@tanstack/react-form';
+import { useForm, useStore, type AnyFieldApi } from '@tanstack/react-form';
 import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useGoogleAnalytics } from 'tanstack-router-ga4';
 import * as THREE from 'three';
@@ -9,6 +9,7 @@ import { Chart } from '@tanstack/charts/react';
 import {
   bakeMaterialToTextures,
   classifyMaterialChannels,
+  DEFAULT_QUANTIZATION_OPTIONS,
   getMaterialXSampleUrl,
   GRID_BASE_RESOLUTION_OPTIONS,
   GRID_LEVELS_OPTIONS,
@@ -22,8 +23,16 @@ import {
   NTC_PROFILES,
   NTCExporter,
   NTCTrainer,
+  type NTCTrainProgress,
 } from 'three-ntc-trainer';
-import { buildChannelActivations, MAX_TOTAL_CHANNELS, NTCNodeMaterial, type NTCSamplingMode } from 'three-ntc';
+import {
+  buildChannelActivations,
+  MAX_TOTAL_CHANNELS,
+  NTCNodeMaterial,
+  type NTCSamplingMode,
+  type NTCCpuModel,
+  type NTCChannelClassification,
+} from 'three-ntc';
 
 import { SamplingModeSelect } from '@/components/SamplingModeSelect';
 import { ModelSizeSummary } from '@/components/ModelSizeSummary';
@@ -35,8 +44,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { DEFAULT_LOD_BIAS } from '@/lib/ntc-examples';
-import { getSharedRenderer } from '@/lib/renderer';
+import { getSharedRenderer, type SharedRenderer } from '@/lib/renderer';
 import { seoMeta } from '@/lib/seo';
+
+// This `three` version ships no type declarations (see three-shims.d.ts), so
+// every import from it is `any`; deriving instance types from the namespace
+// itself keeps these annotations honest instead of writing `any` outright.
+type Matrix3 = InstanceType<typeof THREE.Matrix3>;
+
+// `MaterialXLoader`'s materials come back typed `Record<string, any>` in
+// three-ntc-trainer's own `MaterialXParseResult` (materialx/MaterialXDocument.ts,
+// outside this package) - naming the handful of properties this page reads
+// keeps that upstream `any` from spreading through every call site here.
+interface MaterialXTeacherMaterial {
+  name?: string;
+  isMeshPhysicalNodeMaterial?: boolean;
+  type?: string;
+  materialXSurfaceShaderNode?: unknown;
+  materialXDocument?: unknown;
+}
+
+type MaterialXLoaderInstance = InstanceType<typeof MaterialXLoader>;
+type MaterialXAsset = Awaited<ReturnType<MaterialXLoaderInstance['loadAsync']>>;
 
 export interface TrainerSearch {
   src?: string;
@@ -102,7 +131,7 @@ const DEFAULT_VALUES: FormValues = {
   lodBias: DEFAULT_LOD_BIAS,
 };
 
-function isPhysicalNodeMaterial(material: any): boolean {
+function isPhysicalNodeMaterial(material: MaterialXTeacherMaterial | undefined): boolean {
   return (
     material !== undefined &&
     (material?.isMeshPhysicalNodeMaterial === true || material?.type === 'MeshPhysicalNodeMaterial')
@@ -135,7 +164,7 @@ function SelectFormField({
   disabled,
   parse = (v: string) => v as unknown,
 }: {
-  field: any;
+  field: AnyFieldApi;
   label: string;
   options: readonly (string | number)[];
   getLabel?: (value: string | number) => string;
@@ -185,17 +214,17 @@ function TrainerPage() {
   const [sourceName, setSourceName] = useState<string | null>(null);
   const [builtInKey, setBuiltInKey] = useState(DEFAULT_MATERIALX_KEY);
   const [hasSource, setHasSource] = useState(false);
-  const [channelClassification, setChannelClassification] = useState<any | null>(null);
+  const [channelClassification, setChannelClassification] = useState<NTCChannelClassification | null>(null);
   const [isTraining, setIsTraining] = useState(false);
   const [hasTrainedModel, setHasTrainedModel] = useState(false);
-  const [previewMaterial, setPreviewMaterial] = useState<any>(null);
-  const [teacherMaterial, setTeacherMaterial] = useState<any>(null);
+  const [previewMaterial, setPreviewMaterial] = useState<NTCNodeMaterial | null>(null);
+  const [teacherMaterial, setTeacherMaterial] = useState<MaterialXTeacherMaterial | null>(null);
 
-  const materialXMaterialRef = useRef<any>(null);
-  const uvTransformRef = useRef<any>(new THREE.Matrix3());
-  const activeTrainerRef = useRef<any>(null);
-  const previewMaterialRef = useRef<any>(null);
-  const sourceTexturesRef = useRef<any[] | null>(null);
+  const materialXMaterialRef = useRef<MaterialXTeacherMaterial | null>(null);
+  const uvTransformRef = useRef<Matrix3>(new THREE.Matrix3());
+  const activeTrainerRef = useRef<NTCTrainer | null>(null);
+  const previewMaterialRef = useRef<NTCNodeMaterial | null>(null);
+  const sourceTexturesRef = useRef<Awaited<ReturnType<typeof bakeMaterialToTextures>> | null>(null);
   const mtlxInputRef = useRef<HTMLInputElement>(null);
 
   // Full-resolution point history lives in a ref (training can call
@@ -247,7 +276,7 @@ function TrainerPage() {
   }, []);
 
   const rebuildPreviewMaterial = useCallback(
-    (renderer: any, cpuModel: any, classification: any, lodBias: number) => {
+    (renderer: SharedRenderer, cpuModel: NTCCpuModel, classification: NTCChannelClassification, lodBias: number) => {
       const previous = previewMaterialRef.current;
       if (previous?.cpuModel === cpuModel) {
         previous.updateFromModel(cpuModel);
@@ -271,7 +300,7 @@ function TrainerPage() {
   );
 
   const setSourceMaterial = useCallback(
-    (material: any, name: string) => {
+    (material: MaterialXTeacherMaterial, name: string) => {
       materialXMaterialRef.current = material;
       setTeacherMaterial(material);
       const classification = classifyMaterialChannels(material);
@@ -293,7 +322,7 @@ function TrainerPage() {
       setHasTrainedModel(false);
       disposeSourceTextures();
 
-      const activeKeys = classification.activeChannels.map((c: any) => c.key).join(', ') || 'none';
+      const activeKeys = classification.activeChannels.map((c) => c.key).join(', ') || 'none';
       const uvNote = uvTransformRef.current.equals(new THREE.Matrix3())
         ? ''
         : ' A UV transform was detected on the albedo graph and will be baked out / re-applied at render time.';
@@ -313,7 +342,7 @@ function TrainerPage() {
       try {
         setStatus(`Loading ${url}...`);
         const loader = new MaterialXLoader();
-        const asset: any = await loader.loadAsync(url, { uvSpace: 'top-left', throwOnErrors: true });
+        const asset: MaterialXAsset = await loader.loadAsync(url, { uvSpace: 'top-left', throwOnErrors: true });
         const materials = asset?.materials ?? asset;
         const material = Object.values(materials).find(isPhysicalNodeMaterial) ?? Object.values(materials)[0];
         if (!material) throw new Error('MaterialXLoader did not produce any materials.');
@@ -356,7 +385,7 @@ function TrainerPage() {
       try {
         setStatus(`Loading ${file.name}...`);
         const loader = new MaterialXLoader();
-        const asset: any = loader.parseBuffer(await file.arrayBuffer(), file.name, {
+        const asset: MaterialXAsset = loader.parseBuffer(await file.arrayBuffer(), file.name, {
           uvSpace: 'top-left',
           throwOnErrors: true,
         });
@@ -427,9 +456,10 @@ function TrainerPage() {
         // Only `mode` is meaningful here (matches the upstream three.js
         // example, which passes exactly this) - NTCTrainer.resolveQuantizationConfig
         // fills in the rest (target/range/perLevel) from its own defaults at
-        // runtime; the TS port's option type is stricter than that runtime
-        // behavior, so this is cast rather than hand-duplicating those defaults.
-        quantization: { mode: values.quantization } as any,
+        // runtime; the TS port's option type (`typeof DEFAULT_QUANTIZATION_OPTIONS`,
+        // every field required) is stricter than that runtime behavior, so this is
+        // cast rather than hand-duplicating those defaults.
+        quantization: { mode: values.quantization } as unknown as typeof DEFAULT_QUANTIZATION_OPTIONS,
         uvTransform: uvTransformRef.current,
         seed: 1,
       });
@@ -437,15 +467,25 @@ function TrainerPage() {
 
       const result = await trainer.train({
         renderer,
-        sourceTextures: renderTargets.map((rt: any) => rt.texture),
-        onProgress: (progress: any) => {
+        sourceTextures: renderTargets.map((rt) => rt.texture),
+        onProgress: (progress: NTCTrainProgress) => {
           const isLast = progress.iteration >= progress.iterations - 1;
           addLossPoint({ iteration: progress.iteration, loss: progress.loss }, isLast);
           rebuildPreviewMaterial(renderer, progress.cpuModel, channelClassification, Number(values.lodBias));
         },
       });
 
-      rebuildPreviewMaterial(renderer, result.cpuModel, channelClassification, Number(values.lodBias));
+      // `trainer.train()`'s inferred return type carries its internal
+      // NTCGridPyramidModel shape (missing `wrap`), not the NTCCpuModel shape
+      // NTCTrainProgress.cpuModel (and NTCNodeMaterial) actually expect at
+      // runtime - same value shape as `progress.cpuModel` above, just typed
+      // more loosely there. See NTCTrainer.train in three-ntc-trainer.
+      rebuildPreviewMaterial(
+        renderer,
+        result.cpuModel as unknown as NTCCpuModel,
+        channelClassification,
+        Number(values.lodBias),
+      );
       setStatus(result.stoppedEarly ? 'Stopped.' : 'Training complete.');
     } catch (err) {
       console.error(err);
