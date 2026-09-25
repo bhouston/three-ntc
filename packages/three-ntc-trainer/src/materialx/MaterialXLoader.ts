@@ -1,6 +1,11 @@
 import { FileLoader, Loader } from 'three/webgpu';
 
-import { MaterialXDocument, type MaterialXParseResult } from './MaterialXDocument.js';
+import {
+  MaterialXDocument,
+  MaterialXNode,
+  type MaterialXParseResult,
+  type ThreeLoadingManager,
+} from './MaterialXDocument.js';
 import { MaterialXLog } from './MaterialXLog.js';
 import { isZipBuffer, readMtlxArchive, createArchiveResolver } from './MaterialXArchive.js';
 
@@ -17,7 +22,7 @@ export interface MaterialXLoaderParseOptions {
   path?: string;
   materialName?: string;
   uvSpace?: 'bottom-left' | 'top-left';
-  interfaceValidator?: (rootNode: any, log: MaterialXLog) => void;
+  interfaceValidator?: (rootNode: MaterialXNode, log: MaterialXLog) => void;
   throwOnErrors?: boolean;
   archiveResolver?: ((uri: string) => string | null) | null;
 }
@@ -37,7 +42,7 @@ export interface MaterialXLoaderParseOptions {
 class MaterialXLoader extends Loader {
   // `Loader` has no TS types (three.js ships none for these subpaths), so these
   // inherited fields aren't visible to the type checker — declare them explicitly.
-  declare manager: any;
+  declare manager: ThreeLoadingManager;
   declare path: string;
 
   private archiveDisposer: (() => void) | null;
@@ -47,7 +52,7 @@ class MaterialXLoader extends Loader {
    *
    * @param manager - The loading manager.
    */
-  constructor(manager?: any) {
+  constructor(manager?: ThreeLoadingManager) {
     super(manager);
 
     /**
@@ -92,7 +97,7 @@ class MaterialXLoader extends Loader {
       .setResponseType('arraybuffer')
       .load(
         url,
-        (data: any) => {
+        (data: ArrayBuffer) => {
           try {
             onLoad(this.parseBuffer(data, url, options));
           } catch (e) {

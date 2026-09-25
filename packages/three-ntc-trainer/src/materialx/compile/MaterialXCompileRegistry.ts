@@ -35,7 +35,13 @@ import {
   sqrt,
   sign,
 } from 'three/tsl';
-import { getComponentCountForType, normalizeSpaceName, toBooleanNode, toVec3Channels } from '../MaterialXUtils.js';
+import {
+  asDynamic,
+  getComponentCountForType,
+  normalizeSpaceName,
+  toBooleanNode,
+  toVec3Channels,
+} from '../MaterialXUtils.js';
 import { MaterialXLogCodes } from '../MaterialXLog.js';
 
 export interface MaterialXCompileContext {
@@ -79,7 +85,7 @@ const SWITCH_MAX_INDEX = 10;
 
 const getDefaultUvNode = (compileContext: MaterialXCompileContext) => compileContext.getTexcoordNode(0);
 
-const toBooleanMaskNode = (node: any) => toBooleanNode(node).select(float(1), float(0));
+const toBooleanMaskNode = (node: any) => asDynamic(toBooleanNode(node)).select(float(1), float(0));
 
 const getTextureAddressMode = (nodeX: any, inputName: string): string => {
   const value = nodeX.getInputValueByName(inputName);
@@ -279,7 +285,7 @@ const compileRangeNode = (nodeX: any) => {
   const result = isDegenerate.select(outLow, remapped);
   const clamped = min(max(result, outLow), outHigh);
 
-  return toBooleanNode(doClamp).select(clamped, result);
+  return asDynamic(toBooleanNode(doClamp)).select(clamped, result);
 };
 
 const getSwitchBranchNode = (nodeX: any, index: number) =>
@@ -475,7 +481,7 @@ const compileHexTiledTextureNode = (nodeX: any, compileContext: MaterialXCompile
         element(blended, 2),
         element(blended, 3),
       );
-      normalSample = toBooleanNode(flipGNode).select(flippedSample, blended);
+      normalSample = asDynamic(toBooleanNode(flipGNode)).select(flippedSample, blended);
     }
 
     return compileHexTiledNormalMapNode(nodeX, compileContext, toVec3Channels(normalSample));
