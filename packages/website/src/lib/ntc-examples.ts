@@ -1,4 +1,4 @@
-import { NTCLoader, NTCNodeMaterial } from 'three-ntc';
+import { NTCLoader, NTCNodeMaterial, type MLPLayer } from 'three-ntc';
 
 import { loadedModelInfo, type ModelInfoData } from './model-info.js';
 import { getSharedRenderer } from '@/lib/renderer';
@@ -41,7 +41,7 @@ export interface LoadedMaterial {
   constantChannels: string[];
   grids: LoadedMaterialGrid[];
   mlpLayers: LoadedMaterialMLPLayer[];
-  material: any;
+  material: NTCNodeMaterial;
 }
 
 export async function parseNtc(text: string): Promise<LoadedMaterial> {
@@ -54,7 +54,7 @@ export async function parseNtc(text: string): Promise<LoadedMaterial> {
   });
   const info = loadedModelInfo(manifest, cpuModel, channelClassification, name ?? 'Untitled');
   const { activeChannels, constantChannels, grids } = info;
-  const mlpLayers = (cpuModel?.decoder?.layers ?? []).map((l: any) => ({
+  const mlpLayers = (cpuModel?.decoder?.layers ?? []).map((l: MLPLayer) => ({
     inputSize: l.inputSize,
     outputSize: l.outputSize,
   }));
