@@ -52,7 +52,12 @@ function makeTextLabel(text: string): any {
 
   const planeHeight = 0.16;
   const geometry = new THREE.PlaneGeometry((planeHeight * width) / height, planeHeight);
-  const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false, depthTest: false });
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+  });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.renderOrder = 999;
   mesh.visible = false;

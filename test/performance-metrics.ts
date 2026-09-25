@@ -1,7 +1,7 @@
 /** Nearest-rank percentiles; keep raw observations alongside these summaries. */
 export function summarizeTimings(values: number[]) {
   if (!values.length || values.some((value) => !Number.isFinite(value) || value < 0)) {
-    throw new Error("Timing samples must be nonempty, finite, and nonnegative");
+    throw new Error('Timing samples must be nonempty, finite, and nonnegative');
   }
   const sorted = [...values].sort((a, b) => a - b);
   const percentile = (p: number) => sorted[Math.max(0, Math.ceil(p * sorted.length) - 1)]!;

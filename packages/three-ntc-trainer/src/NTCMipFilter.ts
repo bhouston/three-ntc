@@ -20,12 +20,7 @@ function weights(source: number, target: number, pixel: number) {
   }
   return taps.map(([i, w]) => [i, w / sum] as [number, number]);
 }
-export function createLanczosMipChain(
-  data: Float32Array,
-  width: number,
-  height: number,
-  channels = 4,
-): NTCSourceMip[] {
+export function createLanczosMipChain(data: Float32Array, width: number, height: number, channels = 4): NTCSourceMip[] {
   if (
     !Number.isInteger(width) ||
     width < 1 ||
@@ -35,7 +30,7 @@ export function createLanczosMipChain(
     channels < 1 ||
     data.length !== width * height * channels
   )
-    throw new Error("Invalid source mip dimensions or channel count");
+    throw new Error('Invalid source mip dimensions or channel count');
   const mips = [{ data: data.slice(), width, height }];
   while (width > 1 || height > 1) {
     const w = Math.max(1, Math.floor(width / 2)),

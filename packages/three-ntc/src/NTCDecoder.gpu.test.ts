@@ -9,13 +9,7 @@ import { evaluateNeuralTextureRaw } from './NTCDecoderTSL.js';
 import { buildLevelTextures, buildMipChainTexture } from './NTCHalfFloatTexture.js';
 import { NTCLoader } from './NTCLoader.js';
 import { NTCNodeMaterial } from './NTCNodeMaterial.js';
-import {
-  evaluateNTCCpu,
-  getRenderer,
-  makeModel,
-  pixelUv,
-  renderNodeToFloats,
-} from '../../../test/gpu-helpers.js';
+import { evaluateNTCCpu, getRenderer, makeModel, pixelUv, renderNodeToFloats } from '../../../test/gpu-helpers.js';
 
 const SIZE = 32;
 
@@ -28,14 +22,7 @@ beforeAll(async () => {
 async function renderDecoder(cpuModel: any, lod: number): Promise<Float32Array> {
   const mipChain = cpuModel.positionalEncoding ? null : buildMipChainTexture(cpuModel);
   const levelTextures = buildLevelTextures(cpuModel);
-  const outputs = evaluateNeuralTextureRaw(
-    uv(),
-    cpuModel,
-    mipChain,
-    null,
-    float(lod),
-    levelTextures,
-  );
+  const outputs = evaluateNeuralTextureRaw(uv(), cpuModel, mipChain, null, float(lod), levelTextures);
   const node = vec4(outputs[0], outputs[1], outputs[2], outputs[3] ?? float(0));
   const pixels = await renderNodeToFloats(renderer, node, SIZE);
   mipChain?.dispose();
@@ -58,9 +45,16 @@ describe('harness', () => {
 
 describe('evaluateNeuralTextureRaw matches the CPU reference decoder', () => {
   it('preserves native alternating features inside a multi-mip band', async () => {
-    const model = makeModel(1, { gridChannels: 1, levels: 2, baseResolution: 4,
-      mipsPerLevel: 2, hiddenSizes: [], outputChannels: 4, textureResolution: 16 });
-    model.grids[0].data.set(Array.from({length: 16}, (_, i) => i % 2));
+    const model = makeModel(1, {
+      gridChannels: 1,
+      levels: 2,
+      baseResolution: 4,
+      mipsPerLevel: 2,
+      hiddenSizes: [],
+      outputChannels: 4,
+      textureResolution: 16,
+    });
+    model.grids[0].data.set(Array.from({ length: 16 }, (_, i) => i % 2));
     const layer = model.decoder.layers[0];
     layer.weights.fill(0);
     layer.biases.fill(0);
@@ -71,7 +65,14 @@ describe('evaluateNeuralTextureRaw matches the CPU reference decoder', () => {
     expect(Math.max(...a.map((v, i) => Math.abs(v - b[i])))).toBeLessThan(0.002);
   });
   const configs = [
-    { positionalEncoding: true, dualGrid: true, hiddenActivation: 'hgelu', mipsPerLevel: 2, gridChannels: 8, lowResChannels: 12 },
+    {
+      positionalEncoding: true,
+      dualGrid: true,
+      hiddenActivation: 'hgelu',
+      mipsPerLevel: 2,
+      gridChannels: 8,
+      lowResChannels: 12,
+    },
     { positionalEncoding: false, dualGrid: false, hiddenActivation: 'relu', mipsPerLevel: 1 },
     { positionalEncoding: false, dualGrid: true, hiddenActivation: 'hgelu', mipsPerLevel: 2 },
     { positionalEncoding: true, dualGrid: false, hiddenActivation: 'relu', mipsPerLevel: 2 },

@@ -22,50 +22,46 @@ import { encodeNTC } from './NTCManifest.js';
  * ```
  */
 class NTCExporter {
+  /**
+   * Parses the given trained NTC material and generates the `.ntc` manifest.
+   *
+   * @param material - A trained `NTCNodeMaterial` (must carry `cpuModel`, `activeChannels`, `channels`).
+   * @param options - The export options.
+   * @return The `.ntc` manifest - JSON-serializable as-is (`JSON.stringify( manifest )`).
+   */
+  parse(material: any, options: NTCExporterOptions = {}): any {
+    if (!material || !material.cpuModel || !material.activeChannels) {
+      throw new Error(
+        'THREE.NTCExporter: material must be a trained NTCNodeMaterial (missing cpuModel/activeChannels).',
+      );
+    }
 
-	/**
-	 * Parses the given trained NTC material and generates the `.ntc` manifest.
-	 *
-	 * @param material - A trained `NTCNodeMaterial` (must carry `cpuModel`, `activeChannels`, `channels`).
-	 * @param options - The export options.
-	 * @return The `.ntc` manifest - JSON-serializable as-is (`JSON.stringify( manifest )`).
-	 */
-	parse( material: any, options: NTCExporterOptions = {} ): any {
+    const channelClassification = {
+      activeChannels: material.activeChannels,
+      constantValues: material._constantValues || {},
+      totalChannels: material.cpuModel.outputChannels,
+      packCount: Math.ceil(material.cpuModel.outputChannels / 4),
+      renderFlags: { side: material.side, transparent: material.transparent },
+    };
 
-		if ( ! material || ! material.cpuModel || ! material.activeChannels ) {
-
-			throw new Error( 'THREE.NTCExporter: material must be a trained NTCNodeMaterial (missing cpuModel/activeChannels).' );
-
-		}
-
-		const channelClassification = {
-			activeChannels: material.activeChannels,
-			constantValues: material._constantValues || {},
-			totalChannels: material.cpuModel.outputChannels,
-			packCount: Math.ceil( material.cpuModel.outputChannels / 4 ),
-			renderFlags: { side: material.side, transparent: material.transparent }
-		};
-
-		return encodeNTC( material.cpuModel, channelClassification, options );
-
-	}
-
+    return encodeNTC(material.cpuModel, channelClassification, options);
+  }
 }
 
 /**
  * NTC exporter options.
  */
 interface NTCExporterOptions {
-	/** A display name embedded in the manifest. */
-	name?: string;
-	/** A free-form provenance string embedded in the manifest. */
-	source?: string;
-	/** The latent grid's wrap mode. */
-	wrap?: 'repeat' | 'clamp';
-	/** Explicit per-level `[min, max]` quantization ranges, overriding both `material.cpuModel.quantizationRange` (QAT) and a plain min/max scan. */
-	quantizationRanges?: Array<[ number, number ]>;
-	/** Overrides `material.cpuModel.uvTransform` (see `NTCNodeMaterial.js`) - a mesh/query-UV-to-local-space affine transform. Omitted from the manifest when identity/not supplied. */
-	uvTransform?: unknown;
+  /** A display name embedded in the manifest. */
+  name?: string;
+  /** A free-form provenance string embedded in the manifest. */
+  source?: string;
+  /** The latent grid's wrap mode. */
+  wrap?: 'repeat' | 'clamp';
+  /** Explicit per-level `[min, max]` quantization ranges, overriding both `material.cpuModel.quantizationRange` (QAT) and a plain min/max scan. */
+  quantizationRanges?: Array<[number, number]>;
+  /** Overrides `material.cpuModel.uvTransform` (see `NTCNodeMaterial.js`) - a mesh/query-UV-to-local-space affine transform. Omitted from the manifest when identity/not supplied. */
+  uvTransform?: unknown;
 }
 
 export { NTCExporter };

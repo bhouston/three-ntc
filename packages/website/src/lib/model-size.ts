@@ -1,7 +1,10 @@
 import type { NTCSamplingMode } from 'three-ntc';
 import {
-  computeDecoderInputSize, computeGridLevels, computeMLPFlops,
-  computeMLPParamCount, computeModelFootprint,
+  computeDecoderInputSize,
+  computeGridLevels,
+  computeMLPFlops,
+  computeMLPParamCount,
+  computeModelFootprint,
 } from 'three-ntc-trainer';
 
 export interface ModelSizeSettings {
@@ -18,10 +21,17 @@ export interface ModelSizeSettings {
 /** The website trains four-channel G0 and G1 grids. No model allocation needed. */
 export function estimateModelSize(settings: ModelSizeSettings, outputChannels: number) {
   const resolutions = computeGridLevels(settings.baseResolution, settings.levels);
-  const gridParams = resolutions.reduce((sum, r) =>
-    sum + 4 * (r * r + (settings.dualGrid ? Math.max(1, Math.floor(r / 2)) ** 2 : 0)), 0);
+  const gridParams = resolutions.reduce(
+    (sum, r) => sum + 4 * (r * r + (settings.dualGrid ? Math.max(1, Math.floor(r / 2)) ** 2 : 0)),
+    0,
+  );
   const inputSize = computeDecoderInputSize(4, settings.positionalEncoding, settings.dualGrid);
-  const shape = { inputSize, hiddenSize: settings.hiddenSize, hiddenLayers: settings.hiddenLayers, outputSize: outputChannels };
+  const shape = {
+    inputSize,
+    hiddenSize: settings.hiddenSize,
+    hiddenLayers: settings.hiddenLayers,
+    outputSize: outputChannels,
+  };
   const mlpParams = computeMLPParamCount(shape);
   const flopsPerDecode = computeMLPFlops(shape);
   const decoderEvaluations = settings.samplingMode === 'trilinear' ? 8 : 1;
@@ -29,6 +39,11 @@ export function estimateModelSize(settings: ModelSizeSettings, outputChannels: n
   const gridStorageBits = settings.quantization === 'uint2' ? 2 : settings.quantization === 'uint4' ? 4 : 8;
   return {
     ...computeModelFootprint({ gridParams, mlpParams, flops: flopsPerDecode * decoderEvaluations, gridStorageBits }),
-    gridParams, mlpParams, inputSize, gridStorageBits, flopsPerDecode, decoderEvaluations,
+    gridParams,
+    mlpParams,
+    inputSize,
+    gridStorageBits,
+    flopsPerDecode,
+    decoderEvaluations,
   };
 }

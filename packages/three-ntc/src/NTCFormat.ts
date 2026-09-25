@@ -29,24 +29,24 @@ const VERSION = 2;
  * TSL node-graph values, not plain JS values.
  */
 export interface NTCChannel {
-	key: string;
-	size: number;
-	activation?: NTCActivation;
-	type?: string;
-	nodeKeys: string[];
-	clampRange: [number, number] | null;
-	defaultValue: any;
-	resolveNode: ( material: any ) => any;
-	resolveConstant: ( material: any ) => any;
-	applyActive: ( targetMaterial: any, sliceNode: any ) => void;
-	applyConstant: ( targetMaterial: any, constantValue: any ) => void;
-	decodeConstant?: ( value: any ) => any;
-	transformBakeComponent?: ( component: any, index: number ) => any;
+  key: string;
+  size: number;
+  activation?: NTCActivation;
+  type?: string;
+  nodeKeys: string[];
+  clampRange: [number, number] | null;
+  defaultValue: any;
+  resolveNode: (material: any) => any;
+  resolveConstant: (material: any) => any;
+  applyActive: (targetMaterial: any, sliceNode: any) => void;
+  applyConstant: (targetMaterial: any, constantValue: any) => void;
+  decodeConstant?: (value: any) => any;
+  transformBakeComponent?: (component: any, index: number) => any;
 }
 
 /** A channel descriptor assigned a flat offset by `layoutChannels`. */
 export interface NTCLayoutChannel extends NTCChannel {
-	offset: number;
+  offset: number;
 }
 
 /**
@@ -138,22 +138,18 @@ export interface NTCLayoutChannel extends NTCChannel {
  * defaults to a generic size-based label ('float'/'float2'/'float3').
  */
 
-function resolveScalarNode( material: any, nodeKey: string, propertyKey: string, fallback: number ): any {
+function resolveScalarNode(material: any, nodeKey: string, propertyKey: string, fallback: number): any {
+  if (material[nodeKey]) return float(material[nodeKey]);
+  if (material[propertyKey] !== undefined) return float(material[propertyKey]);
 
-	if ( material[ nodeKey ] ) return float( material[ nodeKey ] );
-	if ( material[ propertyKey ] !== undefined ) return float( material[ propertyKey ] );
-
-	return float( fallback );
-
+  return float(fallback);
 }
 
-function resolveColorNode( material: any, nodeKey: string, propertyKey: string, fallback: any ): any {
+function resolveColorNode(material: any, nodeKey: string, propertyKey: string, fallback: any): any {
+  if (material[nodeKey]) return vec3(material[nodeKey]);
+  if (material[propertyKey] !== undefined) return vec3(material[propertyKey]);
 
-	if ( material[ nodeKey ] ) return vec3( material[ nodeKey ] );
-	if ( material[ propertyKey ] !== undefined ) return vec3( material[ propertyKey ] );
-
-	return vec3( fallback );
-
+  return vec3(fallback);
 }
 
 /**
@@ -164,31 +160,32 @@ function resolveColorNode( material: any, nodeKey: string, propertyKey: string, 
  * reconstructed vector, a decomposed strength/rotation pair) are written out
  * by hand below instead of forcing them through this factory.
  */
-function simpleScalarChannel( key: string, { activation, clampRange, defaultValue }: { activation?: NTCActivation; clampRange: [number, number] | null; defaultValue: number } ): NTCChannel {
-
-	return {
-		key,
-		size: 1,
-		activation,
-		nodeKeys: [ key + 'Node' ],
-		clampRange,
-		defaultValue,
-		resolveNode: ( material: any ) => resolveScalarNode( material, key + 'Node', key, defaultValue ),
-		resolveConstant: ( material: any ) => ( material[ key ] !== undefined ? material[ key ] : defaultValue ),
-		applyActive: ( targetMaterial: any, sliceNode: any ) => {
-
-			targetMaterial[ key + 'Node' ] = clampRange ? sliceNode.clamp( ...clampRange ) : sliceNode;
-
-		},
-		applyConstant: ( targetMaterial: any, constantValue: any ) => {
-
-			// A literal `float(...)` constant node, not the plain `key`
-			// property - see this file's top doc comment for why.
-			targetMaterial[ key + 'Node' ] = float( constantValue );
-
-		}
-	};
-
+function simpleScalarChannel(
+  key: string,
+  {
+    activation,
+    clampRange,
+    defaultValue,
+  }: { activation?: NTCActivation; clampRange: [number, number] | null; defaultValue: number },
+): NTCChannel {
+  return {
+    key,
+    size: 1,
+    activation,
+    nodeKeys: [key + 'Node'],
+    clampRange,
+    defaultValue,
+    resolveNode: (material: any) => resolveScalarNode(material, key + 'Node', key, defaultValue),
+    resolveConstant: (material: any) => (material[key] !== undefined ? material[key] : defaultValue),
+    applyActive: (targetMaterial: any, sliceNode: any) => {
+      targetMaterial[key + 'Node'] = clampRange ? sliceNode.clamp(...clampRange) : sliceNode;
+    },
+    applyConstant: (targetMaterial: any, constantValue: any) => {
+      // A literal `float(...)` constant node, not the plain `key`
+      // property - see this file's top doc comment for why.
+      targetMaterial[key + 'Node'] = float(constantValue);
+    },
+  };
 }
 
 /**
@@ -203,61 +200,65 @@ function simpleScalarChannel( key: string, { activation, clampRange, defaultValu
  * matching this addon's existing behavior of not round-tripping a distinct
  * intensity scalar for these two channels.
  */
-function colorIntensityChannel( key: string, { nodeKey, colorProperty, intensityProperty, applyActive, applyConstant, activation = 'sigmoid' }: {
-	nodeKey: string;
-	colorProperty: string;
-	intensityProperty: string;
-	activation?: NTCActivation;
-	applyActive: ( targetMaterial: any, sliceNode: any ) => void;
-	applyConstant: ( targetMaterial: any, constantValue: any ) => void;
-} ): NTCChannel {
+function colorIntensityChannel(
+  key: string,
+  {
+    nodeKey,
+    colorProperty,
+    intensityProperty,
+    applyActive,
+    applyConstant,
+    activation = 'sigmoid',
+  }: {
+    nodeKey: string;
+    colorProperty: string;
+    intensityProperty: string;
+    activation?: NTCActivation;
+    applyActive: (targetMaterial: any, sliceNode: any) => void;
+    applyConstant: (targetMaterial: any, constantValue: any) => void;
+  },
+): NTCChannel {
+  return {
+    key,
+    size: 3,
+    activation,
+    type: 'color',
+    nodeKeys: [nodeKey],
+    clampRange: activation === 'sigmoid' ? [0, 1] : null,
+    defaultValue: [0, 0, 0],
+    resolveNode: (material: any) => {
+      // `material[nodeKey]`, when set, is *already* the fully-resolved
+      // color*intensity value - exactly what MeshPhysicalNodeMaterial's
+      // own shading assigns it as-is, with no further `*intensityProperty`
+      // scaling (see `emissive.assign(vec3(emissiveNode ? emissiveNode :
+      // materialEmissive))` / the equivalent `sheenNode` line in
+      // src/materials/nodes/MeshPhysicalNodeMaterial.js - the intensity
+      // multiply only happens *inside* `materialEmissive`/`materialSheen`'s
+      // own plain-property fallback, in src/nodes/accessors/MaterialNode.js).
+      // Multiplying it by `intensityProperty` again here - as this used to
+      // do unconditionally - silently zeroed out every MaterialX-sourced
+      // sheen material: `MaterialXSurfaceMappings.js` always sets
+      // `sheenNode` directly (already `sheen_weight * sheen_color`) and
+      // never touches the separate `material.sheen` scalar, which defaults
+      // to `0` (unlike `emissiveIntensity`'s default of `1`, which
+      // happened to make the same bug a no-op for `emissive` - by luck,
+      // not by design). Only the plain-property fallback path below still
+      // needs the explicit multiply, since three.js itself only folds
+      // color*intensity together when resolving *that* path.
+      if (material[nodeKey]) return vec3(material[nodeKey]);
 
-	return {
-		key,
-		size: 3,
-		activation,
-		type: 'color',
-		nodeKeys: [ nodeKey ],
-		clampRange: activation === 'sigmoid' ? [0,1] : null,
-		defaultValue: [ 0, 0, 0 ],
-		resolveNode: ( material: any ) => {
-
-			// `material[nodeKey]`, when set, is *already* the fully-resolved
-			// color*intensity value - exactly what MeshPhysicalNodeMaterial's
-			// own shading assigns it as-is, with no further `*intensityProperty`
-			// scaling (see `emissive.assign(vec3(emissiveNode ? emissiveNode :
-			// materialEmissive))` / the equivalent `sheenNode` line in
-			// src/materials/nodes/MeshPhysicalNodeMaterial.js - the intensity
-			// multiply only happens *inside* `materialEmissive`/`materialSheen`'s
-			// own plain-property fallback, in src/nodes/accessors/MaterialNode.js).
-			// Multiplying it by `intensityProperty` again here - as this used to
-			// do unconditionally - silently zeroed out every MaterialX-sourced
-			// sheen material: `MaterialXSurfaceMappings.js` always sets
-			// `sheenNode` directly (already `sheen_weight * sheen_color`) and
-			// never touches the separate `material.sheen` scalar, which defaults
-			// to `0` (unlike `emissiveIntensity`'s default of `1`, which
-			// happened to make the same bug a no-op for `emissive` - by luck,
-			// not by design). Only the plain-property fallback path below still
-			// needs the explicit multiply, since three.js itself only folds
-			// color*intensity together when resolving *that* path.
-			if ( material[ nodeKey ] ) return vec3( material[ nodeKey ] );
-
-			const color = material[ colorProperty ] || new THREE.Color( 0, 0, 0 );
-			const intensity = material[ intensityProperty ] !== undefined ? material[ intensityProperty ] : 1;
-			return vec3( color ).mul( intensity );
-
-		},
-		resolveConstant: ( material: any ) => {
-
-			const c = material[ colorProperty ] || new THREE.Color( 0, 0, 0 );
-			const i = material[ intensityProperty ] !== undefined ? material[ intensityProperty ] : 1;
-			return [ c.r * i, c.g * i, c.b * i ];
-
-		},
-		applyActive,
-		applyConstant
-	};
-
+      const color = material[colorProperty] || new THREE.Color(0, 0, 0);
+      const intensity = material[intensityProperty] !== undefined ? material[intensityProperty] : 1;
+      return vec3(color).mul(intensity);
+    },
+    resolveConstant: (material: any) => {
+      const c = material[colorProperty] || new THREE.Color(0, 0, 0);
+      const i = material[intensityProperty] !== undefined ? material[intensityProperty] : 1;
+      return [c.r * i, c.g * i, c.b * i];
+    },
+    applyActive,
+    applyConstant,
+  };
 }
 
 /**
@@ -274,39 +275,34 @@ function colorIntensityChannel( key: string, { nodeKey, colorProperty, intensity
  * per-material - there's no equivalent per-material "IOR range" concept in
  * three.js/glTF to read one from).
  */
-function fixedRangeScalarChannel( key: string, { min, max, defaultValue }: { min: number; max: number; defaultValue: number } ): NTCChannel {
+function fixedRangeScalarChannel(
+  key: string,
+  { min, max, defaultValue }: { min: number; max: number; defaultValue: number },
+): NTCChannel {
+  const range = max - min;
 
-	const range = max - min;
-
-	return {
-		key,
-		size: 1,
-		activation: 'sigmoid',
-		nodeKeys: [ key + 'Node' ],
-		clampRange: null,
-		defaultValue,
-		resolveNode: ( material: any ) => {
-
-			const raw = resolveScalarNode( material, key + 'Node', key, defaultValue );
-			return raw.sub( min ).div( range ).clamp( 0, 1 );
-
-		},
-		resolveConstant: ( material: any ) => ( material[ key ] !== undefined ? material[ key ] : defaultValue ),
-		applyActive: ( targetMaterial: any, sliceNode: any ) => {
-
-			targetMaterial[ key + 'Node' ] = sliceNode.clamp( 0, 1 ).mul( range ).add( min );
-
-		},
-		applyConstant: ( targetMaterial: any, constantValue: any ) => {
-
-			// The physical value itself (not a fraction) - matches every other
-			// channel's `applyConstant`/`resolveConstant` pairing; only the
-			// *trained* path needs the [0,1] fraction round trip above.
-			targetMaterial[ key + 'Node' ] = float( constantValue );
-
-		}
-	};
-
+  return {
+    key,
+    size: 1,
+    activation: 'sigmoid',
+    nodeKeys: [key + 'Node'],
+    clampRange: null,
+    defaultValue,
+    resolveNode: (material: any) => {
+      const raw = resolveScalarNode(material, key + 'Node', key, defaultValue);
+      return raw.sub(min).div(range).clamp(0, 1);
+    },
+    resolveConstant: (material: any) => (material[key] !== undefined ? material[key] : defaultValue),
+    applyActive: (targetMaterial: any, sliceNode: any) => {
+      targetMaterial[key + 'Node'] = sliceNode.clamp(0, 1).mul(range).add(min);
+    },
+    applyConstant: (targetMaterial: any, constantValue: any) => {
+      // The physical value itself (not a fraction) - matches every other
+      // channel's `applyConstant`/`resolveConstant` pairing; only the
+      // *trained* path needs the [0,1] fraction round trip above.
+      targetMaterial[key + 'Node'] = float(constantValue);
+    },
+  };
 }
 
 /**
@@ -316,37 +312,29 @@ function fixedRangeScalarChannel( key: string, { min, max, defaultValue }: { min
  * above). Trained/resolved directly as the Color's (r, g, b), sigmoid-bounded
  * to [0,1] like every other reflectance-style color channel.
  */
-function simpleColorChannel( key: string, { defaultValue }: { defaultValue: [ number, number, number ] } ): NTCChannel {
+function simpleColorChannel(key: string, { defaultValue }: { defaultValue: [number, number, number] }): NTCChannel {
+  const fallbackColor = () => new THREE.Color(...defaultValue);
 
-	const fallbackColor = () => new THREE.Color( ...defaultValue );
-
-	return {
-		key,
-		size: 3,
-		activation: 'sigmoid',
-		type: 'color',
-		nodeKeys: [ key + 'Node' ],
-		clampRange: [ 0, 1 ],
-		defaultValue,
-		resolveNode: ( material: any ) => resolveColorNode( material, key + 'Node', key, fallbackColor() ),
-		resolveConstant: ( material: any ) => {
-
-			const c = material[ key ] || fallbackColor();
-			return [ c.r, c.g, c.b ];
-
-		},
-		applyActive: ( targetMaterial: any, sliceNode: any ) => {
-
-			targetMaterial[ key + 'Node' ] = sliceNode.clamp( 0, 1 );
-
-		},
-		applyConstant: ( targetMaterial: any, constantValue: any ) => {
-
-			targetMaterial[ key + 'Node' ] = vec3( ...constantValue );
-
-		}
-	};
-
+  return {
+    key,
+    size: 3,
+    activation: 'sigmoid',
+    type: 'color',
+    nodeKeys: [key + 'Node'],
+    clampRange: [0, 1],
+    defaultValue,
+    resolveNode: (material: any) => resolveColorNode(material, key + 'Node', key, fallbackColor()),
+    resolveConstant: (material: any) => {
+      const c = material[key] || fallbackColor();
+      return [c.r, c.g, c.b];
+    },
+    applyActive: (targetMaterial: any, sliceNode: any) => {
+      targetMaterial[key + 'Node'] = sliceNode.clamp(0, 1);
+    },
+    applyConstant: (targetMaterial: any, constantValue: any) => {
+      targetMaterial[key + 'Node'] = vec3(...constantValue);
+    },
+  };
 }
 
 /**
@@ -366,26 +354,24 @@ function simpleColorChannel( key: string, { defaultValue }: { defaultValue: [ nu
  * respectively - both rely on this channel already having run first, so it
  * must stay ordered before `iridescenceThickness` in `CHANNELS`).
  */
-function iridescenceThicknessRangeChannel( index: 0 | 1, fallback: number ): NTCChannel {
+function iridescenceThicknessRangeChannel(index: 0 | 1, fallback: number): NTCChannel {
+  const key = index === 0 ? 'iridescenceThicknessRangeMin' : 'iridescenceThicknessRangeMax';
 
-	const key = index === 0 ? 'iridescenceThicknessRangeMin' : 'iridescenceThicknessRangeMax';
-
-	return {
-		key,
-		size: 1,
-		nodeKeys: [ '__never__' ],
-		clampRange: null,
-		defaultValue: fallback,
-		resolveNode: ( material: any ) => float( material.iridescenceThicknessRange ? material.iridescenceThicknessRange[ index ] : fallback ),
-		resolveConstant: ( material: any ) => ( material.iridescenceThicknessRange ? material.iridescenceThicknessRange[ index ] : fallback ),
-		applyActive: () => {}, // never reached - see nodeKeys above
-		applyConstant: ( targetMaterial: any, constantValue: any ) => {
-
-			targetMaterial.iridescenceThicknessRange[ index ] = constantValue;
-
-		}
-	};
-
+  return {
+    key,
+    size: 1,
+    nodeKeys: ['__never__'],
+    clampRange: null,
+    defaultValue: fallback,
+    resolveNode: (material: any) =>
+      float(material.iridescenceThicknessRange ? material.iridescenceThicknessRange[index] : fallback),
+    resolveConstant: (material: any) =>
+      material.iridescenceThicknessRange ? material.iridescenceThicknessRange[index] : fallback,
+    applyActive: () => {}, // never reached - see nodeKeys above
+    applyConstant: (targetMaterial: any, constantValue: any) => {
+      targetMaterial.iridescenceThicknessRange[index] = constantValue;
+    },
+  };
 }
 
 /**
@@ -396,29 +382,26 @@ function iridescenceThicknessRangeChannel( index: 0 | 1, fallback: number ): NTC
  * Shared by `normal` and `clearcoatNormal` below, which differ only in which
  * node/property pair they read from and write to.
  */
-function normalChannel( key: string, materialNodeProperty: string ): NTCChannel {
-
-	return {
-		key,
-		size: 2,
-		activation: 'tanh',
-		type: 'normal',
-		nodeKeys: [ materialNodeProperty ],
-		clampRange: null,
-		defaultValue: [ 0, 0, 1 ],
-		resolveNode: ( material: any ) => ( material[ materialNodeProperty ] ? vec3( material[ materialNodeProperty ] ) : vec3( 0, 0, 1 ) ),
-		resolveConstant: () => [ 0, 0, 1 ],
-		applyActive: ( targetMaterial: any, sliceNode: any ) => {
-
-			targetMaterial[ materialNodeProperty ] = OUTPUT_TYPES.normal.reconstruct( sliceNode );
-
-		},
-		// A constant normal/clearcoatNormal channel means "no bump" - leave
-		// the corresponding *Node property unset entirely, rather than wiring
-		// up a node that always evaluates to the flat [0,0,1] default.
-		applyConstant: () => {}
-	};
-
+function normalChannel(key: string, materialNodeProperty: string): NTCChannel {
+  return {
+    key,
+    size: 2,
+    activation: 'tanh',
+    type: 'normal',
+    nodeKeys: [materialNodeProperty],
+    clampRange: null,
+    defaultValue: [0, 0, 1],
+    resolveNode: (material: any) =>
+      material[materialNodeProperty] ? vec3(material[materialNodeProperty]) : vec3(0, 0, 1),
+    resolveConstant: () => [0, 0, 1],
+    applyActive: (targetMaterial: any, sliceNode: any) => {
+      targetMaterial[materialNodeProperty] = OUTPUT_TYPES.normal.reconstruct(sliceNode);
+    },
+    // A constant normal/clearcoatNormal channel means "no bump" - leave
+    // the corresponding *Node property unset entirely, rather than wiring
+    // up a node that always evaluates to the flat [0,0,1] default.
+    applyConstant: () => {},
+  };
 }
 
 /**
@@ -431,268 +414,262 @@ function normalChannel( key: string, materialNodeProperty: string ): NTCChannel 
 const ATTENUATION_DISTANCE_INFINITY_SENTINEL = 1e6;
 
 const CHANNELS: NTCChannel[] = [
-	{
-		key: 'albedo', size: 3, activation: 'sigmoid', type: 'color', nodeKeys: [ 'colorNode' ], clampRange: null, defaultValue: [ 1, 1, 1 ],
-		resolveNode: ( material: any ) => ( material.colorNode ? vec3( material.colorNode ) : vec3( material.color || new THREE.Color( 1, 1, 1 ) ) ),
-		resolveConstant: ( material: any ) => {
+  {
+    key: 'albedo',
+    size: 3,
+    activation: 'sigmoid',
+    type: 'color',
+    nodeKeys: ['colorNode'],
+    clampRange: null,
+    defaultValue: [1, 1, 1],
+    resolveNode: (material: any) =>
+      material.colorNode ? vec3(material.colorNode) : vec3(material.color || new THREE.Color(1, 1, 1)),
+    resolveConstant: (material: any) => {
+      const c = material.color || new THREE.Color(1, 1, 1);
+      return [c.r, c.g, c.b];
+    },
+    // Also stashed as `_shadedColorNode` - swapped back in by
+    // NTCNodeMaterial.setDebugView('shaded') - since albedo is
+    // the one channel whose trained slice doubles as the material's real,
+    // lit `colorNode`.
+    applyActive: (targetMaterial: any, sliceNode: any) => {
+      targetMaterial._shadedColorNode = sliceNode;
+      targetMaterial.colorNode = sliceNode;
+    },
+    applyConstant: (targetMaterial: any, constantValue: any) => {
+      targetMaterial._shadedColorNode = vec3(...constantValue);
+      targetMaterial.colorNode = targetMaterial._shadedColorNode;
+    },
+  },
+  simpleScalarChannel('opacity', { activation: 'sigmoid', clampRange: [0, 1], defaultValue: 1 }),
+  // 2-component tangent-space (dx, dy) offset, not a full xyz vector - z is
+  // reconstructed at consumption time as sqrt(1 - dx*dx - dy*dy), see
+  // NTCOutputTypes.reconstructFinalNormal.
+  normalChannel('normal', 'normalNode'),
+  simpleScalarChannel('roughness', { activation: 'sigmoid', clampRange: [0.02, 1], defaultValue: 1 }),
+  simpleScalarChannel('metalness', { activation: 'sigmoid', clampRange: [0, 1], defaultValue: 0 }),
+  simpleScalarChannel('clearcoat', { activation: 'sigmoid', clampRange: [0, 1], defaultValue: 0 }),
+  simpleScalarChannel('clearcoatRoughness', { activation: 'sigmoid', clampRange: [0.02, 1], defaultValue: 0 }),
+  normalChannel('clearcoatNormal', 'clearcoatNormalNode'),
+  // Thin-film interference (glTF KHR_materials_iridescence /
+  // MeshPhysicalMaterial.iridescence*) - a distinct surface layer from
+  // clearcoat, spatially-varying on real-world sources (oil slicks,
+  // anodized metal, soap film) via its strength and film thickness alike,
+  // so both get their own trainable channel rather than being folded into
+  // a single "iridescence" scalar.
+  simpleScalarChannel('iridescence', { activation: 'sigmoid', clampRange: [0, 1], defaultValue: 0 }),
+  // Index of refraction of the thin film itself - almost always spatially
+  // *constant* in practice (it's a material constant of the film, not
+  // something that's painted on), but trainable all the same for
+  // consistency with every other channel here. Trained strictly as a [0,1]
+  // fraction of a fixed [1.0, 2.333] window (glTF's own spec range) via
+  // `fixedRangeScalarChannel`, not an unbounded value merely clamped after
+  // the fact - the network is architecturally incapable of ever
+  // representing an out-of-range IOR, and stays in the same well-behaved
+  // (saturates both ends) 'sigmoid' regime every other bounded channel
+  // here trains in.
+  fixedRangeScalarChannel('iridescenceIOR', { min: 1.0, max: 2.333, defaultValue: 1.3 }),
+  // Thin-film thickness in nanometers. Unlike `iridescenceIOR` above, this
+  // doesn't train against a *fixed* range - it trains as a [0,1] fraction
+  // of the *source material's own* `iridescenceThicknessRange` (exactly
+  // the convention three.js/glTF's own `iridescenceThicknessMap` already
+  // uses: its green channel is a 0-1 fraction remapped by that same range
+  // - see MaterialNode.js's IRIDESCENCE_THICKNESS resolution), so the
+  // network never has to learn a range it wasn't told about, and never
+  // sees (or could output) a raw nanometer value outside [0,1]. The two
+  // `iridescenceThicknessRangeChannel` entries just below carry the range
+  // endpoints themselves through `constantValues`, verbatim off the
+  // source material - never trained, never adapted - and must run first
+  // in this array so `targetMaterial.iridescenceThicknessRange` is
+  // already correct by the time this channel's `applyActive`/
+  // `applyConstant` read it back.
+  iridescenceThicknessRangeChannel(0, 100),
+  iridescenceThicknessRangeChannel(1, 400),
+  {
+    key: 'iridescenceThickness',
+    size: 1,
+    activation: 'sigmoid',
+    nodeKeys: ['iridescenceThicknessNode'],
+    clampRange: [0, 1],
+    defaultValue: 1,
+    resolveNode: (material: any) => {
+      // No map at all -> always the declared maximum (fraction 1),
+      // matching MaterialNode.js's own IRIDESCENCE_THICKNESS fallback.
+      if (!material.iridescenceThicknessNode) return float(1);
 
-			const c = material.color || new THREE.Color( 1, 1, 1 );
-			return [ c.r, c.g, c.b ];
+      const [min, max] = material.iridescenceThicknessRange || [100, 400];
+      return float(material.iridescenceThicknessNode)
+        .sub(min)
+        .div(Math.max(max - min, 1e-6))
+        .clamp(0, 1);
+    },
+    resolveConstant: () => 1, // same "no map -> maximum" fallback as above
+    applyActive: (targetMaterial: any, sliceNode: any) => {
+      const [min, max] = targetMaterial.iridescenceThicknessRange;
+      targetMaterial.iridescenceThicknessNode = float(min).add(sliceNode.clamp(0, 1).mul(max - min));
+    },
+    applyConstant: (targetMaterial: any, constantValue: any) => {
+      const [min, max] = targetMaterial.iridescenceThicknessRange;
+      targetMaterial.iridescenceThicknessNode = float(min + constantValue * (max - min));
+    },
+  },
+  simpleScalarChannel('transmission', { activation: 'sigmoid', clampRange: [0, 1], defaultValue: 0 }),
+  // Dielectric specular reflectance multiplier - MeshPhysicalMaterial
+  // defaults this to 1 (full Fresnel reflectance at normal incidence, per
+  // `ior`), but a source material can turn its non-metal specular lobe down
+  // or fully off (e.g. a MaterialX `specular="0"` Lambertian). Without this
+  // channel that override was silently dropped on reconstruction - the
+  // neural material always inherited MeshPhysicalMaterial's `specularIntensity
+  // = 1` default regardless of what the source material set - producing a
+  // reconstruction that looks visibly shinier than a matte source despite
+  // matching roughness/metalness.
+  simpleScalarChannel('specularIntensity', { activation: 'sigmoid', clampRange: [0, 1], defaultValue: 1 }),
+  // Tint of the dielectric specular lobe `specularIntensity` scales - a
+  // separate channel from `specularIntensity` for the same reason
+  // `sheenColor`/`sheen` are separate: one is a color, one is a scalar
+  // multiplier, and a source material can vary either independently.
+  simpleColorChannel('specularColor', { defaultValue: [1, 1, 1] }),
+  // Base dielectric index of refraction - drives both the Fresnel specular
+  // response above and, when `transmission` is active, the refraction
+  // through the volume. Same `fixedRangeScalarChannel` treatment (and the
+  // same glTF-spec-derived bound) as `iridescenceIOR`.
+  fixedRangeScalarChannel('ior', { min: 1.0, max: 2.333, defaultValue: 1.5 }),
+  // Transmission *volume* properties - how far light travels, and how it's
+  // tinted, once it's inside the dielectric behind a `transmission`
+  // surface, as opposed to `transmission` itself (the fraction of light
+  // that enters the surface at all). `thickness` is a local scene-unit
+  // distance (unbounded, non-negative - 'softplus', same reasoning as
+  // `iridescenceIOR`/`iridescenceThickness` above) rather than a [0,1]
+  // fraction, so it deliberately isn't `clampRange`-bounded the way every
+  // sigmoid-activated channel here is.
+  simpleScalarChannel('thickness', { activation: 'softplus', clampRange: null, defaultValue: 0 }),
+  simpleColorChannel('attenuationColor', { defaultValue: [1, 1, 1] }),
+  // Absorption falloff distance - `MeshPhysicalMaterial.attenuationDistance`
+  // defaults to `Infinity` ("no absorption"/color-preserving as light
+  // travels through the volume), which is both a perfectly meaningful value
+  // to *apply* (a literal `float(Infinity)` TSL constant is not valid
+  // shader source, but a sufficiently large finite one is visually and
+  // numerically indistinguishable - Beer-Lambert extinction over any
+  // on-screen distance is already ~1 well before this) and an awkward one
+  // to *persist* (`JSON.stringify(Infinity)` silently degrades to `null`,
+  // which would then fail to round-trip back into a usable constant at
+  // all). `ATTENUATION_DISTANCE_INFINITY_SENTINEL` below is that finite
+  // stand-in - only ever relevant on the *constant* (untrained) path, since
+  // a trained slice always decodes to some finite softplus output; see
+  // this channel's `decodeConstant` (and `decodeConstantValues`'s doc
+  // comment) for the other half of this - converting the sentinel back to
+  // a real `Infinity` once it's safely out of JSON, for any caller that
+  // wants the true semantic value rather than the encoded one.
+  (() => {
+    const key = 'attenuationDistance';
+    const nodeKey = key + 'Node';
 
-		},
-		// Also stashed as `_shadedColorNode` - swapped back in by
-		// NTCNodeMaterial.setDebugView('shaded') - since albedo is
-		// the one channel whose trained slice doubles as the material's real,
-		// lit `colorNode`.
-		applyActive: ( targetMaterial: any, sliceNode: any ) => {
+    const encode = (value: number) => (Number.isFinite(value) ? value : ATTENUATION_DISTANCE_INFINITY_SENTINEL);
 
-			targetMaterial._shadedColorNode = sliceNode;
-			targetMaterial.colorNode = sliceNode;
+    return {
+      key,
+      size: 1,
+      activation: 'softplus' as NTCActivation,
+      nodeKeys: [nodeKey],
+      clampRange: [0, ATTENUATION_DISTANCE_INFINITY_SENTINEL] as [number, number],
+      defaultValue: ATTENUATION_DISTANCE_INFINITY_SENTINEL,
+      resolveNode: (material: any) => {
+        if (material[nodeKey]) return float(material[nodeKey]);
+        return float(encode(material.attenuationDistance !== undefined ? material.attenuationDistance : Infinity));
+      },
+      resolveConstant: (material: any) =>
+        encode(material.attenuationDistance !== undefined ? material.attenuationDistance : Infinity),
+      applyActive: (targetMaterial: any, sliceNode: any) => {
+        targetMaterial[nodeKey] = sliceNode.clamp(0, ATTENUATION_DISTANCE_INFINITY_SENTINEL);
+      },
+      applyConstant: (targetMaterial: any, constantValue: any) => {
+        targetMaterial[nodeKey] = float(constantValue);
+      },
+      // See this channel's doc comment above - only meaningful for a
+      // *constant* value (a trained one is never the sentinel, since
+      // softplus never produces it exactly).
+      decodeConstant: (value: number) => (value === ATTENUATION_DISTANCE_INFINITY_SENTINEL ? Infinity : value),
+    };
+  })(),
+  colorIntensityChannel('emissive', {
+    activation: 'softplus',
+    nodeKey: 'emissiveNode',
+    colorProperty: 'emissive',
+    intensityProperty: 'emissiveIntensity',
+    applyActive: (targetMaterial: any, sliceNode: any) => {
+      targetMaterial.emissiveNode = sliceNode;
+    },
+    applyConstant: (targetMaterial: any, constantValue: any) => {
+      targetMaterial.emissiveNode = vec3(...constantValue);
+    },
+  }),
+  // Anisotropy strength+rotation trained as a single signed 2D direction
+  // vector (ax, ay) = (cos(rotation)*strength, sin(rotation)*strength),
+  // exactly what MeshPhysicalMaterial.anisotropyNode itself consumes. This
+  // avoids training a wrapping [0,1] angle (which has a hard 0/1
+  // discontinuity and an atan2(0,0) singularity at zero strength) through a
+  // bounded activation.
+  {
+    key: 'anisotropy',
+    size: 2,
+    activation: 'tanh',
+    type: 'anisotropyVector',
+    nodeKeys: ['anisotropyNode'],
+    clampRange: null,
+    defaultValue: [0, 0],
+    resolveNode: (material: any) => {
+      if (material.anisotropyNode) return vec2(material.anisotropyNode);
 
-		},
-		applyConstant: ( targetMaterial: any, constantValue: any ) => {
+      const strength = material.anisotropy !== undefined ? material.anisotropy : 0;
+      const rotation = material.anisotropyRotation !== undefined ? material.anisotropyRotation : 0;
 
-			targetMaterial._shadedColorNode = vec3( ...constantValue );
-			targetMaterial.colorNode = targetMaterial._shadedColorNode;
-
-		}
-	},
-	simpleScalarChannel( 'opacity', { activation: 'sigmoid', clampRange: [ 0, 1 ], defaultValue: 1 } ),
-	// 2-component tangent-space (dx, dy) offset, not a full xyz vector - z is
-	// reconstructed at consumption time as sqrt(1 - dx*dx - dy*dy), see
-	// NTCOutputTypes.reconstructFinalNormal.
-	normalChannel( 'normal', 'normalNode' ),
-	simpleScalarChannel( 'roughness', { activation: 'sigmoid', clampRange: [ 0.02, 1 ], defaultValue: 1 } ),
-	simpleScalarChannel( 'metalness', { activation: 'sigmoid', clampRange: [ 0, 1 ], defaultValue: 0 } ),
-	simpleScalarChannel( 'clearcoat', { activation: 'sigmoid', clampRange: [ 0, 1 ], defaultValue: 0 } ),
-	simpleScalarChannel( 'clearcoatRoughness', { activation: 'sigmoid', clampRange: [ 0.02, 1 ], defaultValue: 0 } ),
-	normalChannel( 'clearcoatNormal', 'clearcoatNormalNode' ),
-	// Thin-film interference (glTF KHR_materials_iridescence /
-	// MeshPhysicalMaterial.iridescence*) - a distinct surface layer from
-	// clearcoat, spatially-varying on real-world sources (oil slicks,
-	// anodized metal, soap film) via its strength and film thickness alike,
-	// so both get their own trainable channel rather than being folded into
-	// a single "iridescence" scalar.
-	simpleScalarChannel( 'iridescence', { activation: 'sigmoid', clampRange: [ 0, 1 ], defaultValue: 0 } ),
-	// Index of refraction of the thin film itself - almost always spatially
-	// *constant* in practice (it's a material constant of the film, not
-	// something that's painted on), but trainable all the same for
-	// consistency with every other channel here. Trained strictly as a [0,1]
-	// fraction of a fixed [1.0, 2.333] window (glTF's own spec range) via
-	// `fixedRangeScalarChannel`, not an unbounded value merely clamped after
-	// the fact - the network is architecturally incapable of ever
-	// representing an out-of-range IOR, and stays in the same well-behaved
-	// (saturates both ends) 'sigmoid' regime every other bounded channel
-	// here trains in.
-	fixedRangeScalarChannel( 'iridescenceIOR', { min: 1.0, max: 2.333, defaultValue: 1.3 } ),
-	// Thin-film thickness in nanometers. Unlike `iridescenceIOR` above, this
-	// doesn't train against a *fixed* range - it trains as a [0,1] fraction
-	// of the *source material's own* `iridescenceThicknessRange` (exactly
-	// the convention three.js/glTF's own `iridescenceThicknessMap` already
-	// uses: its green channel is a 0-1 fraction remapped by that same range
-	// - see MaterialNode.js's IRIDESCENCE_THICKNESS resolution), so the
-	// network never has to learn a range it wasn't told about, and never
-	// sees (or could output) a raw nanometer value outside [0,1]. The two
-	// `iridescenceThicknessRangeChannel` entries just below carry the range
-	// endpoints themselves through `constantValues`, verbatim off the
-	// source material - never trained, never adapted - and must run first
-	// in this array so `targetMaterial.iridescenceThicknessRange` is
-	// already correct by the time this channel's `applyActive`/
-	// `applyConstant` read it back.
-	iridescenceThicknessRangeChannel( 0, 100 ),
-	iridescenceThicknessRangeChannel( 1, 400 ),
-	{
-		key: 'iridescenceThickness', size: 1, activation: 'sigmoid', nodeKeys: [ 'iridescenceThicknessNode' ], clampRange: [ 0, 1 ], defaultValue: 1,
-		resolveNode: ( material: any ) => {
-
-			// No map at all -> always the declared maximum (fraction 1),
-			// matching MaterialNode.js's own IRIDESCENCE_THICKNESS fallback.
-			if ( ! material.iridescenceThicknessNode ) return float( 1 );
-
-			const [ min, max ] = material.iridescenceThicknessRange || [ 100, 400 ];
-			return float( material.iridescenceThicknessNode ).sub( min ).div( Math.max( max - min, 1e-6 ) ).clamp( 0, 1 );
-
-		},
-		resolveConstant: () => 1, // same "no map -> maximum" fallback as above
-		applyActive: ( targetMaterial: any, sliceNode: any ) => {
-
-			const [ min, max ] = targetMaterial.iridescenceThicknessRange;
-			targetMaterial.iridescenceThicknessNode = float( min ).add( sliceNode.clamp( 0, 1 ).mul( max - min ) );
-
-		},
-		applyConstant: ( targetMaterial: any, constantValue: any ) => {
-
-			const [ min, max ] = targetMaterial.iridescenceThicknessRange;
-			targetMaterial.iridescenceThicknessNode = float( min + constantValue * ( max - min ) );
-
-		}
-	},
-	simpleScalarChannel( 'transmission', { activation: 'sigmoid', clampRange: [ 0, 1 ], defaultValue: 0 } ),
-	// Dielectric specular reflectance multiplier - MeshPhysicalMaterial
-	// defaults this to 1 (full Fresnel reflectance at normal incidence, per
-	// `ior`), but a source material can turn its non-metal specular lobe down
-	// or fully off (e.g. a MaterialX `specular="0"` Lambertian). Without this
-	// channel that override was silently dropped on reconstruction - the
-	// neural material always inherited MeshPhysicalMaterial's `specularIntensity
-	// = 1` default regardless of what the source material set - producing a
-	// reconstruction that looks visibly shinier than a matte source despite
-	// matching roughness/metalness.
-	simpleScalarChannel( 'specularIntensity', { activation: 'sigmoid', clampRange: [ 0, 1 ], defaultValue: 1 } ),
-	// Tint of the dielectric specular lobe `specularIntensity` scales - a
-	// separate channel from `specularIntensity` for the same reason
-	// `sheenColor`/`sheen` are separate: one is a color, one is a scalar
-	// multiplier, and a source material can vary either independently.
-	simpleColorChannel( 'specularColor', { defaultValue: [ 1, 1, 1 ] } ),
-	// Base dielectric index of refraction - drives both the Fresnel specular
-	// response above and, when `transmission` is active, the refraction
-	// through the volume. Same `fixedRangeScalarChannel` treatment (and the
-	// same glTF-spec-derived bound) as `iridescenceIOR`.
-	fixedRangeScalarChannel( 'ior', { min: 1.0, max: 2.333, defaultValue: 1.5 } ),
-	// Transmission *volume* properties - how far light travels, and how it's
-	// tinted, once it's inside the dielectric behind a `transmission`
-	// surface, as opposed to `transmission` itself (the fraction of light
-	// that enters the surface at all). `thickness` is a local scene-unit
-	// distance (unbounded, non-negative - 'softplus', same reasoning as
-	// `iridescenceIOR`/`iridescenceThickness` above) rather than a [0,1]
-	// fraction, so it deliberately isn't `clampRange`-bounded the way every
-	// sigmoid-activated channel here is.
-	simpleScalarChannel( 'thickness', { activation: 'softplus', clampRange: null, defaultValue: 0 } ),
-	simpleColorChannel( 'attenuationColor', { defaultValue: [ 1, 1, 1 ] } ),
-	// Absorption falloff distance - `MeshPhysicalMaterial.attenuationDistance`
-	// defaults to `Infinity` ("no absorption"/color-preserving as light
-	// travels through the volume), which is both a perfectly meaningful value
-	// to *apply* (a literal `float(Infinity)` TSL constant is not valid
-	// shader source, but a sufficiently large finite one is visually and
-	// numerically indistinguishable - Beer-Lambert extinction over any
-	// on-screen distance is already ~1 well before this) and an awkward one
-	// to *persist* (`JSON.stringify(Infinity)` silently degrades to `null`,
-	// which would then fail to round-trip back into a usable constant at
-	// all). `ATTENUATION_DISTANCE_INFINITY_SENTINEL` below is that finite
-	// stand-in - only ever relevant on the *constant* (untrained) path, since
-	// a trained slice always decodes to some finite softplus output; see
-	// this channel's `decodeConstant` (and `decodeConstantValues`'s doc
-	// comment) for the other half of this - converting the sentinel back to
-	// a real `Infinity` once it's safely out of JSON, for any caller that
-	// wants the true semantic value rather than the encoded one.
-	( () => {
-
-		const key = 'attenuationDistance';
-		const nodeKey = key + 'Node';
-
-		const encode = ( value: number ) => ( Number.isFinite( value ) ? value : ATTENUATION_DISTANCE_INFINITY_SENTINEL );
-
-		return {
-			key, size: 1, activation: 'softplus' as NTCActivation, nodeKeys: [ nodeKey ],
-			clampRange: [ 0, ATTENUATION_DISTANCE_INFINITY_SENTINEL ] as [ number, number ], defaultValue: ATTENUATION_DISTANCE_INFINITY_SENTINEL,
-			resolveNode: ( material: any ) => {
-
-				if ( material[ nodeKey ] ) return float( material[ nodeKey ] );
-				return float( encode( material.attenuationDistance !== undefined ? material.attenuationDistance : Infinity ) );
-
-			},
-			resolveConstant: ( material: any ) => encode( material.attenuationDistance !== undefined ? material.attenuationDistance : Infinity ),
-			applyActive: ( targetMaterial: any, sliceNode: any ) => {
-
-				targetMaterial[ nodeKey ] = sliceNode.clamp( 0, ATTENUATION_DISTANCE_INFINITY_SENTINEL );
-
-			},
-			applyConstant: ( targetMaterial: any, constantValue: any ) => {
-
-				targetMaterial[ nodeKey ] = float( constantValue );
-
-			},
-			// See this channel's doc comment above - only meaningful for a
-			// *constant* value (a trained one is never the sentinel, since
-			// softplus never produces it exactly).
-			decodeConstant: ( value: number ) => ( value === ATTENUATION_DISTANCE_INFINITY_SENTINEL ? Infinity : value )
-		};
-
-	} )(),
-	colorIntensityChannel( 'emissive', {
-		activation: 'softplus',
-		nodeKey: 'emissiveNode', colorProperty: 'emissive', intensityProperty: 'emissiveIntensity',
-		applyActive: ( targetMaterial: any, sliceNode: any ) => {
-
-			targetMaterial.emissiveNode = sliceNode;
-
-		},
-		applyConstant: ( targetMaterial: any, constantValue: any ) => {
-
-			targetMaterial.emissiveNode = vec3( ...constantValue );
-
-		}
-	} ),
-	// Anisotropy strength+rotation trained as a single signed 2D direction
-	// vector (ax, ay) = (cos(rotation)*strength, sin(rotation)*strength),
-	// exactly what MeshPhysicalMaterial.anisotropyNode itself consumes. This
-	// avoids training a wrapping [0,1] angle (which has a hard 0/1
-	// discontinuity and an atan2(0,0) singularity at zero strength) through a
-	// bounded activation.
-	{
-		key: 'anisotropy', size: 2, activation: 'tanh', type: 'anisotropyVector', nodeKeys: [ 'anisotropyNode' ], clampRange: null, defaultValue: [ 0, 0 ],
-		resolveNode: ( material: any ) => {
-
-			if ( material.anisotropyNode ) return vec2( material.anisotropyNode );
-
-			const strength = material.anisotropy !== undefined ? material.anisotropy : 0;
-			const rotation = material.anisotropyRotation !== undefined ? material.anisotropyRotation : 0;
-
-			return vec2( Math.cos( rotation ) * strength, Math.sin( rotation ) * strength );
-
-		},
-		resolveConstant: ( material: any ) => {
-
-			const strength = material.anisotropy !== undefined ? material.anisotropy : 0;
-			const rotation = material.anisotropyRotation !== undefined ? material.anisotropyRotation : 0;
-			return [ Math.cos( rotation ) * strength, Math.sin( rotation ) * strength ];
-
-		},
-		// Trained directly as a signed (ax, ay) direction vector, exactly the
-		// form MeshPhysicalMaterial.anisotropyNode itself expects - no cos/sin
-		// recombination needed.
-		applyActive: ( targetMaterial: any, sliceNode: any ) => {
-
-			targetMaterial.anisotropyNode = sliceNode;
-
-		},
-		// Applied as the same raw (ax, ay) direction node `anisotropyNode`
-		// itself expects - no hypot/atan2 decomposition into the legacy
-		// strength/rotation properties needed, since those would (like every
-		// other plain property) route through a live uniform instead of a
-		// literal constant node. The generic "skip applyConstant entirely
-		// when the resolved value equals this channel's own `defaultValue`"
-		// pass below (see its doc comment) is what actually keeps a
-		// zero-strength material from ever reaching this assignment - this
-		// closure doesn't need to know that itself.
-		applyConstant: ( targetMaterial: any, constantValue: any ) => {
-
-			targetMaterial.anisotropyNode = vec2( ...constantValue );
-
-		}
-	},
-	colorIntensityChannel( 'sheenColor', {
-		nodeKey: 'sheenNode', colorProperty: 'sheenColor', intensityProperty: 'sheen',
-		applyActive: ( targetMaterial: any, sliceNode: any ) => {
-
-			targetMaterial.sheenNode = sliceNode.clamp( 0, 1 );
-
-		},
-		applyConstant: ( targetMaterial: any, constantValue: any ) => {
-
-			targetMaterial.sheenNode = vec3( ...constantValue );
-
-		}
-	} ),
-	simpleScalarChannel( 'sheenRoughness', { activation: 'sigmoid', clampRange: [ 0.02, 1 ], defaultValue: 1 } ),
-	// Chromatic dispersion strength (KHR_materials_dispersion) - conventional
-	// content stays within [0,1] (glTF: "typically in the range of 0 to 1,
-	// but higher values are unrestricted"), so this is 'sigmoid'-activated,
-	// like every other naturally-bounded reflectance-style scalar here,
-	// rather than 'softplus' - an out-of-range source value beyond 1 would
-	// still just clamp to 1 like `roughness`/`clearcoat` do at their own
-	// bounds.
-	simpleScalarChannel( 'dispersion', { activation: 'sigmoid', clampRange: [ 0, 1 ], defaultValue: 0 } ),
-	simpleScalarChannel( 'retroreflectivity', { activation: 'sigmoid', clampRange: [ 0, 1 ], defaultValue: 0 } )
+      return vec2(Math.cos(rotation) * strength, Math.sin(rotation) * strength);
+    },
+    resolveConstant: (material: any) => {
+      const strength = material.anisotropy !== undefined ? material.anisotropy : 0;
+      const rotation = material.anisotropyRotation !== undefined ? material.anisotropyRotation : 0;
+      return [Math.cos(rotation) * strength, Math.sin(rotation) * strength];
+    },
+    // Trained directly as a signed (ax, ay) direction vector, exactly the
+    // form MeshPhysicalMaterial.anisotropyNode itself expects - no cos/sin
+    // recombination needed.
+    applyActive: (targetMaterial: any, sliceNode: any) => {
+      targetMaterial.anisotropyNode = sliceNode;
+    },
+    // Applied as the same raw (ax, ay) direction node `anisotropyNode`
+    // itself expects - no hypot/atan2 decomposition into the legacy
+    // strength/rotation properties needed, since those would (like every
+    // other plain property) route through a live uniform instead of a
+    // literal constant node. The generic "skip applyConstant entirely
+    // when the resolved value equals this channel's own `defaultValue`"
+    // pass below (see its doc comment) is what actually keeps a
+    // zero-strength material from ever reaching this assignment - this
+    // closure doesn't need to know that itself.
+    applyConstant: (targetMaterial: any, constantValue: any) => {
+      targetMaterial.anisotropyNode = vec2(...constantValue);
+    },
+  },
+  colorIntensityChannel('sheenColor', {
+    nodeKey: 'sheenNode',
+    colorProperty: 'sheenColor',
+    intensityProperty: 'sheen',
+    applyActive: (targetMaterial: any, sliceNode: any) => {
+      targetMaterial.sheenNode = sliceNode.clamp(0, 1);
+    },
+    applyConstant: (targetMaterial: any, constantValue: any) => {
+      targetMaterial.sheenNode = vec3(...constantValue);
+    },
+  }),
+  simpleScalarChannel('sheenRoughness', { activation: 'sigmoid', clampRange: [0.02, 1], defaultValue: 1 }),
+  // Chromatic dispersion strength (KHR_materials_dispersion) - conventional
+  // content stays within [0,1] (glTF: "typically in the range of 0 to 1,
+  // but higher values are unrestricted"), so this is 'sigmoid'-activated,
+  // like every other naturally-bounded reflectance-style scalar here,
+  // rather than 'softplus' - an out-of-range source value beyond 1 would
+  // still just clamp to 1 like `roughness`/`clearcoat` do at their own
+  // bounds.
+  simpleScalarChannel('dispersion', { activation: 'sigmoid', clampRange: [0, 1], defaultValue: 0 }),
+  simpleScalarChannel('retroreflectivity', { activation: 'sigmoid', clampRange: [0, 1], defaultValue: 0 }),
 ];
 
 /**
@@ -706,26 +683,24 @@ const CHANNELS: NTCChannel[] = [
  * reconstruction semantics - a custom `type: 'normal'` channel that isn't
  * baked the same way wouldn't want this by default.
  */
-for ( const channel of CHANNELS ) {
+for (const channel of CHANNELS) {
+  if (channel.type !== 'normal') continue;
 
-	if ( channel.type !== 'normal' ) continue;
-
-	// The normal/clearcoatNormal offset is baked on a flat quad whose UV.v
-	// gets flipped before computeTangents() runs (see bakeColorNodeToTexture
-	// in NTCTextureSource.js - that flip is required for correct
-	// scalar-channel UV round-tripping), which flips that quad's bitangent
-	// handedness relative to any real mesh's own (un-flipped) tangent basis.
-	// Since the quad sits at the identity transform, its tangent/bitangent/
-	// normal are otherwise meant to coincide with world X/Y/Z, so the baked y
-	// here is the *negated* tangent-space offset the network is meant to
-	// learn. Negate it back so the trained (dx, dy) matches the true
-	// tangent-space convention that OUTPUT_TYPES.normal.reconstruct blends
-	// through a real mesh's un-flipped tangentWorld/bitangentWorld at
-	// inference time - without this, the neural material's reconstructed
-	// normal disagrees in sign with the teacher's live-evaluated one (visible
-	// as a mismatched "normal" debug view between the two).
-	channel.transformBakeComponent = ( component: any, index: number ) => ( index === 1 ? component.negate() : component );
-
+  // The normal/clearcoatNormal offset is baked on a flat quad whose UV.v
+  // gets flipped before computeTangents() runs (see bakeColorNodeToTexture
+  // in NTCTextureSource.js - that flip is required for correct
+  // scalar-channel UV round-tripping), which flips that quad's bitangent
+  // handedness relative to any real mesh's own (un-flipped) tangent basis.
+  // Since the quad sits at the identity transform, its tangent/bitangent/
+  // normal are otherwise meant to coincide with world X/Y/Z, so the baked y
+  // here is the *negated* tangent-space offset the network is meant to
+  // learn. Negate it back so the trained (dx, dy) matches the true
+  // tangent-space convention that OUTPUT_TYPES.normal.reconstruct blends
+  // through a real mesh's un-flipped tangentWorld/bitangentWorld at
+  // inference time - without this, the neural material's reconstructed
+  // normal disagrees in sign with the teacher's live-evaluated one (visible
+  // as a mismatched "normal" debug view between the two).
+  channel.transformBakeComponent = (component: any, index: number) => (index === 1 ? component.negate() : component);
 }
 
 /**
@@ -735,19 +710,19 @@ for ( const channel of CHANNELS ) {
  * `applyConstant` entirely for a channel whose resolved value is a total
  * no-op, rather than special-casing that per channel.
  */
-function constantEqualsDefault( channel: NTCChannel, value: any ): boolean {
+function constantEqualsDefault(channel: NTCChannel, value: any): boolean {
+  const defaultValue = channel.defaultValue;
+  if (defaultValue === undefined) return false;
 
-	const defaultValue = channel.defaultValue;
-	if ( defaultValue === undefined ) return false;
+  if (Array.isArray(defaultValue)) {
+    return (
+      Array.isArray(value) &&
+      value.length === defaultValue.length &&
+      value.every((v: any, i: number) => v === defaultValue[i])
+    );
+  }
 
-	if ( Array.isArray( defaultValue ) ) {
-
-		return Array.isArray( value ) && value.length === defaultValue.length && value.every( ( v: any, i: number ) => v === defaultValue[ i ] );
-
-	}
-
-	return value === defaultValue;
-
+  return value === defaultValue;
 }
 
 /**
@@ -775,25 +750,21 @@ function constantEqualsDefault( channel: NTCChannel, value: any ): boolean {
  * `MeshPhysicalNodeMaterial`, for every channel this pattern could affect,
  * not just the one that happened to get noticed first.
  */
-for ( const channel of CHANNELS ) {
+for (const channel of CHANNELS) {
+  const applyConstant = channel.applyConstant;
 
-	const applyConstant = channel.applyConstant;
+  channel.applyConstant = (targetMaterial: any, constantValue: any) => {
+    if (constantEqualsDefault(channel, constantValue)) return;
 
-	channel.applyConstant = ( targetMaterial: any, constantValue: any ) => {
-
-		if ( constantEqualsDefault( channel, constantValue ) ) return;
-
-		applyConstant( targetMaterial, constantValue );
-
-	};
-
+    applyConstant(targetMaterial, constantValue);
+  };
 }
 
 // 39 as of this writing (2 of CHANNELS' 26 entries -
 // `iridescenceThicknessRangeMin`/`Max` - are metadata-only and can never
 // actually be "active", so this is a loose upper bound on trainable width,
 // not a value every channel could simultaneously hit).
-const MAX_TOTAL_CHANNELS = CHANNELS.reduce( ( sum, c ) => sum + c.size, 0 );
+const MAX_TOTAL_CHANNELS = CHANNELS.reduce((sum, c) => sum + c.size, 0);
 
 /**
  * Debug-only views of the mesh's raw tangent-space frame itself
@@ -806,15 +777,13 @@ const MAX_TOTAL_CHANNELS = CHANNELS.reduce( ( sum, c ) => sum + c.size, 0 );
  * shared frame - if *this* view already disagrees, the bug is in how the
  * frame itself is built/consumed, not in anything the network learned.
  */
-const FRAME_VIEWS = [ 'tangent', 'bitangent' ];
+const FRAME_VIEWS = ['tangent', 'bitangent'];
 
-function getChannel( key: string, channels: NTCChannel[] = CHANNELS ): NTCChannel {
+function getChannel(key: string, channels: NTCChannel[] = CHANNELS): NTCChannel {
+  const channel = channels.find((c) => c.key === key);
+  if (channel === undefined) throw new Error(`THREE.NTCFormat: unknown channel "${key}".`);
 
-	const channel = channels.find( ( c ) => c.key === key );
-	if ( channel === undefined ) throw new Error( `THREE.NTCFormat: unknown channel "${key}".` );
-
-	return channel;
-
+  return channel;
 }
 
 /**
@@ -836,19 +805,18 @@ function getChannel( key: string, channels: NTCChannel[] = CHANNELS ): NTCChanne
  * values it recognizes, it doesn't validate the map's shape (that's
  * `NTCLoader.validateManifest`'s job, for the manifest path).
  */
-function decodeConstantValues( constantValues: Record<string, any>, channels: NTCChannel[] = CHANNELS ): Record<string, any> {
+function decodeConstantValues(
+  constantValues: Record<string, any>,
+  channels: NTCChannel[] = CHANNELS,
+): Record<string, any> {
+  const decoded: Record<string, any> = {};
 
-	const decoded: Record<string, any> = {};
+  for (const [key, value] of Object.entries(constantValues)) {
+    const channel = channels.find((c) => c.key === key);
+    decoded[key] = channel && channel.decodeConstant ? channel.decodeConstant(value) : value;
+  }
 
-	for ( const [ key, value ] of Object.entries( constantValues ) ) {
-
-		const channel = channels.find( ( c ) => c.key === key );
-		decoded[ key ] = ( channel && channel.decodeConstant ) ? channel.decodeConstant( value ) : value;
-
-	}
-
-	return decoded;
-
+  return decoded;
 }
 
 /**
@@ -860,22 +828,22 @@ function decodeConstantValues( constantValues: Record<string, any>, channels: NT
  * that's (a subset of) the built-in `CHANNELS` or an entirely caller-
  * supplied channel array.
  */
-function layoutChannels( channelSubset: NTCChannel[] ): { channels: NTCLayoutChannel[]; totalChannels: number; packCount: number } {
+function layoutChannels(channelSubset: NTCChannel[]): {
+  channels: NTCLayoutChannel[];
+  totalChannels: number;
+  packCount: number;
+} {
+  let offset = 0;
+  const layout: NTCLayoutChannel[] = [];
 
-	let offset = 0;
-	const layout: NTCLayoutChannel[] = [];
+  for (const channel of channelSubset) {
+    layout.push({ ...channel, offset });
+    offset += channel.size;
+  }
 
-	for ( const channel of channelSubset ) {
+  const totalChannels = offset;
 
-		layout.push( { ...channel, offset } );
-		offset += channel.size;
-
-	}
-
-	const totalChannels = offset;
-
-	return { channels: layout, totalChannels, packCount: Math.ceil( totalChannels / 4 ) };
-
+  return { channels: layout, totalChannels, packCount: Math.ceil(totalChannels / 4) };
 }
 
 /**
@@ -887,18 +855,14 @@ function layoutChannels( channelSubset: NTCChannel[] ): { channels: NTCLayoutCha
  * this the same way `layoutChannels` assigns offsets, so a component's
  * activation always lands at the same flat index its value does.
  */
-function buildChannelActivations( activeChannels: NTCChannel[] ): ( NTCActivation )[] {
+function buildChannelActivations(activeChannels: NTCChannel[]): NTCActivation[] {
+  const activations: NTCActivation[] = [];
 
-	const activations: NTCActivation[] = [];
+  for (const channel of activeChannels) {
+    for (let i = 0; i < channel.size; i++) activations.push(channel.activation);
+  }
 
-	for ( const channel of activeChannels ) {
-
-		for ( let i = 0; i < channel.size; i ++ ) activations.push( channel.activation );
-
-	}
-
-	return activations;
-
+  return activations;
 }
 
 /**
@@ -910,25 +874,27 @@ function buildChannelActivations( activeChannels: NTCChannel[] ): ( NTCActivatio
  * are broadcast to grayscale; 'tanh' vectors (normals, anisotropy) map to
  * the familiar bluish normal-map-style preview.
  */
-function previewColor( valueNode: any, channel: { activation?: NTCActivation; size: number }, alreadyEncoded: boolean ): any {
+function previewColor(
+  valueNode: any,
+  channel: { activation?: NTCActivation; size: number },
+  alreadyEncoded: boolean,
+): any {
+  let value = valueNode;
 
-	let value = valueNode;
+  if (channel.activation === 'tanh' && !alreadyEncoded) value = value.mul(0.5).add(0.5);
 
-	if ( channel.activation === 'tanh' && ! alreadyEncoded ) value = value.mul( 0.5 ).add( 0.5 );
+  // A trained (as opposed to measured-constant) value has no guarantee of
+  // landing in [0,1] - even a sigmoid/tanh-activated channel only
+  // approaches its bound asymptotically, and softplus (emission) is
+  // unbounded above by design. Clamp for display so this reads as "not
+  // converged yet" (a muted, but plausible, color) rather than
+  // hard-saturating to a misleadingly bold primary color.
+  value = value.clamp(0, 1);
 
-	// A trained (as opposed to measured-constant) value has no guarantee of
-	// landing in [0,1] - even a sigmoid/tanh-activated channel only
-	// approaches its bound asymptotically, and softplus (emission) is
-	// unbounded above by design. Clamp for display so this reads as "not
-	// converged yet" (a muted, but plausible, color) rather than
-	// hard-saturating to a misleadingly bold primary color.
-	value = value.clamp( 0, 1 );
+  if (channel.size === 1) return vec3(value, value, value);
+  if (channel.size === 2) return vec3(value.x, value.y, 0);
 
-	if ( channel.size === 1 ) return vec3( value, value, value );
-	if ( channel.size === 2 ) return vec3( value.x, value.y, 0 );
-
-	return value;
-
+  return value;
 }
 
 /**
@@ -944,13 +910,11 @@ function previewColor( valueNode: any, channel: { activation?: NTCActivation; si
  * side) and `NTCNodeMaterial.setDebugView` (the neural side) so
  * the two can't drift apart on this widening.
  */
-function buildDebugViewColorNode( channel: NTCChannel, valueNode: any ): any {
+function buildDebugViewColorNode(channel: NTCChannel, valueNode: any): any {
+  const outputType = OUTPUT_TYPES[channelEffectiveType(channel)];
+  const previewChannel = outputType?.previewSize ? { ...channel, size: outputType.previewSize } : channel;
 
-	const outputType = OUTPUT_TYPES[ channelEffectiveType( channel ) ];
-	const previewChannel = outputType?.previewSize ? { ...channel, size: outputType.previewSize } : channel;
-
-	return vec4( previewColor( valueNode, previewChannel, false ), 1 );
-
+  return vec4(previewColor(valueNode, previewChannel, false), 1);
 }
 
 /**
@@ -958,10 +922,8 @@ function buildDebugViewColorNode( channel: NTCChannel, valueNode: any ): any {
  * raw tangent-space frame itself, not a trained channel. Shared for the
  * same reason as `buildDebugViewColorNode` above.
  */
-function buildFrameViewColorNode( frameNode: any ): any {
-
-	return vec4( previewColor( transformNormalToView( frameNode ), { activation: 'tanh', size: 3 }, false ), 1 );
-
+function buildFrameViewColorNode(frameNode: any): any {
+  return vec4(previewColor(transformNormalToView(frameNode), { activation: 'tanh', size: 3 }, false), 1);
 }
 
 /**
@@ -978,13 +940,11 @@ function buildFrameViewColorNode( frameNode: any ): any {
  * detected/explicit UV transform behaves exactly as before this field
  * existed.
  */
-function decodeUvTransform( array?: number[] | null ): any {
+function decodeUvTransform(array?: number[] | null): any {
+  if (!array) return new THREE.Matrix3();
 
-	if ( ! array ) return new THREE.Matrix3();
-
-	const [ a, b, c, d, e, f ] = array;
-	return new THREE.Matrix3().set( a, b, c, d, e, f, 0, 0, 1 );
-
+  const [a, b, c, d, e, f] = array;
+  return new THREE.Matrix3().set(a, b, c, d, e, f, 0, 0, 1);
 }
 
 /**
@@ -993,11 +953,9 @@ function decodeUvTransform( array?: number[] | null ): any {
  * `elements` array (`[n11, n21, n31, n12, n22, n32, n13, n23, n33]`, see
  * `Matrix3`'s own doc comment on row-/column-major storage).
  */
-function encodeUvTransform( matrix3: any ): number[] {
-
-	const e = matrix3.elements;
-	return [ e[ 0 ], e[ 3 ], e[ 6 ], e[ 1 ], e[ 4 ], e[ 7 ] ];
-
+function encodeUvTransform(matrix3: any): number[] {
+  const e = matrix3.elements;
+  return [e[0], e[3], e[6], e[1], e[4], e[7]];
 }
 
 /**
@@ -1007,40 +965,46 @@ function encodeUvTransform( matrix3: any ): number[] {
  * present, matching how `renderFlags` was introduced without a `VERSION`
  * bump (see NTCManifest.js's `encodeNTC`).
  */
-function isIdentityUvTransform( matrix3?: any ): boolean {
+function isIdentityUvTransform(matrix3?: any): boolean {
+  if (!matrix3) return true;
 
-	if ( ! matrix3 ) return true;
-
-	const e = matrix3.elements;
-	return e[ 0 ] === 1 && e[ 1 ] === 0 && e[ 2 ] === 0 &&
-		e[ 3 ] === 0 && e[ 4 ] === 1 && e[ 5 ] === 0 &&
-		e[ 6 ] === 0 && e[ 7 ] === 0 && e[ 8 ] === 1;
-
+  const e = matrix3.elements;
+  return (
+    e[0] === 1 &&
+    e[1] === 0 &&
+    e[2] === 0 &&
+    e[3] === 0 &&
+    e[4] === 1 &&
+    e[5] === 0 &&
+    e[6] === 0 &&
+    e[7] === 0 &&
+    e[8] === 1
+  );
 }
 
 export {
-	FORMAT,
-	VERSION,
-	CHANNELS,
-	MAX_TOTAL_CHANNELS,
-	FRAME_VIEWS,
-	getChannel,
-	constantEqualsDefault,
-	decodeConstantValues,
-	layoutChannels,
-	buildChannelActivations,
-	previewColor,
-	buildDebugViewColorNode,
-	buildFrameViewColorNode,
-	simpleScalarChannel,
-	fixedRangeScalarChannel,
-	colorIntensityChannel,
-	simpleColorChannel,
-	normalChannel,
-	iridescenceThicknessRangeChannel,
-	constantToNode,
-	reconstructFinalNormal,
-	decodeUvTransform,
-	encodeUvTransform,
-	isIdentityUvTransform
+  FORMAT,
+  VERSION,
+  CHANNELS,
+  MAX_TOTAL_CHANNELS,
+  FRAME_VIEWS,
+  getChannel,
+  constantEqualsDefault,
+  decodeConstantValues,
+  layoutChannels,
+  buildChannelActivations,
+  previewColor,
+  buildDebugViewColorNode,
+  buildFrameViewColorNode,
+  simpleScalarChannel,
+  fixedRangeScalarChannel,
+  colorIntensityChannel,
+  simpleColorChannel,
+  normalChannel,
+  iridescenceThicknessRangeChannel,
+  constantToNode,
+  reconstructFinalNormal,
+  decodeUvTransform,
+  encodeUvTransform,
+  isIdentityUvTransform,
 };

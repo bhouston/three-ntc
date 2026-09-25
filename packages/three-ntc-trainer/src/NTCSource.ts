@@ -25,20 +25,19 @@ type ChannelDescriptor = any;
  * converted to a node, so every channel still has *some* preview-able node
  * here even if it's never actually driven by the network.
  */
-function resolveMaterialChannelNodes( material: MaterialLike, channels: ChannelDescriptor[] = CHANNELS ): Record<string, TSLNode> {
+function resolveMaterialChannelNodes(
+  material: MaterialLike,
+  channels: ChannelDescriptor[] = CHANNELS,
+): Record<string, TSLNode> {
+  const nodes: Record<string, TSLNode> = {};
 
-	const nodes: Record<string, TSLNode> = {};
+  for (const channel of channels) {
+    nodes[channel.key] = channel.resolveNode
+      ? channel.resolveNode(material)
+      : constantToNode(channel.alwaysConstant ? channel.constantValue : channel.resolveConstant(material));
+  }
 
-	for ( const channel of channels ) {
-
-		nodes[ channel.key ] = channel.resolveNode
-			? channel.resolveNode( material )
-			: constantToNode( channel.alwaysConstant ? channel.constantValue : channel.resolveConstant( material ) );
-
-	}
-
-	return nodes;
-
+  return nodes;
 }
 
 /**
@@ -75,38 +74,28 @@ function resolveMaterialChannelNodes( material: MaterialLike, channels: ChannelD
  * caller-supplied channel array (built-in descriptors, custom ones, or a mix)
  * - this function has no hardcoded knowledge of any particular channel key.
  */
-function classifyMaterialChannels( material: MaterialLike, channels: ChannelDescriptor[] = CHANNELS ) {
+function classifyMaterialChannels(material: MaterialLike, channels: ChannelDescriptor[] = CHANNELS) {
+  const activeList: ChannelDescriptor[] = [];
+  const constantValues: Record<string, unknown> = {};
 
-	const activeList: ChannelDescriptor[] = [];
-	const constantValues: Record<string, unknown> = {};
+  for (const channel of channels) {
+    if (channel.alwaysConstant) {
+      constantValues[channel.key] = channel.constantValue;
+      continue;
+    }
 
-	for ( const channel of channels ) {
+    const hasNode = channel.nodeKeys.some((key: string) => Boolean(material[key]));
 
-		if ( channel.alwaysConstant ) {
+    if (hasNode) {
+      activeList.push(channel);
+    } else {
+      constantValues[channel.key] = channel.resolveConstant(material);
+    }
+  }
 
-			constantValues[ channel.key ] = channel.constantValue;
-			continue;
+  const { channels: activeChannels, totalChannels, packCount } = layoutChannels(activeList);
 
-		}
-
-		const hasNode = channel.nodeKeys.some( ( key: string ) => Boolean( material[ key ] ) );
-
-		if ( hasNode ) {
-
-			activeList.push( channel );
-
-		} else {
-
-			constantValues[ channel.key ] = channel.resolveConstant( material );
-
-		}
-
-	}
-
-	const { channels: activeChannels, totalChannels, packCount } = layoutChannels( activeList );
-
-	return { activeChannels, totalChannels, packCount, constantValues, renderFlags: resolveRenderFlags( material ) };
-
+  return { activeChannels, totalChannels, packCount, constantValues, renderFlags: resolveRenderFlags(material) };
 }
 
 /**
@@ -127,72 +116,59 @@ function classifyMaterialChannels( material: MaterialLike, channels: ChannelDesc
  * keeps the neural material's pass count (and therefore its tint strength)
  * consistent with the material it was fit against.
  */
-function resolveRenderFlags( material: MaterialLike ): { side: unknown; transparent: boolean | undefined } {
-
-	return { side: material.side, transparent: material.transparent };
-
+function resolveRenderFlags(material: MaterialLike): { side: unknown; transparent: boolean | undefined } {
+  return { side: material.side, transparent: material.transparent };
 }
 
-function flattenChannelComponents( activeChannels: ChannelDescriptor[], channelNodes: Record<string, TSLNode> ): TSLNode[] {
+function flattenChannelComponents(
+  activeChannels: ChannelDescriptor[],
+  channelNodes: Record<string, TSLNode>,
+): TSLNode[] {
+  const components: TSLNode[] = [];
+  const axes = ['x', 'y', 'z'];
 
-	const components: TSLNode[] = [];
-	const axes = [ 'x', 'y', 'z' ];
+  for (const channel of activeChannels) {
+    const value = channelNodes[channel.key];
 
-	for ( const channel of activeChannels ) {
+    if (channel.size === 1) {
+      components.push(value);
+    } else {
+      // Multi-component channels (2-component tanh offsets, etc.) train
+      // against only their first `size` components - the raw resolved
+      // node may still be a wider vector (e.g. the material's tangent-
+      // space normalNode, resolved as a full vec3); trailing components
+      // are deliberately dropped here (and, for normal/clearcoatNormal,
+      // reconstructed at consumption time instead - see
+      // NTCOutputTypes.reconstructFinalNormal).
+      for (let i = 0; i < channel.size; i++) {
+        let component = value[axes[i]];
 
-		const value = channelNodes[ channel.key ];
+        // A channel may declare a per-component transform to apply
+        // only at bake time (see `transformBakeComponent` on the
+        // normal/clearcoatNormal descriptors in NTCFormat.js
+        // - a UV/tangent-handedness artifact of the flat-quad baking
+        // setup, not part of the channel's own reconstruction
+        // semantics).
+        if (channel.transformBakeComponent) component = channel.transformBakeComponent(component, i);
 
-		if ( channel.size === 1 ) {
+        components.push(component);
+      }
+    }
+  }
 
-			components.push( value );
-
-		} else {
-
-			// Multi-component channels (2-component tanh offsets, etc.) train
-			// against only their first `size` components - the raw resolved
-			// node may still be a wider vector (e.g. the material's tangent-
-			// space normalNode, resolved as a full vec3); trailing components
-			// are deliberately dropped here (and, for normal/clearcoatNormal,
-			// reconstructed at consumption time instead - see
-			// NTCOutputTypes.reconstructFinalNormal).
-			for ( let i = 0; i < channel.size; i ++ ) {
-
-				let component = value[ axes[ i ] ];
-
-				// A channel may declare a per-component transform to apply
-				// only at bake time (see `transformBakeComponent` on the
-				// normal/clearcoatNormal descriptors in NTCFormat.js
-				// - a UV/tangent-handedness artifact of the flat-quad baking
-				// setup, not part of the channel's own reconstruction
-				// semantics).
-				if ( channel.transformBakeComponent ) component = channel.transformBakeComponent( component, i );
-
-				components.push( component );
-
-			}
-
-		}
-
-	}
-
-	return components;
-
+  return components;
 }
 
-function packComponentsIntoVec4( components: TSLNode[] ): TSLNode[] {
+function packComponentsIntoVec4(components: TSLNode[]): TSLNode[] {
+  const packs: TSLNode[] = [];
 
-	const packs: TSLNode[] = [];
+  for (let i = 0; i < components.length; i += 4) {
+    const group = components.slice(i, i + 4);
+    while (group.length < 4) group.push(float(0));
+    packs.push(vec4(group[0], group[1], group[2], group[3]));
+  }
 
-	for ( let i = 0; i < components.length; i += 4 ) {
-
-		const group = components.slice( i, i + 4 );
-		while ( group.length < 4 ) group.push( float( 0 ) );
-		packs.push( vec4( group[ 0 ], group[ 1 ], group[ 2 ], group[ 3 ] ) );
-
-	}
-
-	return packs;
-
+  return packs;
 }
 
 /**
@@ -203,13 +179,11 @@ function packComponentsIntoVec4( components: TSLNode[] ): TSLNode[] {
  * the network's own output into this same raw range, so no target-side
  * encoding happens here.
  */
-function buildPackedColorNodes( activeChannels: ChannelDescriptor[], material: MaterialLike ): TSLNode[] {
+function buildPackedColorNodes(activeChannels: ChannelDescriptor[], material: MaterialLike): TSLNode[] {
+  const channelNodes = resolveMaterialChannelNodes(material, activeChannels);
+  const components = flattenChannelComponents(activeChannels, channelNodes);
 
-	const channelNodes = resolveMaterialChannelNodes( material, activeChannels );
-	const components = flattenChannelComponents( activeChannels, channelNodes );
-
-	return packComponentsIntoVec4( components );
-
+  return packComponentsIntoVec4(components);
 }
 
 /**
@@ -218,24 +192,28 @@ function buildPackedColorNodes( activeChannels: ChannelDescriptor[], material: M
  * render per pack (see NTCFormat.js for how flat channel indices
  * map onto them).
  */
-async function bakeMaterialToTextures( renderer: any, material: MaterialLike, resolution: number, activeChannels: ChannelDescriptor[], uvTransform: any = null ) {
+async function bakeMaterialToTextures(
+  renderer: any,
+  material: MaterialLike,
+  resolution: number,
+  activeChannels: ChannelDescriptor[],
+  uvTransform: any = null,
+) {
+  const colorNodes = buildPackedColorNodes(activeChannels, material);
+  const renderTargets = [];
 
-	const colorNodes = buildPackedColorNodes( activeChannels, material );
-	const renderTargets = [];
+  for (const colorNode of colorNodes) {
+    // `generateMipmaps: true` - these are training-source textures (see
+    // bakeColorNodeToTexture's doc comment on its default). `uvTransform`
+    // (see its doc comment there) bakes every channel in its local,
+    // untransformed space - the same space `NTCNodeMaterial` maps query
+    // UV into at render time.
+    renderTargets.push(
+      await bakeColorNodeToTexture(renderer, colorNode, resolution, { generateMipmaps: true, uvTransform }),
+    );
+  }
 
-	for ( const colorNode of colorNodes ) {
-
-		// `generateMipmaps: true` - these are training-source textures (see
-		// bakeColorNodeToTexture's doc comment on its default). `uvTransform`
-		// (see its doc comment there) bakes every channel in its local,
-		// untransformed space - the same space `NTCNodeMaterial` maps query
-		// UV into at render time.
-		renderTargets.push( await bakeColorNodeToTexture( renderer, colorNode, resolution, { generateMipmaps: true, uvTransform } ) );
-
-	}
-
-	return renderTargets;
-
+  return renderTargets;
 }
 
 /**
@@ -247,69 +225,64 @@ async function bakeMaterialToTextures( renderer: any, material: MaterialLike, re
  * comparable in the same encoded [0,1] space. `channels` defaults to the
  * built-in `CHANNELS` vocabulary.
  */
-function buildChannelPreviewMaterials( material: MaterialLike, channels: ChannelDescriptor[] = CHANNELS ): Record<string, MaterialLike> {
+function buildChannelPreviewMaterials(
+  material: MaterialLike,
+  channels: ChannelDescriptor[] = CHANNELS,
+): Record<string, MaterialLike> {
+  const channelNodes = resolveMaterialChannelNodes(material, channels);
+  const materials: Record<string, MaterialLike> = { shaded: material };
 
-	const channelNodes = resolveMaterialChannelNodes( material, channels );
-	const materials: Record<string, MaterialLike> = { shaded: material };
+  // Every preview below is built as a *clone* of the real (MeshPhysical-
+  // NodeMaterial-derived) `material`, not a bare `THREE.NodeMaterial()`.
+  // That matters specifically for `bitangentWorld`: it's never a stored
+  // vertex attribute (only `tangent.xyz` + a handedness sign are - see
+  // TangentUtils/Bitangent.js), so it's *always* re-derived per pixel as
+  // normalWorld.cross(tangentWorld) inside a `.once(['NORMAL'])`-cached
+  // helper that only gets wired up to a real per-frame varying when the
+  // material actually runs a normal-mapping build pass. A bare
+  // `NodeMaterial` with only `colorNode` set never triggers that pass, so
+  // its `bitangentWorld` was observed to freeze at its first-build value
+  // instead of tracking the mesh's rotation - `tangentWorld` doesn't have
+  // this problem (it comes straight off the stored vertex attribute), and
+  // `NTCNodeMaterial` doesn't either, since it's a full
+  // MeshPhysicalNodeMaterial subclass that always runs that setup
+  // regardless of `lights`. Cloning `material` here (which already has
+  // `normalNode`/`clearcoatNormalNode` set) gives every preview the same
+  // class and the same setup path, so `bitangentWorld` behaves exactly as
+  // it does in the real 'shaded' render and in the neural material.
+  function clonePreviewMaterial() {
+    const previewMaterial = material.clone();
+    previewMaterial.lights = false;
+    previewMaterial.toneMapped = false;
+    return previewMaterial;
+  }
 
-	// Every preview below is built as a *clone* of the real (MeshPhysical-
-	// NodeMaterial-derived) `material`, not a bare `THREE.NodeMaterial()`.
-	// That matters specifically for `bitangentWorld`: it's never a stored
-	// vertex attribute (only `tangent.xyz` + a handedness sign are - see
-	// TangentUtils/Bitangent.js), so it's *always* re-derived per pixel as
-	// normalWorld.cross(tangentWorld) inside a `.once(['NORMAL'])`-cached
-	// helper that only gets wired up to a real per-frame varying when the
-	// material actually runs a normal-mapping build pass. A bare
-	// `NodeMaterial` with only `colorNode` set never triggers that pass, so
-	// its `bitangentWorld` was observed to freeze at its first-build value
-	// instead of tracking the mesh's rotation - `tangentWorld` doesn't have
-	// this problem (it comes straight off the stored vertex attribute), and
-	// `NTCNodeMaterial` doesn't either, since it's a full
-	// MeshPhysicalNodeMaterial subclass that always runs that setup
-	// regardless of `lights`. Cloning `material` here (which already has
-	// `normalNode`/`clearcoatNormalNode` set) gives every preview the same
-	// class and the same setup path, so `bitangentWorld` behaves exactly as
-	// it does in the real 'shaded' render and in the neural material.
-	function clonePreviewMaterial() {
+  for (const channel of channels) {
+    const previewMaterial = clonePreviewMaterial();
+    previewMaterial.colorNode = buildDebugViewColorNode(channel, channelNodes[channel.key]);
+    materials[channel.key] = previewMaterial;
+  }
 
-		const previewMaterial = material.clone();
-		previewMaterial.lights = false;
-		previewMaterial.toneMapped = false;
-		return previewMaterial;
+  // Debug-only views of the raw tangentWorld/bitangentWorld frame itself
+  // (see FRAME_VIEWS's doc comment) - view-space, same tanh-vector color
+  // convention as the 'normal'/'clearcoatNormal' channels above, so this
+  // is directly comparable against NTCNodeMaterial's own
+  // 'tangent'/'bitangent' debug views.
+  const frameNodes: Record<string, TSLNode> = { tangent: tangentWorld, bitangent: bitangentWorld };
 
-	}
+  for (const key of FRAME_VIEWS) {
+    const previewMaterial = clonePreviewMaterial();
+    previewMaterial.colorNode = buildFrameViewColorNode(frameNodes[key]);
+    materials[key] = previewMaterial;
+  }
 
-	for ( const channel of channels ) {
-
-		const previewMaterial = clonePreviewMaterial();
-		previewMaterial.colorNode = buildDebugViewColorNode( channel, channelNodes[ channel.key ] );
-		materials[ channel.key ] = previewMaterial;
-
-	}
-
-	// Debug-only views of the raw tangentWorld/bitangentWorld frame itself
-	// (see FRAME_VIEWS's doc comment) - view-space, same tanh-vector color
-	// convention as the 'normal'/'clearcoatNormal' channels above, so this
-	// is directly comparable against NTCNodeMaterial's own
-	// 'tangent'/'bitangent' debug views.
-	const frameNodes: Record<string, TSLNode> = { tangent: tangentWorld, bitangent: bitangentWorld };
-
-	for ( const key of FRAME_VIEWS ) {
-
-		const previewMaterial = clonePreviewMaterial();
-		previewMaterial.colorNode = buildFrameViewColorNode( frameNodes[ key ] );
-		materials[ key ] = previewMaterial;
-
-	}
-
-	return materials;
-
+  return materials;
 }
 
 export {
-	bakeMaterialToTextures,
-	buildPackedColorNodes,
-	buildChannelPreviewMaterials,
-	classifyMaterialChannels,
-	resolveMaterialChannelNodes
+  bakeMaterialToTextures,
+  buildPackedColorNodes,
+  buildChannelPreviewMaterials,
+  classifyMaterialChannels,
+  resolveMaterialChannelNodes,
 };

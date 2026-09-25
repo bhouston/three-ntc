@@ -2,7 +2,15 @@
   "name": "three-ntc-trainer",
   "version": "0.1.0",
   "description": "GPU trainer that bakes a MaterialX material into a .ntc Neural Texture Compression model.",
-  "keywords": ["three.js", "threejs", "webgpu", "tsl", "neural texture compression", "materialx", "training"],
+  "keywords": [
+    "materialx",
+    "neural texture compression",
+    "three.js",
+    "threejs",
+    "training",
+    "tsl",
+    "webgpu"
+  ],
   "homepage": "https://github.com/bhouston/three-ntc/tree/main/packages/three-ntc-trainer",
   "bugs": {
     "url": "https://github.com/bhouston/three-ntc/issues"
@@ -14,6 +22,9 @@
     "url": "git+https://github.com/bhouston/three-ntc.git",
     "directory": "packages/three-ntc-trainer"
   },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -23,7 +34,6 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist"],
   "scripts": {
     "build": "tsc",
     "dev": "tsc -w --preserveWatchOutput --noEmitOnError",
@@ -33,10 +43,10 @@
     "fflate": "^0.8.2",
     "three-ntc": "workspace:^"
   },
-  "peerDependencies": {
-    "three": ">=0.180.0"
-  },
   "devDependencies": {
     "three": "^0.186.0"
+  },
+  "peerDependencies": {
+    "three": ">=0.180.0"
   }
 }

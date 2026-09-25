@@ -57,17 +57,22 @@ function HomePage() {
         <h1 className="text-2xl font-semibold">Neural Texture Compression for Three.js</h1>
         <p className="mx-auto max-w-2xl text-sm text-muted-foreground">
           A three.js implementation of{' '}
-          <a href={NTC_PAPER_URL} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-4">
+          <a
+            href={NTC_PAPER_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary underline underline-offset-4"
+          >
             NVIDIA's 2023 Neural Texture Compression paper
           </a>
           . It represents materials as a tiny neural network instead of a stack of full-resolution textures,
-          dramatically cutting memory and download size so scenes can carry much richer materials without
-          blowing up their footprint.
+          dramatically cutting memory and download size so scenes can carry much richer materials without blowing up
+          their footprint.
         </p>
         <p className="mx-auto max-w-2xl text-sm text-muted-foreground">
-          NTC compresses every texture of a material — albedo, normal, roughness, metalness, and more — together
-          into a single representation, often smaller than just one texture of the original material. The
-          materials below are each about 93KB.
+          NTC compresses every texture of a material — albedo, normal, roughness, metalness, and more — together into a
+          single representation, often smaller than just one texture of the original material. The materials below are
+          each about 93KB.
         </p>
       </div>
 
@@ -92,8 +97,8 @@ function HomePage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Fit a MaterialX material into a neural texture compression model, right in the browser, and export it
-                as .ntc.
+                Fit a MaterialX material into a neural texture compression model, right in the browser, and export it as
+                .ntc.
               </p>
             </CardContent>
           </Card>

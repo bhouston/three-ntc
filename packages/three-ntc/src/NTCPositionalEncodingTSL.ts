@@ -21,10 +21,8 @@ const POSITIONAL_ENCODING_SIZE = POSITIONAL_ENCODING_OCTAVES * 2 * 2; // 12
  * smooth curve). `triangleWaveTSL(x.sub(0.25))` gives the `sin(2*pi*x)`-like
  * quarter-period-shifted twin (zero and rising at integer `x`).
  */
-function triangleWaveTSL( x: any ): any {
-
-	return abs( fract( x ).sub( 0.5 ) ).mul( 4 ).sub( 1 );
-
+function triangleWaveTSL(x: any): any {
+  return abs(fract(x).sub(0.5)).mul(4).sub(1);
 }
 
 /**
@@ -35,24 +33,18 @@ function triangleWaveTSL( x: any ): any {
  * `[tx octave0 sin, tx octave0 cos, tx octave1 sin, tx octave1 cos, tx
  * octave2 sin, tx octave2 cos, ty ...(same 6)]`.
  */
-function computeTiledPositionalEncodingTSL( tx: any, ty: any ): any[] {
+function computeTiledPositionalEncodingTSL(tx: any, ty: any): any[] {
+  const values: any[] = [];
 
-	const values: any[] = [];
+  for (const t of [tx, ty]) {
+    for (let h = 0; h < POSITIONAL_ENCODING_OCTAVES; h++) {
+      const freq = Math.pow(2, h);
+      values.push(triangleWaveTSL(t.mul(freq).sub(0.25)));
+      values.push(triangleWaveTSL(t.mul(freq)));
+    }
+  }
 
-	for ( const t of [ tx, ty ] ) {
-
-		for ( let h = 0; h < POSITIONAL_ENCODING_OCTAVES; h ++ ) {
-
-			const freq = Math.pow( 2, h );
-			values.push( triangleWaveTSL( t.mul( freq ).sub( 0.25 ) ) );
-			values.push( triangleWaveTSL( t.mul( freq ) ) );
-
-		}
-
-	}
-
-	return values;
-
+  return values;
 }
 
 export { computeTiledPositionalEncodingTSL, triangleWaveTSL, POSITIONAL_ENCODING_OCTAVES, POSITIONAL_ENCODING_SIZE };

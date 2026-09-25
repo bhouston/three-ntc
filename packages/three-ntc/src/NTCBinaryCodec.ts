@@ -15,51 +15,39 @@ const CHUNK_SIZE = 8192;
  * array as individual arguments in one call throws "Maximum call stack size
  * exceeded" in every JS engine).
  */
-function base64FromBytes( bytes: Uint8Array ): string {
+function base64FromBytes(bytes: Uint8Array): string {
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength).toString('base64');
+  }
 
-	if ( typeof Buffer !== 'undefined' ) {
+  let binary = '';
 
-		return Buffer.from( bytes.buffer, bytes.byteOffset, bytes.byteLength ).toString( 'base64' );
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    const chunk = bytes.subarray(i, i + CHUNK_SIZE);
+    binary += String.fromCharCode.apply(null, chunk as unknown as number[]);
+  }
 
-	}
-
-	let binary = '';
-
-	for ( let i = 0; i < bytes.length; i += CHUNK_SIZE ) {
-
-		const chunk = bytes.subarray( i, i + CHUNK_SIZE );
-		binary += String.fromCharCode.apply( null, chunk as unknown as number[] );
-
-	}
-
-	return btoa( binary );
-
+  return btoa(binary);
 }
 
 /**
  * Decodes a base64 string back to raw bytes - the inverse of
  * `base64FromBytes`.
  */
-function bytesFromBase64( str: string ): Uint8Array {
+function bytesFromBase64(str: string): Uint8Array {
+  if (typeof Buffer !== 'undefined') {
+    const buffer = Buffer.from(str, 'base64');
+    return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength).slice();
+  }
 
-	if ( typeof Buffer !== 'undefined' ) {
+  const binary = atob(str);
+  const bytes = new Uint8Array(binary.length);
 
-		const buffer = Buffer.from( str, 'base64' );
-		return new Uint8Array( buffer.buffer, buffer.byteOffset, buffer.byteLength ).slice();
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
 
-	}
-
-	const binary = atob( str );
-	const bytes = new Uint8Array( binary.length );
-
-	for ( let i = 0; i < binary.length; i ++ ) {
-
-		bytes[ i ] = binary.charCodeAt( i );
-
-	}
-
-	return bytes;
-
+  return bytes;
 }
 
 /**
@@ -68,10 +56,8 @@ function bytesFromBase64( str: string ): Uint8Array {
  * `packHalfFloatRGBA` already relies on) rather than re-deriving the bit
  * twiddling.
  */
-function float32ToFloat16( x: number ): number {
-
-	return DataUtils.toHalfFloat( x );
-
+function float32ToFloat16(x: number): number {
+  return DataUtils.toHalfFloat(x);
 }
 
 /**
@@ -80,49 +66,39 @@ function float32ToFloat16( x: number ): number {
  * `.neuralMaterial`/`.neuralAppearance` MLP weight blob back into a
  * Float32Array. Reuses `DataUtils.fromHalfFloat`.
  */
-function float16ToFloat32( h: number ): number {
-
-	return DataUtils.fromHalfFloat( h );
-
+function float16ToFloat32(h: number): number {
+  return DataUtils.fromHalfFloat(h);
 }
 
 /**
  * Packs a Float32Array into a base64 string of little-endian Float16 bytes
  * (2 bytes/value) - used for MLP weight/bias blobs.
  */
-function encodeFloat16Base64( data: Float32Array ): string {
+function encodeFloat16Base64(data: Float32Array): string {
+  const bytes = new Uint8Array(data.length * 2);
+  const view = new DataView(bytes.buffer);
 
-	const bytes = new Uint8Array( data.length * 2 );
-	const view = new DataView( bytes.buffer );
+  for (let i = 0; i < data.length; i++) {
+    view.setUint16(i * 2, float32ToFloat16(data[i]), true);
+  }
 
-	for ( let i = 0; i < data.length; i ++ ) {
-
-		view.setUint16( i * 2, float32ToFloat16( data[ i ] ), true );
-
-	}
-
-	return base64FromBytes( bytes );
-
+  return base64FromBytes(bytes);
 }
 
 /**
  * Decodes a base64 Float16 blob (as produced by `encodeFloat16Base64`) back
  * into a Float32Array of `length` values.
  */
-function decodeFloat16Base64( str: string, length: number ): Float32Array {
+function decodeFloat16Base64(str: string, length: number): Float32Array {
+  const bytes = bytesFromBase64(str);
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const out = new Float32Array(length);
 
-	const bytes = bytesFromBase64( str );
-	const view = new DataView( bytes.buffer, bytes.byteOffset, bytes.byteLength );
-	const out = new Float32Array( length );
+  for (let i = 0; i < length; i++) {
+    out[i] = float16ToFloat32(view.getUint16(i * 2, true));
+  }
 
-	for ( let i = 0; i < length; i ++ ) {
-
-		out[ i ] = float16ToFloat32( view.getUint16( i * 2, true ) );
-
-	}
-
-	return out;
-
+  return out;
 }
 
 /**
@@ -132,40 +108,32 @@ function decodeFloat16Base64( str: string, length: number ): Float32Array {
  * grid) is handled by treating every value as level 0, rather than dividing
  * by zero.
  */
-function encodeUint8Base64( data: Float32Array, min: number, max: number ): string {
+function encodeUint8Base64(data: Float32Array, min: number, max: number): string {
+  const bytes = new Uint8Array(data.length);
+  const range = max - min;
 
-	const bytes = new Uint8Array( data.length );
-	const range = max - min;
+  for (let i = 0; i < data.length; i++) {
+    const t = range !== 0 ? Math.min(1, Math.max(0, (data[i] - min) / range)) : 0;
+    bytes[i] = Math.round(t * 255);
+  }
 
-	for ( let i = 0; i < data.length; i ++ ) {
-
-		const t = range !== 0 ? Math.min( 1, Math.max( 0, ( data[ i ] - min ) / range ) ) : 0;
-		bytes[ i ] = Math.round( t * 255 );
-
-	}
-
-	return base64FromBytes( bytes );
-
+  return base64FromBytes(bytes);
 }
 
 /**
  * Decodes a base64 Uint8 blob (as produced by `encodeUint8Base64`) back into
  * a Float32Array of `length` values, using the same `min`/`max` range.
  */
-function decodeUint8Base64( str: string, min: number, max: number, length: number ): Float32Array {
+function decodeUint8Base64(str: string, min: number, max: number, length: number): Float32Array {
+  const bytes = bytesFromBase64(str);
+  const out = new Float32Array(length);
+  const range = max - min;
 
-	const bytes = bytesFromBase64( str );
-	const out = new Float32Array( length );
-	const range = max - min;
+  for (let i = 0; i < length; i++) {
+    out[i] = min + (bytes[i] / 255) * range;
+  }
 
-	for ( let i = 0; i < length; i ++ ) {
-
-		out[ i ] = min + ( bytes[ i ] / 255 ) * range;
-
-	}
-
-	return out;
-
+  return out;
 }
 
 /**
@@ -173,80 +141,74 @@ function decodeUint8Base64( str: string, min: number, max: number, length: numbe
  * little-end-first into bytes (low bits first); the last byte's unused bits
  * are padded with 0.
  */
-function encodePackedBase64( data: Float32Array, min: number, max: number, bits: number ): string {
+function encodePackedBase64(data: Float32Array, min: number, max: number, bits: number): string {
+  const perByte = 8 / bits;
+  const maxLevel = (1 << bits) - 1;
+  const bytes = new Uint8Array(Math.ceil(data.length / perByte));
+  const range = max - min;
 
-	const perByte = 8 / bits;
-	const maxLevel = ( 1 << bits ) - 1;
-	const bytes = new Uint8Array( Math.ceil( data.length / perByte ) );
-	const range = max - min;
+  for (let i = 0; i < data.length; i++) {
+    const t = range !== 0 ? Math.min(1, Math.max(0, (data[i] - min) / range)) : 0;
+    bytes[Math.floor(i / perByte)] |= Math.round(t * maxLevel) << ((i % perByte) * bits);
+  }
 
-	for ( let i = 0; i < data.length; i ++ ) {
-
-		const t = range !== 0 ? Math.min( 1, Math.max( 0, ( data[ i ] - min ) / range ) ) : 0;
-		bytes[ Math.floor( i / perByte ) ] |= Math.round( t * maxLevel ) << ( ( i % perByte ) * bits );
-
-	}
-
-	return base64FromBytes( bytes );
-
+  return base64FromBytes(bytes);
 }
 
 /** Inverse of `encodePackedBase64`. */
-function decodePackedBase64( str: string, min: number, max: number, length: number, bits: number ): Float32Array {
+function decodePackedBase64(str: string, min: number, max: number, length: number, bits: number): Float32Array {
+  const perByte = 8 / bits;
+  const maxLevel = (1 << bits) - 1;
+  const bytes = bytesFromBase64(str);
+  const out = new Float32Array(length);
+  const range = max - min;
 
-	const perByte = 8 / bits;
-	const maxLevel = ( 1 << bits ) - 1;
-	const bytes = bytesFromBase64( str );
-	const out = new Float32Array( length );
-	const range = max - min;
+  for (let i = 0; i < length; i++) {
+    const level = (bytes[Math.floor(i / perByte)] >> ((i % perByte) * bits)) & maxLevel;
+    out[i] = min + (level / maxLevel) * range;
+  }
 
-	for ( let i = 0; i < length; i ++ ) {
-
-		const level = ( bytes[ Math.floor( i / perByte ) ] >> ( ( i % perByte ) * bits ) ) & maxLevel;
-		out[ i ] = min + ( level / maxLevel ) * range;
-
-	}
-
-	return out;
-
+  return out;
 }
 
-const encodeUint4Base64 = ( data: Float32Array, min: number, max: number ) => encodePackedBase64( data, min, max, 4 );
-const decodeUint4Base64 = ( str: string, min: number, max: number, length: number ) => decodePackedBase64( str, min, max, length, 4 );
-const encodeUint2Base64 = ( data: Float32Array, min: number, max: number ) => encodePackedBase64( data, min, max, 2 );
-const decodeUint2Base64 = ( str: string, min: number, max: number, length: number ) => decodePackedBase64( str, min, max, length, 2 );
+const encodeUint4Base64 = (data: Float32Array, min: number, max: number) => encodePackedBase64(data, min, max, 4);
+const decodeUint4Base64 = (str: string, min: number, max: number, length: number) =>
+  decodePackedBase64(str, min, max, length, 4);
+const encodeUint2Base64 = (data: Float32Array, min: number, max: number) => encodePackedBase64(data, min, max, 2);
+const decodeUint2Base64 = (str: string, min: number, max: number, length: number) =>
+  decodePackedBase64(str, min, max, length, 2);
 
 /** Latent-grid codecs keyed by the manifest level `dtype`. */
 const LATENT_CODECS = {
-	uint8: { encode: encodeUint8Base64, decode: decodeUint8Base64 },
-	uint4: { encode: encodeUint4Base64, decode: decodeUint4Base64 },
-	uint2: { encode: encodeUint2Base64, decode: decodeUint2Base64 }
+  uint8: { encode: encodeUint8Base64, decode: decodeUint8Base64 },
+  uint4: { encode: encodeUint4Base64, decode: decodeUint4Base64 },
+  uint2: { encode: encodeUint2Base64, decode: decodeUint2Base64 },
 };
 
 type LatentDtype = keyof typeof LATENT_CODECS;
 
 /** One fully-connected layer, in `createMLP`-shape (see NeuralMLP.js). */
 export interface MLPLayer {
-	inputSize: number;
-	outputSize: number;
-	activation?: string;
-	weights: Float32Array;
-	biases: Float32Array;
+  inputSize: number;
+  outputSize: number;
+  activation?: string;
+  weights: Float32Array;
+  biases: Float32Array;
 }
 
 /** One `{ rows, cols, kind }` entry describing a slice of the flat MLP blob. */
 export interface MLPLayoutEntry {
-	rows: number;
-	cols: number;
-	kind: 'weight' | 'bias';
-	activation?: string;
+  rows: number;
+  cols: number;
+  kind: 'weight' | 'bias';
+  activation?: string;
 }
 
 /** The `{ dtype, layout, dataBase64 }` block `encodeMLPLayersBase64` produces. */
 export interface MLPBlock {
-	dtype: 'float16';
-	layout: MLPLayoutEntry[];
-	dataBase64: string;
+  dtype: 'float16';
+  layout: MLPLayoutEntry[];
+  dataBase64: string;
 }
 
 /**
@@ -269,34 +231,33 @@ export interface MLPBlock {
  * identically in both `.neuralTexture`/`.neuralMaterial` and
  * `.neuralAppearance` manifests.
  */
-function encodeMLPLayersBase64( layers: MLPLayer[] ): MLPBlock {
+function encodeMLPLayersBase64(layers: MLPLayer[]): MLPBlock {
+  const layout: MLPLayoutEntry[] = [];
+  let totalLength = 0;
 
-	const layout: MLPLayoutEntry[] = [];
-	let totalLength = 0;
+  for (const layer of layers) {
+    totalLength += layer.inputSize * layer.outputSize + layer.outputSize;
+  }
 
-	for ( const layer of layers ) {
+  const flat = new Float32Array(totalLength);
+  let cursor = 0;
 
-		totalLength += layer.inputSize * layer.outputSize + layer.outputSize;
+  for (const layer of layers) {
+    layout.push({
+      rows: layer.inputSize,
+      cols: layer.outputSize,
+      kind: 'weight',
+      activation: layer.activation || 'linear',
+    });
 
-	}
+    for (let i = 0; i < layer.weights.length; i++) flat[cursor++] = layer.weights[i];
 
-	const flat = new Float32Array( totalLength );
-	let cursor = 0;
+    layout.push({ rows: 1, cols: layer.outputSize, kind: 'bias' });
 
-	for ( const layer of layers ) {
+    for (let i = 0; i < layer.biases.length; i++) flat[cursor++] = layer.biases[i];
+  }
 
-		layout.push( { rows: layer.inputSize, cols: layer.outputSize, kind: 'weight', activation: layer.activation || 'linear' } );
-
-		for ( let i = 0; i < layer.weights.length; i ++ ) flat[ cursor ++ ] = layer.weights[ i ];
-
-		layout.push( { rows: 1, cols: layer.outputSize, kind: 'bias' } );
-
-		for ( let i = 0; i < layer.biases.length; i ++ ) flat[ cursor ++ ] = layer.biases[ i ];
-
-	}
-
-	return { dtype: 'float16', layout, dataBase64: encodeFloat16Base64( flat ) };
-
+  return { dtype: 'float16', layout, dataBase64: encodeFloat16Base64(flat) };
 }
 
 /**
@@ -305,49 +266,47 @@ function encodeMLPLayersBase64( layers: MLPLayer[] ): MLPBlock {
  * biases }`, `weights`/`biases` as `Float32Array`s) from a `{ dtype, layout,
  * dataBase64 }` block.
  */
-function decodeMLPLayersBase64( mlp: MLPBlock ): MLPLayer[] {
+function decodeMLPLayersBase64(mlp: MLPBlock): MLPLayer[] {
+  let totalLength = 0;
+  for (const entry of mlp.layout) totalLength += entry.rows * entry.cols;
 
-	let totalLength = 0;
-	for ( const entry of mlp.layout ) totalLength += entry.rows * entry.cols;
+  const flat = decodeFloat16Base64(mlp.dataBase64, totalLength);
+  const layers: MLPLayer[] = [];
+  let cursor = 0;
 
-	const flat = decodeFloat16Base64( mlp.dataBase64, totalLength );
-	const layers: MLPLayer[] = [];
-	let cursor = 0;
+  for (let i = 0; i < mlp.layout.length; i += 2) {
+    const weightEntry = mlp.layout[i];
+    const biasEntry = mlp.layout[i + 1];
+    const inputSize = weightEntry.rows;
+    const outputSize = weightEntry.cols;
+    const weightsCount = inputSize * outputSize;
 
-	for ( let i = 0; i < mlp.layout.length; i += 2 ) {
+    const weights = flat.slice(cursor, cursor + weightsCount);
+    cursor += weightsCount;
+    const biases = flat.slice(cursor, cursor + biasEntry.cols);
+    cursor += biasEntry.cols;
 
-		const weightEntry = mlp.layout[ i ];
-		const biasEntry = mlp.layout[ i + 1 ];
-		const inputSize = weightEntry.rows;
-		const outputSize = weightEntry.cols;
-		const weightsCount = inputSize * outputSize;
+    layers.push({ inputSize, outputSize, activation: weightEntry.activation || 'linear', weights, biases });
+  }
 
-		const weights = flat.slice( cursor, cursor + weightsCount ); cursor += weightsCount;
-		const biases = flat.slice( cursor, cursor + biasEntry.cols ); cursor += biasEntry.cols;
-
-		layers.push( { inputSize, outputSize, activation: weightEntry.activation || 'linear', weights, biases } );
-
-	}
-
-	return layers;
-
+  return layers;
 }
 
 export {
-	base64FromBytes,
-	bytesFromBase64,
-	float32ToFloat16,
-	float16ToFloat32,
-	encodeFloat16Base64,
-	decodeFloat16Base64,
-	encodeUint8Base64,
-	decodeUint8Base64,
-	encodeUint4Base64,
-	decodeUint4Base64,
-	encodeUint2Base64,
-	decodeUint2Base64,
-	LATENT_CODECS,
-	encodeMLPLayersBase64,
-	decodeMLPLayersBase64
+  base64FromBytes,
+  bytesFromBase64,
+  float32ToFloat16,
+  float16ToFloat32,
+  encodeFloat16Base64,
+  decodeFloat16Base64,
+  encodeUint8Base64,
+  decodeUint8Base64,
+  encodeUint4Base64,
+  decodeUint4Base64,
+  encodeUint2Base64,
+  decodeUint2Base64,
+  LATENT_CODECS,
+  encodeMLPLayersBase64,
+  decodeMLPLayersBase64,
 };
 export type { LatentDtype };

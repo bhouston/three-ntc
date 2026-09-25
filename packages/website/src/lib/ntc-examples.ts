@@ -53,8 +53,11 @@ export async function parseNtc(text: string): Promise<LoadedMaterial> {
     lodBias: DEFAULT_LOD_BIAS,
   });
   const info = loadedModelInfo(manifest, cpuModel, channelClassification, name ?? 'Untitled');
-  const {activeChannels, constantChannels, grids} = info;
-  const mlpLayers = (cpuModel?.decoder?.layers ?? []).map((l: any) => ({ inputSize: l.inputSize, outputSize: l.outputSize }));
+  const { activeChannels, constantChannels, grids } = info;
+  const mlpLayers = (cpuModel?.decoder?.layers ?? []).map((l: any) => ({
+    inputSize: l.inputSize,
+    outputSize: l.outputSize,
+  }));
   return {
     info,
     name: name ?? 'Untitled',

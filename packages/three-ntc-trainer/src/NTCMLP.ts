@@ -3,99 +3,92 @@ const LINEAR_RGB_OUTPUT_HE_SCALE = 0.45;
 const LINEAR_RGB_OUTPUT_BIAS = 0.3;
 
 interface MLPLayer {
-	inputSize: number;
-	outputSize: number;
-	weights: number[];
-	biases: number[];
-	activation: string;
+  inputSize: number;
+  outputSize: number;
+  weights: number[];
+  biases: number[];
+  activation: string;
 }
 
 interface MLP {
-	layers: MLPLayer[];
+  layers: MLPLayer[];
 }
 
-function createMLP( inputSize: number, hiddenLayers: number[], outputSize: number, random: () => number, hiddenActivation = 'relu', outputActivation = 'linear' ): MLP {
+function createMLP(
+  inputSize: number,
+  hiddenLayers: number[],
+  outputSize: number,
+  random: () => number,
+  hiddenActivation = 'relu',
+  outputActivation = 'linear',
+): MLP {
+  const sizes = [inputSize, ...hiddenLayers, outputSize];
+  const layers: MLPLayer[] = [];
 
-	const sizes = [ inputSize, ...hiddenLayers, outputSize ];
-	const layers: MLPLayer[] = [];
+  for (let i = 0; i < sizes.length - 1; i++) {
+    const input = sizes[i];
+    const output = sizes[i + 1];
+    const isOutputLayer = i === sizes.length - 2;
+    const activation = isOutputLayer ? outputActivation : hiddenActivation;
+    const isLinearOutput = isOutputLayer && activation === 'linear';
+    const isLinearRgb = isLinearOutput && output === 3;
+    const scale =
+      Math.sqrt(2 / input) *
+      (isLinearRgb ? LINEAR_RGB_OUTPUT_HE_SCALE : isLinearOutput ? LINEAR_SCALAR_OUTPUT_HE_SCALE : 1);
+    const weights: number[] = Array.from({ length: input * output });
+    const biases: number[] = Array.from({ length: output }, () => (isLinearRgb ? LINEAR_RGB_OUTPUT_BIAS : 0));
 
-	for ( let i = 0; i < sizes.length - 1; i ++ ) {
+    for (let j = 0; j < weights.length; j++) {
+      weights[j] = (random() * 2 - 1) * scale;
+    }
 
-		const input = sizes[ i ];
-		const output = sizes[ i + 1 ];
-		const isOutputLayer = i === sizes.length - 2;
-		const activation = isOutputLayer ? outputActivation : hiddenActivation;
-		const isLinearOutput = isOutputLayer && activation === 'linear';
-		const isLinearRgb = isLinearOutput && output === 3;
-		const scale = Math.sqrt( 2 / input ) * ( isLinearRgb ? LINEAR_RGB_OUTPUT_HE_SCALE : ( isLinearOutput ? LINEAR_SCALAR_OUTPUT_HE_SCALE : 1 ) );
-		const weights: number[] = Array.from( { length: input * output } );
-		const biases: number[] = Array.from( { length: output }, () => ( isLinearRgb ? LINEAR_RGB_OUTPUT_BIAS : 0 ) );
+    layers.push({
+      inputSize: input,
+      outputSize: output,
+      weights,
+      biases,
+      activation,
+    });
+  }
 
-		for ( let j = 0; j < weights.length; j ++ ) {
-
-			weights[ j ] = ( random() * 2 - 1 ) * scale;
-
-		}
-
-		layers.push( {
-			inputSize: input,
-			outputSize: output,
-			weights,
-			biases,
-			activation
-		} );
-
-	}
-
-	return { layers };
-
+  return { layers };
 }
 
-function forwardMLP( mlp: MLP, input: number[] ) {
+function forwardMLP(mlp: MLP, input: number[]) {
+  const activations = [input.slice()];
+  const preActivations: number[][] = [];
+  let values = input.slice();
 
-	const activations = [ input.slice() ];
-	const preActivations: number[][] = [];
-	let values = input.slice();
+  for (const layer of mlp.layers) {
+    const next: number[] = Array.from({ length: layer.outputSize });
+    const pre: number[] = Array.from({ length: layer.outputSize });
 
-	for ( const layer of mlp.layers ) {
+    for (let output = 0; output < layer.outputSize; output++) {
+      let value = layer.biases[output];
 
-		const next: number[] = Array.from( { length: layer.outputSize } );
-		const pre: number[] = Array.from( { length: layer.outputSize } );
+      for (let inputIndex = 0; inputIndex < layer.inputSize; inputIndex++) {
+        value += layer.weights[output * layer.inputSize + inputIndex] * values[inputIndex];
+      }
 
-		for ( let output = 0; output < layer.outputSize; output ++ ) {
+      pre[output] = value;
+      next[output] = activate(value, layer.activation);
+    }
 
-			let value = layer.biases[ output ];
+    preActivations.push(pre);
+    activations.push(next);
+    values = next;
+  }
 
-			for ( let inputIndex = 0; inputIndex < layer.inputSize; inputIndex ++ ) {
-
-				value += layer.weights[ output * layer.inputSize + inputIndex ] * values[ inputIndex ];
-
-			}
-
-			pre[ output ] = value;
-			next[ output ] = activate( value, layer.activation );
-
-		}
-
-		preActivations.push( pre );
-		activations.push( next );
-		values = next;
-
-	}
-
-	return { activations, preActivations, output: values };
-
+  return { activations, preActivations, output: values };
 }
 
-function activate( value: number, activation: string ): number {
+function activate(value: number, activation: string): number {
+  if (activation === 'relu') return Math.max(0, value);
+  if (activation === 'leakyRelu') return value >= 0 ? value : value * 0.01;
+  if (activation === 'tanh') return Math.tanh(value);
+  if (activation === 'hgelu') return hardGELU(value);
 
-	if ( activation === 'relu' ) return Math.max( 0, value );
-	if ( activation === 'leakyRelu' ) return value >= 0 ? value : value * 0.01;
-	if ( activation === 'tanh' ) return Math.tanh( value );
-	if ( activation === 'hgelu' ) return hardGELU( value );
-
-	return value;
-
+  return value;
 }
 
 /**
@@ -119,13 +112,11 @@ function activate( value: number, activation: string ): number {
  * expression, which can otherwise land on IEEE-754 negative zero at x = -1.5
  * (`-1.5/3 * 0 === -0`, not `0`).
  */
-function hardGELU( value: number ): number {
+function hardGELU(value: number): number {
+  if (value <= -1.5) return 0;
+  if (value >= 1.5) return value;
 
-	if ( value <= - 1.5 ) return 0;
-	if ( value >= 1.5 ) return value;
-
-	return value / 3 * ( value + 1.5 );
-
+  return (value / 3) * (value + 1.5);
 }
 
 /**
@@ -140,34 +131,20 @@ function hardGELU( value: number ): number {
  *                = 1            if x >= 1.5
  *                = (2x + 1.5)/3 otherwise
  */
-function hardGELUDerivative( value: number ): number {
+function hardGELUDerivative(value: number): number {
+  if (value <= -1.5) return 0;
+  if (value >= 1.5) return 1;
 
-	if ( value <= - 1.5 ) return 0;
-	if ( value >= 1.5 ) return 1;
-
-	return ( 2 * value + 1.5 ) / 3;
-
+  return (2 * value + 1.5) / 3;
 }
 
-function sigmoid( value: number ): number {
-
-	return 1 / ( 1 + Math.exp( - value ) );
-
+function sigmoid(value: number): number {
+  return 1 / (1 + Math.exp(-value));
 }
 
-function powerLog( value: number, power: number ): number {
-
-	return power * ( Math.pow( value, 1 / power ) - 1 );
-
+function powerLog(value: number, power: number): number {
+  return power * (Math.pow(value, 1 / power) - 1);
 }
 
-export {
-	createMLP,
-	forwardMLP,
-	activate,
-	hardGELU,
-	hardGELUDerivative,
-	sigmoid,
-	powerLog
-};
+export { createMLP, forwardMLP, activate, hardGELU, hardGELUDerivative, sigmoid, powerLog };
 export type { MLP, MLPLayer };

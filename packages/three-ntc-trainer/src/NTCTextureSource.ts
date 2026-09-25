@@ -14,120 +14,121 @@ type TSLNode = any;
  * appearance teacher-atlas renderer, simplified to a single full-resolution
  * pass since there's no per-sample atlas tiling to do here.
  */
-async function bakeColorNodeToTexture( renderer: any, colorNode: TSLNode, resolution = 512, { generateMipmaps = false, uvTransform = null as any } = {} ): Promise<any> {
+async function bakeColorNodeToTexture(
+  renderer: any,
+  colorNode: TSLNode,
+  resolution = 512,
+  { generateMipmaps = false, uvTransform = null as any } = {},
+): Promise<any> {
+  const scene = new THREE.Scene();
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 4);
+  camera.position.set(0, 0, 2);
 
-	const scene = new THREE.Scene();
-	const camera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 4 );
-	camera.position.set( 0, 0, 2 );
+  const material = new NodeMaterial();
+  material.lights = false;
+  material.toneMapped = false;
+  // These bake textures store raw packed data (e.g. roughness/metalness may
+  // land in the alpha channel), not real alpha-compositing surfaces. Without
+  // this, the material's default opaque blending state forces alpha to 1.0
+  // on write, silently clobbering any data channel packed into slot 3 of a
+  // vec4 (see NeuralMaterialSource.js's packComponentsIntoVec4).
+  material.blending = THREE.NoBlending;
+  // Deliberately `fragmentNode`, not `colorNode`: assigning `colorNode` runs
+  // NodeMaterial's normal (colorNode === null ? built-in : custom) fragment
+  // path through `setupDiffuseColor`/`setupLighting`, whose "basicOutput"
+  // unconditionally does `vec4(outgoingLightNode, diffuseColor.a).max(0)`
+  // ("force unsigned floats - useful for RenderTargets", see
+  // NodeMaterial.js's setupFragment) - correct for a material's *actual
+  // lit output*, but this bake path (re)uses a colorNode to smuggle
+  // arbitrary, potentially *signed* data (e.g. NeuralMaterialFormat.js's
+  // tangent-space (dx, dy) normal offset, in [-1, 1]) through a plain
+  // unlit NodeMaterial. That `.max(0)` silently clips every negative
+  // component of every baked channel to 0 before training ever sees it -
+  // found by writing a test that baked a flat known-negative color and got
+  // a wrong, non-negative value back.
+  // `fragmentNode` bypasses setupDiffuseColor/setupLighting/that clamp
+  // entirely (see NodeMaterial.js: "this node property can be used if you
+  // need complete freedom in implementing the fragment shader"), so the
+  // baked value is exactly what `colorNode` computes, sign intact.
+  // `vec4( colorNode )` (TSL's ConvertType) auto-pads a vec3 input with
+  // alpha = 1 and passes a vec4 input through unchanged, so this works
+  // whether the caller's node is already a full RGBA pack (e.g.
+  // NeuralMaterialSource.js's buildPackedColorNodes) or a bare vec3 (e.g.
+  // a MaterialX albedo colorNode, see webgpu_materials_neural_texture.html).
+  material.fragmentNode = vec4(colorNode);
 
-	const material = new NodeMaterial();
-	material.lights = false;
-	material.toneMapped = false;
-	// These bake textures store raw packed data (e.g. roughness/metalness may
-	// land in the alpha channel), not real alpha-compositing surfaces. Without
-	// this, the material's default opaque blending state forces alpha to 1.0
-	// on write, silently clobbering any data channel packed into slot 3 of a
-	// vec4 (see NeuralMaterialSource.js's packComponentsIntoVec4).
-	material.blending = THREE.NoBlending;
-	// Deliberately `fragmentNode`, not `colorNode`: assigning `colorNode` runs
-	// NodeMaterial's normal (colorNode === null ? built-in : custom) fragment
-	// path through `setupDiffuseColor`/`setupLighting`, whose "basicOutput"
-	// unconditionally does `vec4(outgoingLightNode, diffuseColor.a).max(0)`
-	// ("force unsigned floats - useful for RenderTargets", see
-	// NodeMaterial.js's setupFragment) - correct for a material's *actual
-	// lit output*, but this bake path (re)uses a colorNode to smuggle
-	// arbitrary, potentially *signed* data (e.g. NeuralMaterialFormat.js's
-	// tangent-space (dx, dy) normal offset, in [-1, 1]) through a plain
-	// unlit NodeMaterial. That `.max(0)` silently clips every negative
-	// component of every baked channel to 0 before training ever sees it -
-	// found by writing a test that baked a flat known-negative color and got
-	// a wrong, non-negative value back.
-	// `fragmentNode` bypasses setupDiffuseColor/setupLighting/that clamp
-	// entirely (see NodeMaterial.js: "this node property can be used if you
-	// need complete freedom in implementing the fragment shader"), so the
-	// baked value is exactly what `colorNode` computes, sign intact.
-	// `vec4( colorNode )` (TSL's ConvertType) auto-pads a vec3 input with
-	// alpha = 1 and passes a vec4 input through unchanged, so this works
-	// whether the caller's node is already a full RGBA pack (e.g.
-	// NeuralMaterialSource.js's buildPackedColorNodes) or a bare vec3 (e.g.
-	// a MaterialX albedo colorNode, see webgpu_materials_neural_texture.html).
-	material.fragmentNode = vec4( colorNode );
+  const geometry = new THREE.PlaneGeometry(2, 2);
+  // PlaneGeometry's built-in UV has v=1 at the top of the quad and v=0 at
+  // the bottom - the opposite of the "v=0 at top" convention three.js's own
+  // fullscreen-quad helper (renderers/common/QuadMesh.js's QuadGeometry)
+  // uses for render-target passes, which is what makes "render at raw UV
+  // (u,v), then later sample the resulting texture back at that same (u,v)"
+  // round-trip correctly. Left unflipped, whatever gets baked at (u,v) here
+  // reads back later (via texture()/textureLevel() in
+  // NeuralTextureGPUComputeTSL's training kernel and NeuralTextureNodeMaterial/
+  // NeuralMaterialNodeMaterial's inference-time evaluateNeuralTextureRaw) as
+  // (u, 1-v) instead - a spurious vertical flip baked into every trained
+  // channel, since none of those consumers know to undo it. Flipping V here
+  // once, at the source, keeps the whole pipeline working in plain raw-UV
+  // space so the neural mesh's material lines up with the teacher's.
+  //
+  // `uvTransform`, when given, is applied here too - inverted - in that
+  // same raw-UV space: baking at raw-UV `x` with the material's own graph
+  // unmodified produces `graph(x)`, but the graph already contains
+  // whatever UV-transform nodes (rotate2d/place2d/tiling, see
+  // NTCMaterialXUvTransform.js) feed its image lookup(s), so baking that
+  // way would bake the *transformed* (e.g. already-tiled) appearance into
+  // the training target - wasting grid capacity re-learning repeated
+  // content instead of storing it once. Baking at `uvTransform^-1(x)`
+  // instead makes this texel equal `graph(uvTransform^-1(x))`, which -
+  // since `graph = imageLookup(uvTransform(...))` - simplifies to
+  // `imageLookup(x)`: the untransformed content, in the same local space
+  // `NTCNodeMaterial` maps query UV *into* via `uvTransform` at render
+  // time. No graph editing needed - this is a pure sampling-side inverse.
+  const uvAttribute = geometry.attributes.uv;
+  const inverseUvTransform = uvTransform ? new THREE.Matrix3().copy(uvTransform).invert() : null;
+  const uvPoint = new THREE.Vector2();
 
-	const geometry = new THREE.PlaneGeometry( 2, 2 );
-	// PlaneGeometry's built-in UV has v=1 at the top of the quad and v=0 at
-	// the bottom - the opposite of the "v=0 at top" convention three.js's own
-	// fullscreen-quad helper (renderers/common/QuadMesh.js's QuadGeometry)
-	// uses for render-target passes, which is what makes "render at raw UV
-	// (u,v), then later sample the resulting texture back at that same (u,v)"
-	// round-trip correctly. Left unflipped, whatever gets baked at (u,v) here
-	// reads back later (via texture()/textureLevel() in
-	// NeuralTextureGPUComputeTSL's training kernel and NeuralTextureNodeMaterial/
-	// NeuralMaterialNodeMaterial's inference-time evaluateNeuralTextureRaw) as
-	// (u, 1-v) instead - a spurious vertical flip baked into every trained
-	// channel, since none of those consumers know to undo it. Flipping V here
-	// once, at the source, keeps the whole pipeline working in plain raw-UV
-	// space so the neural mesh's material lines up with the teacher's.
-	//
-	// `uvTransform`, when given, is applied here too - inverted - in that
-	// same raw-UV space: baking at raw-UV `x` with the material's own graph
-	// unmodified produces `graph(x)`, but the graph already contains
-	// whatever UV-transform nodes (rotate2d/place2d/tiling, see
-	// NTCMaterialXUvTransform.js) feed its image lookup(s), so baking that
-	// way would bake the *transformed* (e.g. already-tiled) appearance into
-	// the training target - wasting grid capacity re-learning repeated
-	// content instead of storing it once. Baking at `uvTransform^-1(x)`
-	// instead makes this texel equal `graph(uvTransform^-1(x))`, which -
-	// since `graph = imageLookup(uvTransform(...))` - simplifies to
-	// `imageLookup(x)`: the untransformed content, in the same local space
-	// `NTCNodeMaterial` maps query UV *into* via `uvTransform` at render
-	// time. No graph editing needed - this is a pure sampling-side inverse.
-	const uvAttribute = geometry.attributes.uv;
-	const inverseUvTransform = uvTransform ? new THREE.Matrix3().copy( uvTransform ).invert() : null;
-	const uvPoint = new THREE.Vector2();
+  for (let i = 0; i < uvAttribute.count; i++) {
+    uvPoint.set(uvAttribute.getX(i), 1 - uvAttribute.getY(i));
+    if (inverseUvTransform) uvPoint.applyMatrix3(inverseUvTransform);
+    uvAttribute.setXY(i, uvPoint.x, uvPoint.y);
+  }
 
-	for ( let i = 0; i < uvAttribute.count; i ++ ) {
+  uvAttribute.needsUpdate = true;
+  geometry.computeTangents();
+  const mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
 
-		uvPoint.set( uvAttribute.getX( i ), 1 - uvAttribute.getY( i ) );
-		if ( inverseUvTransform ) uvPoint.applyMatrix3( inverseUvTransform );
-		uvAttribute.setXY( i, uvPoint.x, uvPoint.y );
+  const renderTarget = new THREE.RenderTarget(resolution, resolution, {
+    type: THREE.HalfFloatType,
+    format: THREE.RGBAFormat,
+    colorSpace: THREE.NoColorSpace,
+    // This generic bake optionally generates hardware box mips. The trainer's
+    // explicit mipFilter: 'lanczos' option rebuilds them with Lanczos-3.
+    generateMipmaps,
+    minFilter: generateMipmaps ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    wrapS: THREE.RepeatWrapping,
+    wrapT: THREE.RepeatWrapping,
+    depthBuffer: false,
+    stencilBuffer: false,
+  });
 
-	}
+  const previousTarget = renderer.getRenderTarget();
+  const previousToneMapping = renderer.toneMapping;
+  renderer.toneMapping = THREE.NoToneMapping;
 
-	uvAttribute.needsUpdate = true;
-	geometry.computeTangents();
-	const mesh = new THREE.Mesh( geometry, material );
-	scene.add( mesh );
+  renderer.setRenderTarget(renderTarget);
+  renderer.render(scene, camera);
 
-	const renderTarget = new THREE.RenderTarget( resolution, resolution, {
-		type: THREE.HalfFloatType,
-		format: THREE.RGBAFormat,
-		colorSpace: THREE.NoColorSpace,
-		// This generic bake optionally generates hardware box mips. The trainer's
-		// explicit mipFilter: 'lanczos' option rebuilds them with Lanczos-3.
-		generateMipmaps,
-		minFilter: generateMipmaps ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter,
-		magFilter: THREE.LinearFilter,
-		wrapS: THREE.RepeatWrapping,
-		wrapT: THREE.RepeatWrapping,
-		depthBuffer: false,
-		stencilBuffer: false
-	} );
+  renderer.setRenderTarget(previousTarget);
+  renderer.toneMapping = previousToneMapping;
 
-	const previousTarget = renderer.getRenderTarget();
-	const previousToneMapping = renderer.toneMapping;
-	renderer.toneMapping = THREE.NoToneMapping;
+  geometry.dispose();
+  material.dispose();
 
-	renderer.setRenderTarget( renderTarget );
-	renderer.render( scene, camera );
-
-	renderer.setRenderTarget( previousTarget );
-	renderer.toneMapping = previousToneMapping;
-
-	geometry.dispose();
-	material.dispose();
-
-	return renderTarget;
-
+  return renderTarget;
 }
 
 /**
@@ -137,37 +138,31 @@ async function bakeColorNodeToTexture( renderer: any, colorNode: TSLNode, resolu
  * doesn't try to walk the graph looking for an `<image>` node - it simply
  * hands the whole color expression to `bakeColorNodeToTexture`.
  */
-function extractBaseColorNode( materialXMaterial: any ): TSLNode | null {
+function extractBaseColorNode(materialXMaterial: any): TSLNode | null {
+  if (!materialXMaterial) return null;
+  if (materialXMaterial.colorNode) return materialXMaterial.colorNode;
 
-	if ( ! materialXMaterial ) return null;
-	if ( materialXMaterial.colorNode ) return materialXMaterial.colorNode;
-
-	return null;
-
+  return null;
 }
 
 /**
  * Loads a plain image file (PNG/JPG/etc.) as a GPU texture, decoding sRGB to
  * the renderer's linear working color space like any other albedo map.
  */
-function loadImageTexture( url: string ): Promise<any> {
+function loadImageTexture(url: string): Promise<any> {
+  return new THREE.TextureLoader().loadAsync(url).then((texture: any) => {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    // Explicit even though these match THREE.Texture's own defaults -
+    // mip-pyramid-aware training (see the RenderTarget's matching comment
+    // above) needs a real mip chain to sample at LOD > 0.
+    texture.generateMipmaps = true;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.needsUpdate = true;
 
-	return new THREE.TextureLoader().loadAsync( url ).then( ( texture: any ) => {
-
-		texture.colorSpace = THREE.SRGBColorSpace;
-		texture.wrapS = THREE.RepeatWrapping;
-		texture.wrapT = THREE.RepeatWrapping;
-		// Explicit even though these match THREE.Texture's own defaults -
-		// mip-pyramid-aware training (see the RenderTarget's matching comment
-		// above) needs a real mip chain to sample at LOD > 0.
-		texture.generateMipmaps = true;
-		texture.minFilter = THREE.LinearMipmapLinearFilter;
-		texture.needsUpdate = true;
-
-		return texture;
-
-	} );
-
+    return texture;
+  });
 }
 
 /**
@@ -178,39 +173,37 @@ function loadImageTexture( url: string ): Promise<any> {
  * disposing the render target's own copy of the texture, never both.
  */
 class NTCTextureSource {
+  texture: any;
+  renderTarget: any | null;
 
-	texture: any;
-	renderTarget: any | null;
+  constructor(texture: any, renderTarget: any | null = null) {
+    this.texture = texture;
+    this.renderTarget = renderTarget;
+  }
 
-	constructor( texture: any, renderTarget: any | null = null ) {
+  static async fromBakedColorNode(
+    renderer: any,
+    colorNode: TSLNode,
+    resolution = 512,
+    uvTransform: any = null,
+  ): Promise<NTCTextureSource> {
+    // `generateMipmaps: true` - this is the actual training-source bake
+    // path (see bakeColorNodeToTexture's doc comment on its default).
+    const renderTarget = await bakeColorNodeToTexture(renderer, colorNode, resolution, {
+      generateMipmaps: true,
+      uvTransform,
+    });
+    return new NTCTextureSource(renderTarget.texture, renderTarget);
+  }
 
-		this.texture = texture;
-		this.renderTarget = renderTarget;
+  static async fromImage(url: string): Promise<NTCTextureSource> {
+    return new NTCTextureSource(await loadImageTexture(url));
+  }
 
-	}
-
-	static async fromBakedColorNode( renderer: any, colorNode: TSLNode, resolution = 512, uvTransform: any = null ): Promise<NTCTextureSource> {
-
-		// `generateMipmaps: true` - this is the actual training-source bake
-		// path (see bakeColorNodeToTexture's doc comment on its default).
-		const renderTarget = await bakeColorNodeToTexture( renderer, colorNode, resolution, { generateMipmaps: true, uvTransform } );
-		return new NTCTextureSource( renderTarget.texture, renderTarget );
-
-	}
-
-	static async fromImage( url: string ): Promise<NTCTextureSource> {
-
-		return new NTCTextureSource( await loadImageTexture( url ) );
-
-	}
-
-	dispose(): void {
-
-		if ( this.renderTarget ) this.renderTarget.dispose();
-		else this.texture.dispose();
-
-	}
-
+  dispose(): void {
+    if (this.renderTarget) this.renderTarget.dispose();
+    else this.texture.dispose();
+  }
 }
 
 export { NTCTextureSource, bakeColorNodeToTexture, extractBaseColorNode, loadImageTexture };

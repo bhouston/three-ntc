@@ -1,4 +1,14 @@
-import { float, max, normalWorld, sqrt, tangentWorld, bitangentWorld, transformNormalToView, vec2, vec3 } from 'three/tsl';
+import {
+  float,
+  max,
+  normalWorld,
+  sqrt,
+  tangentWorld,
+  bitangentWorld,
+  transformNormalToView,
+  vec2,
+  vec3,
+} from 'three/tsl';
 
 /**
  * Turns a trained tangent-space (dx, dy) offset into the mesh's final
@@ -37,19 +47,18 @@ import { float, max, normalWorld, sqrt, tangentWorld, bitangentWorld, transformN
  * re-exported from NTCNodeMaterial.js for backward compatibility
  * with existing imports/tests.
  */
-function reconstructFinalNormal( offsetNode: any ): any {
+function reconstructFinalNormal(offsetNode: any): any {
+  const dx = offsetNode.x;
+  const dy = offsetNode.y;
+  const dz = sqrt(max(float(1).sub(dx.mul(dx)).sub(dy.mul(dy)), float(0)));
+  const tangentSpace = vec3(dx, dy, dz);
+  const blended = tangentWorld
+    .mul(tangentSpace.x)
+    .add(bitangentWorld.mul(tangentSpace.y))
+    .add(normalWorld.mul(tangentSpace.z))
+    .normalize();
 
-	const dx = offsetNode.x;
-	const dy = offsetNode.y;
-	const dz = sqrt( max( float( 1 ).sub( dx.mul( dx ) ).sub( dy.mul( dy ) ), float( 0 ) ) );
-	const tangentSpace = vec3( dx, dy, dz );
-	const blended = tangentWorld.mul( tangentSpace.x )
-		.add( bitangentWorld.mul( tangentSpace.y ) )
-		.add( normalWorld.mul( tangentSpace.z ) )
-		.normalize();
-
-	return transformNormalToView( blended );
-
+  return transformNormalToView(blended);
 }
 
 /**
@@ -61,18 +70,16 @@ function reconstructFinalNormal( offsetNode: any ): any {
  * to preview a constant channel through the exact same node-based color
  * pipeline as a trained one.
  */
-function constantToNode( value: number | number[] ): any {
+function constantToNode(value: number | number[]): any {
+  if (!Array.isArray(value)) return float(value);
 
-	if ( ! Array.isArray( value ) ) return float( value );
-
-	return value.length === 2 ? vec2( ...value ) : vec3( ...value );
-
+  return value.length === 2 ? vec2(...value) : vec3(...value);
 }
 
 /** One entry of `OUTPUT_TYPES` - see the registry's doc comment below. */
 export interface NTCOutputType {
-	reconstruct: ( offsetNode: any ) => any;
-	previewSize: number;
+  reconstruct: (offsetNode: any) => any;
+  previewSize: number;
 }
 
 /**
@@ -92,23 +99,23 @@ export interface NTCOutputType {
  * `reconstructFinalNormal` above and `previewSize` below.
  */
 const OUTPUT_TYPES: Record<string, NTCOutputType> = {
-	normal: {
-		// Shared reconstruction from a trained 2-component offset to a full
-		// view-space normal - see reconstructFinalNormal's doc comment.
-		reconstruct: reconstructFinalNormal,
-		// The raw trained payload is 2-component, but by the time a value is
-		// shown in a debug view it's always the fully reconstructed 3-
-		// component vector (see NTCFormat.buildDebugViewColorNode) -
-		// previewColor needs to be told to treat it as 3-wide, not 2, or it
-		// hardcodes blue to 0 and silently drops z.
-		previewSize: 3
-	}
+  normal: {
+    // Shared reconstruction from a trained 2-component offset to a full
+    // view-space normal - see reconstructFinalNormal's doc comment.
+    reconstruct: reconstructFinalNormal,
+    // The raw trained payload is 2-component, but by the time a value is
+    // shown in a debug view it's always the fully reconstructed 3-
+    // component vector (see NTCFormat.buildDebugViewColorNode) -
+    // previewColor needs to be told to treat it as 3-wide, not 2, or it
+    // hardcodes blue to 0 and silently drops z.
+    previewSize: 3,
+  },
 };
 
 /** The subset of a channel descriptor `channelEffectiveType` needs. */
 export interface EffectiveTypeChannel {
-	type?: string;
-	size: number;
+  type?: string;
+  size: number;
 }
 
 /**
@@ -118,12 +125,10 @@ export interface EffectiveTypeChannel {
  * some type label to key off of without forcing every descriptor to state
  * the obvious.
  */
-function channelEffectiveType( channel: EffectiveTypeChannel ): string {
+function channelEffectiveType(channel: EffectiveTypeChannel): string {
+  if (channel.type) return channel.type;
 
-	if ( channel.type ) return channel.type;
-
-	return channel.size === 1 ? 'float' : `float${channel.size}`;
-
+  return channel.size === 1 ? 'float' : `float${channel.size}`;
 }
 
 export { reconstructFinalNormal, constantToNode, OUTPUT_TYPES, channelEffectiveType };

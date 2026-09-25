@@ -12,14 +12,17 @@ function supportsFloatAccumulation(device: any): Promise<boolean> {
       device.pushErrorScope('validation');
       let supported = false;
       try {
-        const module = device.createShaderModule({ code: `${FLOAT_ATOMIC_WGSL}
+        const module = device.createShaderModule({
+          code: `${FLOAT_ATOMIC_WGSL}
 @group(0) @binding(0) var<storage, read_write> accumulator: atomic<i32>;
 @compute @workgroup_size(1) fn main() {
   let previous = ntcAtomicAddFloat(&accumulator, 1.0);
-}` });
+}`,
+        });
         await device.createComputePipelineAsync({
-          label: 'NTC float accumulation capability check', layout: 'auto',
-          compute: { module, entryPoint: 'main' }
+          label: 'NTC float accumulation capability check',
+          layout: 'auto',
+          compute: { module, entryPoint: 'main' },
         });
         supported = true;
       } catch {
@@ -35,13 +38,16 @@ function supportsFloatAccumulation(device: any): Promise<boolean> {
 }
 
 export async function resolveGradientPrecision(
-  device: any, requested: 'auto' | 'fixed' | 'float'
+  device: any,
+  requested: 'auto' | 'fixed' | 'float',
 ): Promise<'fixed' | 'float'> {
   if (requested === 'fixed') return 'fixed';
   if (requested !== 'auto' && requested !== 'float') throw new Error('Invalid gradientPrecision');
   if (await supportsFloatAccumulation(device)) return 'float';
   if (requested === 'float') {
-    throw new Error('NTCTrainer: floating-point gradient accumulation cannot compile on this device. Use gradientPrecision: "auto" or "fixed".');
+    throw new Error(
+      'NTCTrainer: floating-point gradient accumulation cannot compile on this device. Use gradientPrecision: "auto" or "fixed".',
+    );
   }
   console.warn('NTCTrainer: floating-point atomics unavailable; using fixed-point gradient accumulation.');
   return 'fixed';

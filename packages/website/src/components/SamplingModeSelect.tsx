@@ -1,9 +1,9 @@
-import { NTC_SAMPLING_MODES, type NTCSamplingMode } from "three-ntc";
+import { NTC_SAMPLING_MODES, type NTCSamplingMode } from 'three-ntc';
 
 const labels: Record<NTCSamplingMode, string> = {
-  nearest: "Nearest neighbor",
-  stochastic: "Stochastic",
-  trilinear: "Trilinear",
+  nearest: 'Nearest neighbor',
+  stochastic: 'Stochastic',
+  trilinear: 'Trilinear',
 };
 
 export function SamplingModeSelect({
@@ -30,11 +30,11 @@ export function SamplingModeSelect({
         </select>
       </label>
       <p className="text-xs text-muted-foreground">
-        {value === "nearest"
-          ? "One decoded texel per sample."
-          : value === "stochastic"
-            ? "One decoded texel per sample. Noisy until temporal reconstruction is added."
-            : "Blends eight decoded texels per sample. More expensive."}
+        {value === 'nearest'
+          ? 'One decoded texel per sample.'
+          : value === 'stochastic'
+            ? 'One decoded texel per sample. Noisy until temporal reconstruction is added.'
+            : 'Blends eight decoded texels per sample. More expensive.'}
       </p>
     </div>
   );

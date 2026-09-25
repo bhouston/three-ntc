@@ -22,10 +22,10 @@ Try it live at **[three-ntc.ben3d.ca](https://three-ntc.ben3d.ca)**.
 ## Usage
 
 ```js
-import { NTCLoader, NTCNodeMaterial } from "three-ntc";
+import { NTCLoader, NTCNodeMaterial } from 'three-ntc';
 
 const loader = new NTCLoader();
-const { cpuModel, channelClassification } = await loader.loadAsync("gold.ntc");
+const { cpuModel, channelClassification } = await loader.loadAsync('gold.ntc');
 
 const material = new NTCNodeMaterial(cpuModel, channelClassification);
 const mesh = new THREE.Mesh(geometry, material);

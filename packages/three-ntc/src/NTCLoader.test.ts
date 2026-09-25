@@ -34,7 +34,13 @@ function buildManifest(positionalEncoding?: boolean, dualGrid?: boolean) {
       ...(dualGrid !== undefined ? { dualGrid } : {}),
     },
     mlp: encodeMLPLayersBase64([
-      { inputSize, outputSize: 1, activation: 'linear', weights: new Float32Array(inputSize).fill(0), biases: new Float32Array(1) },
+      {
+        inputSize,
+        outputSize: 1,
+        activation: 'linear',
+        weights: new Float32Array(inputSize).fill(0),
+        biases: new Float32Array(1),
+      },
     ]),
     channels: { activeKeys: ['roughness'] },
   };
@@ -65,8 +71,8 @@ it('preserves legacy emissive sigmoid and reads explicit HDR activations', () =>
   manifest.channels.activeKeys = ['emissive'];
   const loader = new NTCLoader();
   expect(loader.parse(manifest).channelClassification.activeChannels[0].activation).toBe('sigmoid');
-  manifest.channels.encodings = {emissive:{activation:'softplus'}};
+  manifest.channels.encodings = { emissive: { activation: 'softplus' } };
   expect(loader.parse(manifest).channelClassification.activeChannels[0].activation).toBe('softplus');
   manifest.channels.encodings.emissive.activation = 'unknown';
-  expect(()=>loader.parse(manifest)).toThrow(/Invalid activation/);
+  expect(() => loader.parse(manifest)).toThrow(/Invalid activation/);
 });

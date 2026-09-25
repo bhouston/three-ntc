@@ -1,8 +1,8 @@
-import { copyFileSync, readFileSync, writeFileSync } from "node:fs";
-import { execFileSync } from "node:child_process";
-import { join } from "node:path";
+import { copyFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { join } from 'node:path';
 
-export const packages = ["three-ntc", "three-ntc-trainer"];
+export const packages = ['three-ntc', 'three-ntc-trainer'];
 
 // Only the CI checkout is modified. Git tags are the version source of truth.
 //
@@ -25,23 +25,23 @@ export const packages = ["three-ntc", "three-ntc-trainer"];
 //      `workspace:^` dependency on three-ntc to a real semver range.
 export function prepare({ artifacts } = {}, { cwd, env }) {
   if (artifacts) {
-    const packDestination = join(cwd, "release-artifacts");
+    const packDestination = join(cwd, 'release-artifacts');
     for (const name of packages) {
-      execFileSync(
-        "pnpm",
-        ["--dir", join(cwd, "packages", name), "pack", "--pack-destination", packDestination],
-        { cwd, env, stdio: "pipe" },
-      );
+      execFileSync('pnpm', ['--dir', join(cwd, 'packages', name), 'pack', '--pack-destination', packDestination], {
+        cwd,
+        env,
+        stdio: 'pipe',
+      });
     }
     return;
   }
   for (const name of packages) {
-    const dir = join(cwd, "packages", name);
-    const path = join(dir, "package.json");
-    const pkg = JSON.parse(readFileSync(path, "utf8"));
-    pkg.files = [...new Set([...pkg.files, "CHANGELOG.md"])];
+    const dir = join(cwd, 'packages', name);
+    const path = join(dir, 'package.json');
+    const pkg = JSON.parse(readFileSync(path, 'utf8'));
+    pkg.files = [...new Set([...pkg.files, 'CHANGELOG.md'])];
     writeFileSync(path, `${JSON.stringify(pkg, null, 2)}\n`);
-    copyFileSync(join(cwd, "LICENSE"), join(dir, "LICENSE"));
-    copyFileSync(join(cwd, "CHANGELOG.md"), join(dir, "CHANGELOG.md"));
+    copyFileSync(join(cwd, 'LICENSE'), join(dir, 'LICENSE'));
+    copyFileSync(join(cwd, 'CHANGELOG.md'), join(dir, 'CHANGELOG.md'));
   }
 }
