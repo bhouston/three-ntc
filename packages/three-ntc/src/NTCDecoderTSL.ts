@@ -13,6 +13,7 @@ import { computeTiledPositionalEncodingTSL } from './NTCPositionalEncodingTSL.js
 import { applyChannelActivation, NTCActivation } from './NTCOutputActivations.js';
 import { MLPLayer } from './NTCBinaryCodec.js';
 import { Fn, Loop, array, float, floor, int, pow, textureLevel, vec2, vec3 } from 'three/tsl';
+import type { TSLNode, NTCMatrix3Like } from './NTCTSLTypes.js';
 
 /**
  * A fully decoded `.ntc` CPU model - what `NTCLoader.parse()` produces and
@@ -31,7 +32,7 @@ export interface NTCCpuModel {
   decoder: { layers: MLPLayer[] };
   outputChannels: number;
   wrap: string;
-  uvTransform: any;
+  uvTransform: NTCMatrix3Like;
   // Optional (default false/absent) - see NTCGridPyramidModel.js (trainer)
   // `computeDecoderInputSize` doc comment and `evaluateNeuralTextureRaw`
   // below.
@@ -44,7 +45,12 @@ export interface NTCCpuModel {
 /** Reads an individual feature vector from an RGBA array texture. Each layer
  * holds four channels; interpolation is performed after decoding stored values.
  */
-function gridFeatures(uv: any, grid: NTCGrid, texture: any, concatenate: boolean): { values: any[]; tx: any; ty: any } {
+function gridFeatures(
+  uv: TSLNode,
+  grid: NTCGrid,
+  texture: TSLNode,
+  concatenate: boolean,
+): { values: TSLNode[]; tx: TSLNode; ty: TSLNode } {
   const x = uv.x.mul(grid.width).sub(0.5),
     y = uv.y.mul(grid.height).sub(0.5);
   const x0 = floor(x),
@@ -57,7 +63,7 @@ function gridFeatures(uv: any, grid: NTCGrid, texture: any, concatenate: boolean
     float(1).sub(tx).mul(ty),
     tx.mul(ty),
   ];
-  const values: any[] = Array.from({ length: concatenate ? 4 * grid.channels : grid.channels }, () => float(0));
+  const values: TSLNode[] = Array.from({ length: concatenate ? 4 * grid.channels : grid.channels }, () => float(0));
   for (let t = 0; t < 4; t++) {
     const coord = vec2(x0.add((t % 2) + 0.5).div(grid.width), y0.add(Math.floor(t / 2) + 0.5).div(grid.height));
     for (let group = 0; group < Math.ceil(grid.channels / 4); group++) {
@@ -73,11 +79,11 @@ function gridFeatures(uv: any, grid: NTCGrid, texture: any, concatenate: boolean
   return { values, tx, ty };
 }
 
-function sampleFeatures(uv: any, model: NTCCpuModel, textures: any[], lod: any): any[] {
+function sampleFeatures(uv: TSLNode, model: NTCCpuModel, textures: TSLNode[], lod: TSLNode): TSLNode[] {
   const selected = selectFeatureLevelTSL(lod, model.grids.length, model.mipsPerLevel, model.lodOffset);
   const highWidth = model.positionalEncoding ? 4 * model.channels + 12 : model.channels;
   const lowChannels = model.lowResGrids?.[0]?.channels ?? model.channels;
-  const features: any[] = Array.from({ length: highWidth + (model.dualGrid ? lowChannels : 0) }, () => float(0));
+  const features: TSLNode[] = Array.from({ length: highWidth + (model.dualGrid ? lowChannels : 0) }, () => float(0));
   for (let g = 0; g < model.grids.length; g++) {
     const gate = selected.equal(int(g)).select(1, 0);
     const high = gridFeatures(uv, model.grids[g], textures[g], !!model.positionalEncoding);
@@ -107,14 +113,14 @@ function sampleFeatures(uv: any, model: NTCCpuModel, textures: any[], lod: any):
  * be downsampled or blended between feature levels before a nonlinear decoder.
  */
 function evaluateNeuralTextureRaw(
-  uvNode: any,
+  uvNode: TSLNode,
   cpuModel: NTCCpuModel,
-  mipChainTexture: any,
-  renderer: any | null = null,
-  lodNode: any = null,
-  levelTextures: any[] | null = null,
+  mipChainTexture: TSLNode,
+  renderer: unknown = null,
+  lodNode: TSLNode = null,
+  levelTextures: TSLNode[] | null = null,
   packed?: ReturnType<typeof packDecoder>,
-): any[] {
+): TSLNode[] {
   // renderer is accepted for compatibility with the higher-level material
   // constructor, but this stock-Three.js path always uses fp32 uniforms.
   void renderer;
@@ -150,9 +156,9 @@ function evaluateNeuralTextureRaw(
       layer.inputSize,
       layer.outputSize,
       layer.activation,
-      (outputVector: any, inputVector: any) =>
+      (outputVector: TSLNode, inputVector: TSLNode) =>
         weights.node.element(int(outputVector).mul(inputVectorCount).add(inputVector)),
-      (outputVector: any) => biases.node.element(outputVector),
+      (outputVector: TSLNode) => biases.node.element(outputVector),
     );
   }
 
@@ -177,15 +183,15 @@ export type NTCSamplingMode = (typeof NTC_SAMPLING_MODES)[number];
  * sampling selects a physical mip and texel; it does not blend latent features.
  */
 function evaluateNeuralTextureSampled(
-  uv: any,
+  uv: TSLNode,
   model: NTCCpuModel,
-  textures: any[],
-  lod: any,
+  textures: TSLNode[],
+  lod: TSLNode,
   activations: NTCActivation[] = [],
   samplingMode: NTCSamplingMode = 'nearest',
-  random: any = vec3(0.5),
+  random: TSLNode = vec3(0.5),
   packed = packDecoder(model),
-): any[] {
+): TSLNode[] {
   if (!NTC_SAMPLING_MODES.includes(samplingMode)) throw new Error(`Unknown NTC sampling mode: ${samplingMode}`);
   const sampled = Fn(() => {
     const resolved = lod.clamp(0, model.maxLod).toVar();
@@ -207,7 +213,7 @@ function evaluateNeuralTextureSampled(
     const blend = resolved.sub(lower).toVar();
     Loop(
       { start: int(0), end: int(8), type: 'int', condition: '<', name: 'ntcTrilinearTap' },
-      ({ ntcTrilinearTap: i }: { ntcTrilinearTap: any }) => {
+      ({ ntcTrilinearTap: i }: { ntcTrilinearTap: TSLNode }) => {
         const firstMip = i.lessThan(4).toVar();
         const level = firstMip.select(lower, upper).toVar();
         const x = i.mod(2),
@@ -239,12 +245,12 @@ function evaluateNeuralTextureSampled(
 
 /** Explicit eight-decode trilinear reference, retained for filtering diagnostics. */
 function evaluateNeuralTextureFiltered(
-  uv: any,
+  uv: TSLNode,
   model: NTCCpuModel,
-  textures: any[],
-  lod: any,
+  textures: TSLNode[],
+  lod: TSLNode,
   activations: NTCActivation[] = [],
-): any[] {
+): TSLNode[] {
   return evaluateNeuralTextureSampled(uv, model, textures, lod, activations, 'trilinear');
 }
 

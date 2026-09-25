@@ -1,4 +1,5 @@
 import { abs, fract } from 'three/tsl';
+import type { TSLNode } from './NTCTSLTypes.js';
 
 // Optional "tiled positional encoding" from the NVIDIA neural texture
 // compression paper (Section 4.3.2): 3 octaves (log2(8), 8 being the paper's
@@ -21,7 +22,7 @@ const POSITIONAL_ENCODING_SIZE = POSITIONAL_ENCODING_OCTAVES * 2 * 2; // 12
  * smooth curve). `triangleWaveTSL(x.sub(0.25))` gives the `sin(2*pi*x)`-like
  * quarter-period-shifted twin (zero and rising at integer `x`).
  */
-function triangleWaveTSL(x: any): any {
+function triangleWaveTSL(x: TSLNode) {
   return abs(fract(x).sub(0.5)).mul(4).sub(1);
 }
 
@@ -33,8 +34,8 @@ function triangleWaveTSL(x: any): any {
  * `[tx octave0 sin, tx octave0 cos, tx octave1 sin, tx octave1 cos, tx
  * octave2 sin, tx octave2 cos, ty ...(same 6)]`.
  */
-function computeTiledPositionalEncodingTSL(tx: any, ty: any): any[] {
-  const values: any[] = [];
+function computeTiledPositionalEncodingTSL(tx: TSLNode, ty: TSLNode): TSLNode[] {
+  const values: TSLNode[] = [];
 
   for (const t of [tx, ty]) {
     for (let h = 0; h < POSITIONAL_ENCODING_OCTAVES; h++) {

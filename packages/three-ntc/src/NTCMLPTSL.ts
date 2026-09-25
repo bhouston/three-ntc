@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import * as TSL from 'three/tsl';
+import type { TSLNode } from './NTCTSLTypes.js';
 
 /**
  * TSL "hardGELU" - see NTCMLP.js's hardGELU doc comment for the exact
@@ -35,7 +36,7 @@ import * as TSL from 'three/tsl';
  * `max(x-1.5,0) = 0` (since `x < 1.5`) -> `middle(x)`, matching the middle
  * branch - continuous at both breakpoints by construction.
  */
-function hardGeluTSL(x: any): any {
+function hardGeluTSL(x: TSLNode) {
   const clamped = x.clamp(-1.5, 1.5);
   const middle = clamped.mul(clamped.add(1.5)).div(3);
   const linearTail = x.sub(1.5).max(0);
@@ -49,13 +50,13 @@ function checkPackedLength(count: number, next: unknown[]): void {
   }
 }
 
-function copyMat4ArrayInto(targetArray: any[], matrices: any[]): void {
+function copyMat4ArrayInto(targetArray: TSLNode[], matrices: TSLNode[]): void {
   checkPackedLength(targetArray.length, matrices);
 
   for (let i = 0; i < matrices.length; i++) targetArray[i].copy(matrices[i]);
 }
 
-function copyVec4ArrayInto(targetArray: any[], vectors: any[]): void {
+function copyVec4ArrayInto(targetArray: TSLNode[], vectors: TSLNode[]): void {
   checkPackedLength(targetArray.length, vectors);
 
   for (let i = 0; i < vectors.length; i++) targetArray[i].copy(vectors[i]);
@@ -63,7 +64,7 @@ function copyVec4ArrayInto(targetArray: any[], vectors: any[]): void {
 
 /** A `{ node, update }` bundle wrapping a packed `uniformArray`. */
 export interface PackedStorage<T> {
-  node: any;
+  node: TSLNode;
   update: (next: T[]) => void;
 }
 
@@ -75,20 +76,20 @@ export interface PackedStorage<T> {
  * in place (used by live training-preview hot-swaps). This intentionally
  * stays on stock fp32 TSL uniforms.
  */
-function createMat4Storage(matrices: any[]): PackedStorage<any> {
+function createMat4Storage(matrices: TSLNode[]): PackedStorage<TSLNode> {
   const node = TSL.uniformArray(matrices, 'mat4');
 
-  return { node, update: (next: any[]) => copyMat4ArrayInto(node.array, next) };
+  return { node, update: (next: TSLNode[]) => copyMat4ArrayInto(node.array, next) };
 }
 
 /**
  * Same as createMat4Storage, for a packed `vec4`-per-block array (see
  * packLayerBiasesVec4) - typically an MLP layer's biases.
  */
-function createVec4Storage(vectors: any[]): PackedStorage<any> {
+function createVec4Storage(vectors: TSLNode[]): PackedStorage<TSLNode> {
   const node = TSL.uniformArray(vectors, 'vec4');
 
-  return { node, update: (next: any[]) => copyVec4ArrayInto(node.array, next) };
+  return { node, update: (next: TSLNode[]) => copyVec4ArrayInto(node.array, next) };
 }
 
 /**
@@ -114,7 +115,7 @@ function createVec4Storage(vectors: any[]): PackedStorage<any> {
 
 // Packs a flat array of scalar TSL nodes/plain numbers into vec4-grouped TSL
 // nodes, zero-padding the final group if `inputs.length` isn't a multiple of 4.
-function packVec4Inputs(inputs: (any | number)[]): any[] {
+function packVec4Inputs(inputs: (TSLNode | number)[]): TSLNode[] {
   const groups = [];
   const groupCount = Math.ceil(inputs.length / 4);
 
@@ -131,7 +132,7 @@ function packVec4Inputs(inputs: (any | number)[]): any[] {
 
 // Inverse of packVec4Inputs: extracts `outputSize` scalar nodes back out of
 // a vec4-grouped array.
-function unpackVec4Outputs(groups: any[], outputSize: number): any[] {
+function unpackVec4Outputs(groups: TSLNode[], outputSize: number): TSLNode[] {
   const outputs = [];
 
   for (let i = 0; i < outputSize; i++) {
@@ -153,10 +154,10 @@ function unpackVec4Outputs(groups: any[], outputSize: number): any[] {
 // naturally as [output][input] here and `mat4Uniform.mul(vec4Input)` on the
 // GPU produces the correct matrix-vector product with no transpose
 // bookkeeping required at either end.
-function packLayerWeightsMat4(weights: Float32Array | number[], inputSize: number, outputSize: number): any[] {
+function packLayerWeightsMat4(weights: Float32Array | number[], inputSize: number, outputSize: number) {
   const inputVectorCount = Math.ceil(inputSize / 4);
   const outputVectorCount = Math.ceil(outputSize / 4);
-  const packed: any[] = [];
+  const packed: TSLNode[] = [];
 
   const weightAt = (outputIndex: number, inputIndex: number): number => {
     if (outputIndex >= outputSize || inputIndex >= inputSize) return 0;
@@ -199,8 +200,8 @@ function packLayerWeightsMat4(weights: Float32Array | number[], inputSize: numbe
 
 // CPU-side: packs a flat bias array into THREE.Vector4s, zero-padded past
 // `biases.length`.
-function packLayerBiasesVec4(biases: Float32Array | number[]): any[] {
-  const packed: any[] = [];
+function packLayerBiasesVec4(biases: Float32Array | number[]) {
+  const packed: TSLNode[] = [];
   const vectorCount = Math.ceil(biases.length / 4);
 
   for (let vectorIndex = 0; vectorIndex < vectorCount; vectorIndex++) {
@@ -224,13 +225,13 @@ function packLayerBiasesVec4(biases: Float32Array | number[]): any[] {
 // shadowing the outer index. The inline Fn registers assignments even when the
 // raw decoder is constructed outside another Fn; it is not a WGSL function.
 function evaluateLinearLayerMat4(
-  inputs: any[],
+  inputs: TSLNode[],
   inputSize: number,
   outputSize: number,
   activation: string | undefined,
-  getWeightMat4: (outputVector: any, inputVector: any) => any,
-  getBiasVec4: ((outputVector: any) => any) | null,
-): any[] {
+  getWeightMat4: (outputVector: TSLNode, inputVector: TSLNode) => TSLNode,
+  getBiasVec4: ((outputVector: TSLNode) => TSLNode) | null,
+): TSLNode[] {
   const inputVectorCount = Math.ceil(inputSize / 4);
   const outputVectorCount = Math.ceil(outputSize / 4);
   // Small layers need at most sixteen mat4 products. Keep their indices static
@@ -251,9 +252,9 @@ function evaluateLinearLayerMat4(
     const packedOutputs = TSL.array('vec4', outputVectorCount).toVar();
     const inputCount = TSL.uniform(inputVectorCount, 'int');
     const outputCount = TSL.uniform(outputVectorCount, 'int');
-    TSL.Loop({ end: outputCount, name: 'ntcOutput' }, ({ ntcOutput: outputVector }: { ntcOutput: any }) => {
+    TSL.Loop({ end: outputCount, name: 'ntcOutput' }, ({ ntcOutput: outputVector }: { ntcOutput: TSLNode }) => {
       const value = (getBiasVec4 ? getBiasVec4(outputVector) : TSL.vec4(0)).toVar();
-      TSL.Loop({ end: inputCount, name: 'ntcInput' }, ({ ntcInput: inputVector }: { ntcInput: any }) => {
+      TSL.Loop({ end: inputCount, name: 'ntcInput' }, ({ ntcInput: inputVector }: { ntcInput: TSLNode }) => {
         value.addAssign(getWeightMat4(outputVector, inputVector).mul(packedInputs.element(inputVector)));
       });
       packedOutputs
