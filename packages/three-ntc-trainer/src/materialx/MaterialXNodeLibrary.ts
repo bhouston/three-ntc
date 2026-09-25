@@ -94,25 +94,32 @@ import {
   Fn,
   Loop,
 } from 'three/tsl';
-import { normalizeSpaceName, toBooleanNode, toVec3Channels } from './MaterialXUtils.js';
+import { asDynamic, normalizeSpaceName, toBooleanNode, toVec3Channels, type TSLNode } from './MaterialXUtils.js';
 
 export interface MXElement {
   name: string;
-  nodeFunc: (...args: any[]) => any;
+  nodeFunc: (...args: TSLNode[]) => TSLNode;
   params: string[];
-  defaults: Record<string, (...args: any[]) => any>;
+  defaults: Record<string, (...args: TSLNode[]) => TSLNode>;
   usesNode: boolean;
 }
 
 const createMXElement = (
   name: string,
-  nodeFunc: (...args: any[]) => any,
+  nodeFunc: (...args: TSLNode[]) => TSLNode,
   params: string[] = [],
-  defaults: Record<string, any> = {},
+  defaults: Record<string, (...args: TSLNode[]) => TSLNode> = {},
   usesNode = false,
 ): MXElement => ({ name, nodeFunc, params, defaults, usesNode });
 
-const mx_range = (inNode: any, inLow: any, inHigh: any, outLow: any, outHigh: any, gamma: any = 1) => {
+const mx_range = (
+  inNode: TSLNode,
+  inLow: TSLNode,
+  inHigh: TSLNode,
+  outLow: TSLNode,
+  outHigh: TSLNode,
+  gamma: TSLNode = 1,
+) => {
   const inSpan = max(sub(inHigh, inLow), 1e-6);
   const normalized = div(sub(inNode, inLow), inSpan);
   const reciprocalGamma = div(1, gamma);
@@ -120,7 +127,7 @@ const mx_range = (inNode: any, inLow: any, inHigh: any, outLow: any, outHigh: an
   return add(outLow, mul(gammaApplied, sub(outHigh, outLow)));
 };
 
-const mx_open_pbr_anisotropy = (roughness: any = 0, anisotropy: any = 0) => {
+const mx_open_pbr_anisotropy = (roughness: TSLNode = 0, anisotropy: TSLNode = 0) => {
   const anisoInvert = sub(float(1), anisotropy);
   const anisoInvertSq = mul(anisoInvert, anisoInvert);
   const denom = add(anisoInvertSq, float(1));
@@ -132,18 +139,18 @@ const mx_open_pbr_anisotropy = (roughness: any = 0, anisotropy: any = 0) => {
   return vec2(alphaX, alphaY);
 };
 
-const mx_boolean = (inNode: any) => toBooleanNode(inNode);
-const mx_and = (in1: any, in2: any) => tslAnd(mx_boolean(in1), mx_boolean(in2));
-const mx_or = (in1: any, in2: any) => tslOr(mx_boolean(in1), mx_boolean(in2));
-const mx_xor = (in1: any, in2: any) => tslXor(mx_boolean(in1), mx_boolean(in2));
-const mx_not = (inNode: any) => tslNot(mx_boolean(inNode));
-const mx_checkerboard = (color1: any, color2: any, uvtiling: any, uvoffset: any, texcoord: any) => {
+const mx_boolean = (inNode: TSLNode) => toBooleanNode(inNode);
+const mx_and = (in1: TSLNode, in2: TSLNode) => tslAnd(mx_boolean(in1), mx_boolean(in2));
+const mx_or = (in1: TSLNode, in2: TSLNode) => tslOr(mx_boolean(in1), mx_boolean(in2));
+const mx_xor = (in1: TSLNode, in2: TSLNode) => tslXor(mx_boolean(in1), mx_boolean(in2));
+const mx_not = (inNode: TSLNode) => tslNot(mx_boolean(inNode));
+const mx_checkerboard = (color1: TSLNode, color2: TSLNode, uvtiling: TSLNode, uvoffset: TSLNode, texcoord: TSLNode) => {
   const tiledUv = sub(mul(texcoord, uvtiling), uvoffset);
   const checkerMix = mx_modulo(dot(floor(tiledUv), vec2(1, 1)), float(2));
   return mix(color2, color1, checkerMix);
 };
 
-const mx_circle = (texcoord: any, center: any, radius: any) => {
+const mx_circle = (texcoord: TSLNode, center: TSLNode, radius: TSLNode) => {
   const delta = sub(texcoord, center);
   const distanceSquared = dot(delta, delta);
   const radiusSquared = mul(radius, radius);
@@ -151,11 +158,11 @@ const mx_circle = (texcoord: any, center: any, radius: any) => {
 };
 
 const mx_normalmap = (
-  value: any = vec3(0.5, 0.5, 1.0),
-  scale: any = 1.0,
-  normal: any = vec3(0.0, 0.0, 1.0),
-  tangent: any = vec3(1.0, 0.0, 0.0),
-  bitangent: any = vec3(0.0, 1.0, 0.0),
+  value: TSLNode = vec3(0.5, 0.5, 1.0),
+  scale: TSLNode = 1.0,
+  normal: TSLNode = vec3(0.0, 0.0, 1.0),
+  tangent: TSLNode = vec3(1.0, 0.0, 0.0),
+  bitangent: TSLNode = vec3(0.0, 1.0, 0.0),
 ) => {
   const mapValue = toVec3Channels(value);
   const decoded = sub(mul(mapValue, 2.0), vec3(1.0, 1.0, 1.0));
@@ -174,15 +181,15 @@ const mx_normalmap = (
 };
 
 const mx_bump = (
-  height: any,
-  scale: any = 1,
-  normal: any = vec3(0.0, 0.0, 1.0),
-  tangent: any = vec3(1.0, 0.0, 0.0),
-  bitangent: any = vec3(0.0, 1.0, 0.0),
+  height: TSLNode,
+  scale: TSLNode = 1,
+  normal: TSLNode = vec3(0.0, 0.0, 1.0),
+  tangent: TSLNode = vec3(1.0, 0.0, 0.0),
+  bitangent: TSLNode = vec3(0.0, 1.0, 0.0),
 ) => mx_normalmap(mx_heighttonormal(height, 1), scale, normal, tangent, bitangent);
-const mx_dot = (inNode: any) => inNode;
+const mx_dot = (inNode: TSLNode) => inNode;
 
-const mx_viewdirection = (space: any = 'world') => {
+const mx_viewdirection = (space: TSLNode = 'world') => {
   const outputSpace = normalizeSpaceName(space, 'world');
   const worldDirection = normalize(sub(positionWorld, cameraPosition));
 
@@ -193,7 +200,7 @@ const mx_viewdirection = (space: any = 'world') => {
   return mx_transformnormal(worldDirection, 'world', outputSpace);
 };
 
-const mx_blackbody = (temperature: any = 5000) => {
+const mx_blackbody = (temperature: TSLNode = 5000) => {
   const temperatureKelvin = clamp(temperature, float(800), float(25000));
   const t = div(float(1000), temperatureKelvin);
   const t2 = mul(t, t);
@@ -244,7 +251,7 @@ const mx_blackbody = (temperature: any = 5000) => {
   return mix(vec3(1, 1, 1), clampedRgb, validYcMask);
 };
 
-const mx_unpremult = (input: any) => {
+const mx_unpremult = (input: TSLNode) => {
   const alpha = element(input, 3);
   const rgb = toVec3Channels(input);
   const unpremultiplied = alpha.equal(0).mix(rgb, div(rgb, alpha));
@@ -252,15 +259,15 @@ const mx_unpremult = (input: any) => {
 };
 
 const mx_colorcorrect = (
-  input: any,
-  hue: any = 0,
-  saturationAmount: any = 1,
-  gamma: any = 1,
-  lift: any = 0,
-  gain: any = 1,
-  contrast: any = 1,
-  contrastPivot: any = 0.5,
-  exposure: any = 0,
+  input: TSLNode,
+  hue: TSLNode = 0,
+  saturationAmount: TSLNode = 1,
+  gamma: TSLNode = 1,
+  lift: TSLNode = 0,
+  gain: TSLNode = 1,
+  contrast: TSLNode = 1,
+  contrastPivot: TSLNode = 0.5,
+  exposure: TSLNode = 0,
 ) => {
   const rgbInput = toVec3Channels(input);
   const hsv = mx_rgbtohsv(rgbInput);
@@ -271,26 +278,31 @@ const mx_colorcorrect = (
   const gainApplied = mul(liftApplied, gain);
   const contrastApplied = mx_contrast(gainApplied, contrast, contrastPivot);
   const exposureApplied = mul(contrastApplied, pow(2, exposure));
-  const preserveAlpha = input && (input.nodeType === 'vec4' || input.nodeType === 'color4');
+  const preserveAlpha = input && (asDynamic(input).nodeType === 'vec4' || asDynamic(input).nodeType === 'color4');
   return preserveAlpha ? vec4(exposureApplied, element(input, 3)) : exposureApplied;
 };
 
-const mx_minus = (fg: any, bg: any, mixval: any = 1) => add(mul(mixval, sub(bg, fg)), mul(sub(1, mixval), bg));
-const mx_difference = (fg: any, bg: any, mixval: any = 1) =>
+const mx_minus = (fg: TSLNode, bg: TSLNode, mixval: TSLNode = 1) =>
+  add(mul(mixval, sub(bg, fg)), mul(sub(1, mixval), bg));
+const mx_difference = (fg: TSLNode, bg: TSLNode, mixval: TSLNode = 1) =>
   add(mul(mixval, abs(sub(bg, fg))), mul(sub(1, mixval), bg));
-const mx_screen = (fg: any, bg: any, mixval: any = 1) => {
+const mx_screen = (fg: TSLNode, bg: TSLNode, mixval: TSLNode = 1) => {
   const screened = sub(1, mul(sub(1, fg), sub(1, bg)));
   return mix(bg, screened, mixval);
 };
 
-const mx_overlay = (fg: any, bg: any, mixval: any = 1) => {
+const mx_overlay = (fg: TSLNode, bg: TSLNode, mixval: TSLNode = 1) => {
   const lowBranch = mul(mul(2, fg), bg);
   const highBranch = sub(1, mul(mul(2, sub(1, fg)), sub(1, bg)));
   const overlayed = mix(lowBranch, highBranch, step(0.5, bg));
   return mix(bg, overlayed, mixval);
 };
 
-const mx_transformnormal = (inNode: any = vec3(0, 0, 1), fromspace: any = 'world', tospace: any = 'world') => {
+const mx_transformnormal = (
+  inNode: TSLNode = vec3(0, 0, 1),
+  fromspace: TSLNode = 'world',
+  tospace: TSLNode = 'world',
+) => {
   const from = normalizeSpaceName(fromspace, 'world');
   const to = normalizeSpaceName(tospace, 'world');
   const inNormal = vec3(inNode);
@@ -306,7 +318,11 @@ const mx_transformnormal = (inNode: any = vec3(0, 0, 1), fromspace: any = 'world
   return normalize(mul(inNormal, mat3(modelWorldMatrix)));
 };
 
-const mx_transformvector = (inNode: any = vec3(0, 0, 0), fromspace: any = 'world', tospace: any = 'world') => {
+const mx_transformvector = (
+  inNode: TSLNode = vec3(0, 0, 0),
+  fromspace: TSLNode = 'world',
+  tospace: TSLNode = 'world',
+) => {
   const from = normalizeSpaceName(fromspace, 'world');
   const to = normalizeSpaceName(tospace, 'world');
   const inVector = vec3(inNode);
@@ -322,7 +338,11 @@ const mx_transformvector = (inNode: any = vec3(0, 0, 0), fromspace: any = 'world
   return mul(inVector, mat3(modelWorldMatrixInverse));
 };
 
-const mx_transformpoint = (inNode: any = vec3(0, 0, 0), fromspace: any = 'world', tospace: any = 'world') => {
+const mx_transformpoint = (
+  inNode: TSLNode = vec3(0, 0, 0),
+  fromspace: TSLNode = 'world',
+  tospace: TSLNode = 'world',
+) => {
   const from = normalizeSpaceName(fromspace, 'world');
   const to = normalizeSpaceName(tospace, 'world');
   const inPoint = vec3(inNode);
@@ -337,25 +357,29 @@ const mx_transformpoint = (inNode: any = vec3(0, 0, 0), fromspace: any = 'world'
   return vec3(element(transformed4, 0), element(transformed4, 1), element(transformed4, 2));
 };
 
-const mx_burn_channel = (fg: any, bg: any, mixval: any = 1) => {
+const mx_burn_channel = (fg: TSLNode, bg: TSLNode, mixval: TSLNode = 1) => {
   const composed = add(mul(mixval, sub(1, div(sub(1, bg), fg))), mul(sub(1, mixval), bg));
   return mul(composed, step(float(1e-6), abs(fg)));
 };
 
-const mx_dodge_channel = (fg: any, bg: any, mixval: any = 1) => {
+const mx_dodge_channel = (fg: TSLNode, bg: TSLNode, mixval: TSLNode = 1) => {
   const composed = add(mul(mixval, div(bg, sub(1, fg))), mul(sub(1, mixval), bg));
   return mul(composed, step(float(1e-6), abs(sub(1, fg))));
 };
 
-const isVec3Like = (node: any) =>
-  node && (node.nodeType === 'vec3' || node.nodeType === 'color' || node.nodeType === 'color3');
-const isVec4Like = (node: any) => node && (node.nodeType === 'vec4' || node.nodeType === 'color4');
+const isVec3Like = (node: TSLNode) =>
+  node &&
+  (asDynamic(node).nodeType === 'vec3' ||
+    asDynamic(node).nodeType === 'color' ||
+    asDynamic(node).nodeType === 'color3');
+const isVec4Like = (node: TSLNode) =>
+  node && (asDynamic(node).nodeType === 'vec4' || asDynamic(node).nodeType === 'color4');
 
 const applyBlendByChannel = (
-  channelFunc: (fg: any, bg: any, mixval: any) => any,
-  fg: any,
-  bg: any,
-  mixval: any = 1,
+  channelFunc: (fg: TSLNode, bg: TSLNode, mixval: TSLNode) => TSLNode,
+  fg: TSLNode,
+  bg: TSLNode,
+  mixval: TSLNode = 1,
 ) => {
   if (isVec4Like(fg) || isVec4Like(bg)) {
     return vec4(
@@ -377,10 +401,11 @@ const applyBlendByChannel = (
   return channelFunc(fg, bg, mixval);
 };
 
-const mx_burn = (fg: any, bg: any, mixval: any = 1) => applyBlendByChannel(mx_burn_channel, fg, bg, mixval);
-const mx_dodge = (fg: any, bg: any, mixval: any = 1) => applyBlendByChannel(mx_dodge_channel, fg, bg, mixval);
+const mx_burn = (fg: TSLNode, bg: TSLNode, mixval: TSLNode = 1) => applyBlendByChannel(mx_burn_channel, fg, bg, mixval);
+const mx_dodge = (fg: TSLNode, bg: TSLNode, mixval: TSLNode = 1) =>
+  applyBlendByChannel(mx_dodge_channel, fg, bg, mixval);
 
-const mixColor4 = (bg: any, fg: any, factor: any) =>
+const mixColor4 = (bg: TSLNode, fg: TSLNode, factor: TSLNode) =>
   vec4(
     mix(element(bg, 0), element(fg, 0), factor),
     mix(element(bg, 1), element(fg, 1), factor),
@@ -388,7 +413,14 @@ const mixColor4 = (bg: any, fg: any, factor: any) =>
     mix(element(bg, 3), element(fg, 3), factor),
   );
 
-const mxRampSegment = (x: any, color1: any, color2: any, interval1: any, interval2: any, interpolation: any) => {
+const mxRampSegment = (
+  x: TSLNode,
+  color1: TSLNode,
+  color2: TSLNode,
+  interval1: TSLNode,
+  interval2: TSLNode,
+  interpolation: TSLNode,
+) => {
   const linearClamped = clamp(x, interval1, interval2);
   const rangeSize = sub(interval2, interval1);
   const safeRange = max(rangeSize, float(1e-6));
@@ -405,15 +437,15 @@ const mxRampSegment = (x: any, color1: any, color2: any, interval1: any, interva
 };
 
 const mx_ramp_gradient = (
-  x: any = 0,
-  interval1: any = 0,
-  interval2: any = 1,
-  color1: any = vec4(0, 0, 0, 1),
-  color2: any = vec4(1, 1, 1, 1),
-  interpolation: any = 1,
-  prevColor: any = vec4(0, 0, 0, 1),
-  intervalNum: any = 1,
-  numIntervals: any = 2,
+  x: TSLNode = 0,
+  interval1: TSLNode = 0,
+  interval2: TSLNode = 1,
+  color1: TSLNode = vec4(0, 0, 0, 1),
+  color2: TSLNode = vec4(1, 1, 1, 1),
+  interpolation: TSLNode = 1,
+  prevColor: TSLNode = vec4(0, 0, 0, 1),
+  intervalNum: TSLNode = 1,
+  numIntervals: TSLNode = 2,
 ) => {
   const xFloat = float(x);
   const interval1Float = float(interval1);
@@ -427,11 +459,11 @@ const mx_ramp_gradient = (
 };
 
 const mx_ramp = (
-  texcoord: any = vec2(0, 0),
-  type: any = 0,
-  interpolation: any = 1,
-  numIntervals: any = 2,
-  ...rest: any[]
+  texcoord: TSLNode = vec2(0, 0),
+  type: TSLNode = 0,
+  interpolation: TSLNode = 1,
+  numIntervals: TSLNode = 2,
+  ...rest: TSLNode[]
 ) => {
   const rampTypeFloat = float(type);
   const interpolationFloat = float(interpolation);
@@ -491,52 +523,53 @@ const defaultColor = (r: number, g: number, b: number) => () => color(r, g, b);
 const defaultVec2 = (x: number, y: number) => () => vec2(x, y);
 const defaultVec3 = (x: number, y: number, z: number) => () => vec3(x, y, z);
 const defaultVec4 = (x: number, y: number, z: number, w: number) => () => vec4(x, y, z, w);
-const usesVec2Noise = (nodeX: any) => nodeX && nodeX.type === 'vector2';
-const usesVec3Noise = (nodeX: any) => nodeX && (nodeX.type === 'vector3' || nodeX.type === 'color3');
+const usesVec2Noise = (nodeX: TSLNode) => nodeX && asDynamic(nodeX).type === 'vector2';
+const usesVec3Noise = (nodeX: TSLNode) =>
+  nodeX && (asDynamic(nodeX).type === 'vector3' || asDynamic(nodeX).type === 'color3');
 
-const mx_noise_materialx = (texcoord: any, amplitude: any, pivot: any, nodeX: any) =>
+const mx_noise_materialx = (texcoord: TSLNode, amplitude: TSLNode, pivot: TSLNode, nodeX: TSLNode) =>
   usesVec3Noise(nodeX) ? mx_noise_vec3(texcoord, vec3(amplitude), pivot) : mx_noise_float(texcoord, amplitude, pivot);
 
 const mx_fractal_noise_materialx_2d = (
-  texcoord: any,
-  octaves: any,
-  lacunarity: any,
-  diminish: any,
-  amplitude: any,
-  nodeX: any,
+  texcoord: TSLNode,
+  octaves: TSLNode,
+  lacunarity: TSLNode,
+  diminish: TSLNode,
+  amplitude: TSLNode,
+  nodeX: TSLNode,
 ) =>
   usesVec3Noise(nodeX)
     ? mx_fractal_noise_vec3_materialx_2d(texcoord, octaves, lacunarity, diminish, amplitude)
     : mx_fractal_noise_float_materialx_2d(texcoord, octaves, lacunarity, diminish, amplitude);
 
 const mx_fractal_noise_materialx_3d = (
-  position: any,
-  octaves: any,
-  lacunarity: any,
-  diminish: any,
-  amplitude: any,
-  nodeX: any,
+  position: TSLNode,
+  octaves: TSLNode,
+  lacunarity: TSLNode,
+  diminish: TSLNode,
+  amplitude: TSLNode,
+  nodeX: TSLNode,
 ) =>
   usesVec3Noise(nodeX)
     ? mx_fractal_noise_vec3(position, octaves, lacunarity, diminish, vec3(amplitude))
     : mx_fractal_noise_float(position, octaves, lacunarity, diminish, amplitude);
 
-const mx_cell_noise_materialx = (position: any, nodeX: any) =>
+const mx_cell_noise_materialx = (position: TSLNode, nodeX: TSLNode) =>
   usesVec3Noise(nodeX) ? mx_cell_noise_vec3(position) : mx_cell_noise_float(position);
 
-const mx_worley_noise_vec2_style = (position: any, jitter: any, style: any) => {
+const mx_worley_noise_vec2_style = (position: TSLNode, jitter: TSLNode, style: TSLNode) => {
   const result = mx_worley_noise_vec3_style(position, jitter, style, 0);
   return vec2(element(result, 0), element(result, 1));
 };
 
-const mx_worley_noise_materialx_2d = (texcoord: any, jitter: any, style: any, nodeX: any) =>
+const mx_worley_noise_materialx_2d = (texcoord: TSLNode, jitter: TSLNode, style: TSLNode, nodeX: TSLNode) =>
   usesVec3Noise(nodeX)
     ? mx_worley_noise_vec3_style(texcoord, jitter, style, 0)
     : usesVec2Noise(nodeX)
       ? mx_worley_noise_vec2_style(texcoord, jitter, style)
       : mx_worley_noise_float_2d(texcoord, jitter, style);
 
-const mx_worley_noise_materialx_3d = (position: any, jitter: any, style: any, nodeX: any) =>
+const mx_worley_noise_materialx_3d = (position: TSLNode, jitter: TSLNode, style: TSLNode, nodeX: TSLNode) =>
   usesVec3Noise(nodeX)
     ? mx_worley_noise_vec3_style(position, jitter, style, 0)
     : usesVec2Noise(nodeX)
@@ -544,7 +577,7 @@ const mx_worley_noise_materialx_3d = (position: any, jitter: any, style: any, no
       : mx_worley_noise_float_3d(position, jitter, style);
 
 const mx_fractal_noise_float_materialx_2d = Fn(
-  ([texcoordInput, octavesInput, lacunarityInput, diminishInput, amplitudeInput]: any[]) => {
+  ([texcoordInput, octavesInput, lacunarityInput, diminishInput, amplitudeInput]: TSLNode[]) => {
     const texcoord = vec2(texcoordInput).toVar();
     const octaves = int(octavesInput).toVar();
     const lacunarity = float(lacunarityInput).toVar();
@@ -564,7 +597,7 @@ const mx_fractal_noise_float_materialx_2d = Fn(
 );
 
 const mx_fractal_noise_vec3_materialx_2d = Fn(
-  ([texcoordInput, octavesInput, lacunarityInput, diminishInput, amplitudeInput]: any[]) => {
+  ([texcoordInput, octavesInput, lacunarityInput, diminishInput, amplitudeInput]: TSLNode[]) => {
     const texcoord = vec2(texcoordInput).toVar();
     const octaves = int(octavesInput).toVar();
     const lacunarity = float(lacunarityInput).toVar();

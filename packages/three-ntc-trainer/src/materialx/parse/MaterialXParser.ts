@@ -1,14 +1,14 @@
 export interface MaterialXNodeLike {
   nodePath: string;
-  add(child: any): void;
+  add(child: this): void;
 }
 
-function parseMaterialXNodeTree(
+function parseMaterialXNodeTree<T extends MaterialXNodeLike>(
   nodeXML: Element,
-  createNode: (nodeXML: Element, nodePath: string) => any,
-  addNode: (node: any) => void,
+  createNode: (nodeXML: Element, nodePath: string) => T,
+  addNode: (node: T) => void,
   nodePath = '',
-): any {
+): T {
   const materialXNode = createNode(nodeXML, nodePath);
   if (materialXNode.nodePath) {
     addNode(materialXNode);
@@ -22,11 +22,11 @@ function parseMaterialXNodeTree(
   return materialXNode;
 }
 
-function parseMaterialXText(
+function parseMaterialXText<T extends MaterialXNodeLike>(
   text: string,
-  createNode: (nodeXML: Element, nodePath: string) => any,
-  addNode: (node: any) => void,
-): any {
+  createNode: (nodeXML: Element, nodePath: string) => T,
+  addNode: (node: T) => void,
+): T {
   const rootXML = new DOMParser().parseFromString(text, 'application/xml').documentElement;
   return parseMaterialXNodeTree(rootXML, createNode, addNode);
 }

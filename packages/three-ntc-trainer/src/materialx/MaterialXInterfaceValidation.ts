@@ -1,5 +1,6 @@
 import { MtlXLibrary } from './MaterialXNodeLibrary.js';
 import { MaterialXLogCodes, type MaterialXLog } from './MaterialXLog.js';
+import type { MaterialXNode } from './MaterialXDocument.js';
 import registryData from './MaterialXNodeInterfaceRegistry.js';
 
 const SKIP_ELEMENTS = new Set(['materialx', 'input', 'output']);
@@ -7,7 +8,7 @@ const CONTAINER_ELEMENTS = new Set(['nodegraph']);
 
 const LIBRARY_FALLBACK_OUTPUT = 'out';
 
-function formatInputElement(inputNodeX: any): string {
+function formatInputElement(inputNodeX: MaterialXNode): string {
   const attrs = [];
   for (const name of ['name', 'type', 'nodename', 'nodegraph', 'interfacename', 'output', 'value']) {
     const value = inputNodeX.getAttribute(name);
@@ -19,7 +20,7 @@ function formatInputElement(inputNodeX: any): string {
   return `<input ${attrs.join(' ')}>`;
 }
 
-function formatNodeElement(nodeX: any): string {
+function formatNodeElement(nodeX: MaterialXNode): string {
   const attrs = [];
   for (const name of ['name', 'type', 'nodedef']) {
     const value = nodeX.getAttribute(name);
@@ -31,7 +32,7 @@ function formatNodeElement(nodeX: any): string {
   return `<${nodeX.element} ${attrs.join(' ')}>`;
 }
 
-function scoreNodedefCandidate(candidateName: string, nodeX: any): number {
+function scoreNodedefCandidate(candidateName: string, nodeX: MaterialXNode) {
   const candidate = registryData.resolved[candidateName];
   if (!candidate) return -1;
 
@@ -58,7 +59,7 @@ function scoreNodedefCandidate(candidateName: string, nodeX: any): number {
   return score;
 }
 
-function resolveInterface(nodeX: any): any {
+function resolveInterface(nodeX: MaterialXNode) {
   const nodedefName = nodeX.getAttribute('nodedef');
   if (nodedefName && registryData.resolved[nodedefName]) {
     return { source: 'nodedef', name: nodedefName, ...registryData.resolved[nodedefName] };
@@ -83,7 +84,7 @@ function resolveInterface(nodeX: any): any {
     }
   }
 
-  const libraryEntry = (MtlXLibrary as any)[nodeX.element];
+  const libraryEntry = MtlXLibrary[nodeX.element];
   if (libraryEntry) {
     const inputs = Object.fromEntries(libraryEntry.params.map((param: string) => [param, null]));
     const outputs = nodeX.type ? { [LIBRARY_FALLBACK_OUTPUT]: nodeX.type } : {};
@@ -93,7 +94,7 @@ function resolveInterface(nodeX: any): any {
   return null;
 }
 
-function resolveReferencedNode(inputNodeX: any): any {
+function resolveReferencedNode(inputNodeX: MaterialXNode) {
   const materialX = inputNodeX.materialX;
   const referencePath = inputNodeX.referencePath;
   if (!referencePath) return null;
@@ -101,10 +102,7 @@ function resolveReferencedNode(inputNodeX: any): any {
   return materialX.getMaterialXNode(referencePath) || null;
 }
 
-function resolveSourceOutputType(
-  sourceNodeX: any,
-  outputName: string | null,
-): { interface: any; outputType: string | null; outputName: string | null } {
+function resolveSourceOutputType(sourceNodeX: MaterialXNode, outputName: string | null) {
   if (sourceNodeX.element === 'output') {
     return {
       interface: null,
@@ -182,7 +180,7 @@ function typesCompatible(expectedType: string | null | undefined, actualType: st
   return false;
 }
 
-function validatePortConnection(inputNodeX: any, parentNodeX: any, log: MaterialXLog): void {
+function validatePortConnection(inputNodeX: MaterialXNode, parentNodeX: MaterialXNode, log: MaterialXLog): void {
   const sourceNodeX = resolveReferencedNode(inputNodeX);
   if (!sourceNodeX) return;
 
@@ -204,7 +202,7 @@ function validatePortConnection(inputNodeX: any, parentNodeX: any, log: Material
   }
 }
 
-function validateNodeInputs(nodeX: any, log: MaterialXLog): void {
+function validateNodeInputs(nodeX: MaterialXNode, log: MaterialXLog): void {
   if (nodeX.element === 'materialx') {
     for (const child of nodeX.children) {
       validateNodeInputs(child, log);
@@ -253,7 +251,7 @@ function validateNodeInputs(nodeX: any, log: MaterialXLog): void {
         validatePortConnection(child, nodeX, log);
       }
     }
-  } else if ((MtlXLibrary as any)[nodeX.element] === undefined && nodeX.element !== 'surfacematerial') {
+  } else if (MtlXLibrary[nodeX.element] === undefined && nodeX.element !== 'surfacematerial') {
     // Defer unsupported-node warnings to compile-time behavior.
     for (const child of nodeX.children) {
       if (child.element === 'input' && child.hasReference) {
@@ -270,7 +268,7 @@ function validateNodeInputs(nodeX: any, log: MaterialXLog): void {
 }
 
 function createStrictInterfaceValidator() {
-  return function validateMaterialXInterfaces(rootNode: any, log: MaterialXLog) {
+  return function validateMaterialXInterfaces(rootNode: MaterialXNode, log: MaterialXLog) {
     validateNodeInputs(rootNode, log);
   };
 }
