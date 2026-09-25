@@ -4,6 +4,7 @@
 [![ci](https://github.com/bhouston/three-ntc/actions/workflows/ci.yml/badge.svg)](https://github.com/bhouston/three-ntc/actions/workflows/ci.yml)
 [![Unit coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbhouston%2Fthree-ntc%2Fcoverage-badge%2Fcoverage.json)](https://github.com/bhouston/three-ntc/actions/workflows/ci.yml)
 [![Live demo](https://img.shields.io/badge/demo-three--ntc.ben3d.ca-blue)](https://three-ntc.ben3d.ca)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/fwupDN493R)
 
 Neural Texture Compression for three.js — encode PBR material texture sets into a compact
 grid + MLP model that decodes on the GPU via TSL, and load the result as a standard three.js
