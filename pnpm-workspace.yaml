@@ -13,3 +13,12 @@ minimumReleaseAgeExclude:
   - '@tanstack/charts'
   - tanstack-router-ga4
   - yargs-file-commands
+  - '@vitest/browser-playwright'
+  - '@vitest/browser'
+  - '@vitest/coverage-v8'
+  - '@vitest/mocker'
+  - '@vitest/pretty-format'
+  - '@vitest/spy'
+  - '@vitest/ui'
+  - '@vitest/utils'
+  - vitest
