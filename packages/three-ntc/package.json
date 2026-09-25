@@ -2,7 +2,15 @@
   "name": "three-ntc",
   "version": "0.1.0",
   "description": "Neural Texture Compression runtime for three.js — load .ntc files as a node material.",
-  "keywords": ["three.js", "threejs", "webgpu", "tsl", "neural texture compression", "pbr", "materials"],
+  "keywords": [
+    "materials",
+    "neural texture compression",
+    "pbr",
+    "three.js",
+    "threejs",
+    "tsl",
+    "webgpu"
+  ],
   "homepage": "https://github.com/bhouston/three-ntc/tree/main/packages/three-ntc",
   "bugs": {
     "url": "https://github.com/bhouston/three-ntc/issues"
@@ -14,6 +22,9 @@
     "url": "git+https://github.com/bhouston/three-ntc.git",
     "directory": "packages/three-ntc"
   },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -23,16 +34,15 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist"],
   "scripts": {
     "build": "tsc",
     "dev": "tsc -w --preserveWatchOutput --noEmitOnError",
     "test": "vitest run --root ../.. --project unit packages/three-ntc"
   },
-  "peerDependencies": {
-    "three": ">=0.180.0"
-  },
   "devDependencies": {
     "three": "^0.186.0"
+  },
+  "peerDependencies": {
+    "three": ">=0.180.0"
   }
 }

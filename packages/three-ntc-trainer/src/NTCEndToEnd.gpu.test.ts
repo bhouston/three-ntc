@@ -43,12 +43,7 @@ const trainerOptions = {
 async function bakeAlbedo(material: any): Promise<Float32Array> {
   const classification = classifyMaterialChannels(material);
   expect(classification.activeChannels[0].key).toBe('albedo');
-  const [rt] = await bakeMaterialToTextures(
-    renderer,
-    material,
-    SIZE,
-    classification.activeChannels,
-  );
+  const [rt] = await bakeMaterialToTextures(renderer, material, SIZE, classification.activeChannels);
   const pixels = await readRenderTargetFloats(renderer, rt, SIZE);
   rt.dispose();
   return pixels;
@@ -95,17 +90,14 @@ describe('fit -> export -> load -> render', () => {
         .add(0.5),
     );
 
-    const { losses, source, trained, roundTripped, manifest, reloaded } =
-      await fitExportReload(material);
+    const { losses, source, trained, roundTripped, manifest, reloaded } = await fitExportReload(material);
 
     expect(losses[losses.length - 1]).toBeLessThan(losses[0] * 0.2);
     expect(psnr(source, trained)).toBeGreaterThan(30);
 
     // Export metadata carries the training configuration through.
     expect(manifest.latents.levels.map((l: any) => l.dtype)).toEqual(['uint8', 'uint8']);
-    expect(reloaded.channelClassification.activeChannels.map((c: any) => c.key)).toEqual([
-      'albedo',
-    ]);
+    expect(reloaded.channelClassification.activeChannels.map((c: any) => c.key)).toEqual(['albedo']);
     expect(reloaded.cpuModel.maxLod).toBe(Math.log2(SIZE));
 
     // QAT trained against uint8 rounding, and the MLP is stored as float16:

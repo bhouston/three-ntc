@@ -75,42 +75,42 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
    and finite constant-range quantization. All nine training tests pass.
    STE with explicit/auto ranges remains available for comparison.
 10. Positional encoding: complete. GPU tests verify an eight-texel period at
-   multiple target mips, distinguish the previous four-texel repetition, and
-   preserve legacy assets. All 40 decoder/training/PE GPU tests pass.
-   The eight-texel option regressed aggregate MSE by 7.16% in step10a, so step10b
-   restores grid-cell PE as the default. `positionalEncodingPeriod: 8` remains
-   explicit and is selected by the paper profile. This is a measured reason
-   to retain the default deviation, rather than assuming paper fidelity wins.
+    multiple target mips, distinguish the previous four-texel repetition, and
+    preserve legacy assets. All 40 decoder/training/PE GPU tests pass.
+    The eight-texel option regressed aggregate MSE by 7.16% in step10a, so step10b
+    restores grid-cell PE as the default. `positionalEncodingPeriod: 8` remains
+    explicit and is selected by the paper profile. This is a measured reason
+    to retain the default deviation, rather than assuming paper fidelity wins.
 11. Lanczos source mip option and quantitative filter tests: complete. Signed
-   DC, odd/rectangular CPU mips, and GPU upload/training/ownership tests pass.
-   `mipFilter: "lanczos"` rebuilds square GPU sources; the default preserves
-   caller-supplied mips. The paper profile opts in. Fixed compression fixtures
-   retain their box source targets, so their compression metric stays unchanged.
+    DC, odd/rectangular CPU mips, and GPU upload/training/ownership tests pass.
+    `mipFilter: "lanczos"` rebuilds square GPU sources; the default preserves
+    caller-supplied mips. The paper profile opts in. Fixed compression fixtures
+    retain their box source targets, so their compression metric stays unchanged.
 12. Longer convergence measurements and final verification: complete. Increasing
-   the same diagnostic budget from 420 to 1260 updates lowers aggregate MSE
-   another 30.04%; all six cases improve. This is still one seed and synthetic
-   data, not a substitute for the paper's full-budget real-material evaluation.
+    the same diagnostic budget from 420 to 1260 updates lowers aggregate MSE
+    another 30.04%; all six cases improve. This is still one seed and synthetic
+    data, not a substitute for the paper's full-budget real-material evaluation.
 
 ## Measurements
 
-| Revision / change | Exported MSE | PSNR (dB) | MSE change vs stated comparison |
-|---|---:|---:|---:|
-| baseline | 0.01294998 | 18.8773 | — |
-| step1: native features | 0.01176782 | 19.2930 | -9.13% |
-| step2: quantize taps before interpolation | 0.01153805 | 19.3787 | -1.95% |
-| step3: independent full-domain sampling | 0.01007776 | 19.9664 | -12.66% |
-| step4: exclude frozen latent gradients | 0.01007776 | 19.9664 | 0.00% |
-| step5: independent G0/G1 pairs | 0.01003036 | 19.9868 | -0.47% |
-| step6: resolution-aware feature mip bands | 0.00852505 | 20.6930 | -15.01% |
-| step7: discrete texel training and decoded-value filtering | 0.00621377 | 22.0665 | -27.11% |
-| step8: consistent presets and opt-in paper profile | 0.00621377 | 22.0665 | 0.00% |
-| step9: bounded noise QAT and in-budget frozen adaptation | 0.00613309 | 22.1232 | -1.30% |
-| step10a: eight-texel positional encoding | 0.00657211 | 21.8230 | 7.16% |
-| step10b: retain measured default; expose paper PE option | 0.00613309 | 22.1232 | -6.68% |
-| step11: optional Lanczos source mipmaps | 0.00613309 | 22.1232 | 0.00% |
-| physical-baseline (separate sigmoid benchmark) | 0.01085313 | 19.6444 | — |
-| physical-final: physical channel activations (separate benchmark) | 0.00530139 | 22.7561 | -51.15% |
-| convergence: 1260 updates (3x budget, separate comparison) | 0.00429097 | 23.6744 | -30.04% |
+| Revision / change                                                 | Exported MSE | PSNR (dB) | MSE change vs stated comparison |
+| ----------------------------------------------------------------- | -----------: | --------: | ------------------------------: |
+| baseline                                                          |   0.01294998 |   18.8773 |                               — |
+| step1: native features                                            |   0.01176782 |   19.2930 |                          -9.13% |
+| step2: quantize taps before interpolation                         |   0.01153805 |   19.3787 |                          -1.95% |
+| step3: independent full-domain sampling                           |   0.01007776 |   19.9664 |                         -12.66% |
+| step4: exclude frozen latent gradients                            |   0.01007776 |   19.9664 |                           0.00% |
+| step5: independent G0/G1 pairs                                    |   0.01003036 |   19.9868 |                          -0.47% |
+| step6: resolution-aware feature mip bands                         |   0.00852505 |   20.6930 |                         -15.01% |
+| step7: discrete texel training and decoded-value filtering        |   0.00621377 |   22.0665 |                         -27.11% |
+| step8: consistent presets and opt-in paper profile                |   0.00621377 |   22.0665 |                           0.00% |
+| step9: bounded noise QAT and in-budget frozen adaptation          |   0.00613309 |   22.1232 |                          -1.30% |
+| step10a: eight-texel positional encoding                          |   0.00657211 |   21.8230 |                           7.16% |
+| step10b: retain measured default; expose paper PE option          |   0.00613309 |   22.1232 |                          -6.68% |
+| step11: optional Lanczos source mipmaps                           |   0.00613309 |   22.1232 |                           0.00% |
+| physical-baseline (separate sigmoid benchmark)                    |   0.01085313 |   19.6444 |                               — |
+| physical-final: physical channel activations (separate benchmark) |   0.00530139 |   22.7561 |                         -51.15% |
+| convergence: 1260 updates (3x budget, separate comparison)        |   0.00429097 |   23.6744 |                         -30.04% |
 
 ## Per-change details
 
@@ -118,144 +118,144 @@ arbitrary PSNR pass threshold. GPU/driver differences may affect results.
 
 Compared with step1. Six quality cases passed (finite error only; no PSNR threshold).
 
-| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
-|---|---|---:|---:|---:|
-| smooth | false | 0.00416424 | 23.805 | 4.23% |
-| smooth | true | 0.00620372 | 22.073 | 0.40% |
-| checker | false | 0.01665406 | 17.785 | -6.51% |
-| checker | true | 0.01119423 | 19.510 | -2.66% |
-| waves | false | 0.02449993 | 16.108 | -0.34% |
-| waves | true | 0.00651213 | 21.863 | -0.34% |
+| Fixture | Learned interpolation | Exported MSE |   PSNR | MSE change |
+| ------- | --------------------- | -----------: | -----: | ---------: |
+| smooth  | false                 |   0.00416424 | 23.805 |      4.23% |
+| smooth  | true                  |   0.00620372 | 22.073 |      0.40% |
+| checker | false                 |   0.01665406 | 17.785 |     -6.51% |
+| checker | true                  |   0.01119423 | 19.510 |     -2.66% |
+| waves   | false                 |   0.02449993 | 16.108 |     -0.34% |
+| waves   | true                  |   0.00651213 | 21.863 |     -0.34% |
 
 ### step3: independent full-domain sampling
 
 Compared with step2. Six quality cases passed (finite error only; no PSNR threshold).
 
-| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
-|---|---|---:|---:|---:|
-| smooth | false | 0.00360238 | 24.434 | -13.49% |
-| smooth | true | 0.00351545 | 24.540 | -43.33% |
-| checker | false | 0.01639537 | 17.853 | -1.55% |
-| checker | true | 0.00949695 | 20.224 | -15.16% |
-| waves | false | 0.02396619 | 16.204 | -2.18% |
-| waves | true | 0.00349023 | 24.571 | -46.40% |
+| Fixture | Learned interpolation | Exported MSE |   PSNR | MSE change |
+| ------- | --------------------- | -----------: | -----: | ---------: |
+| smooth  | false                 |   0.00360238 | 24.434 |    -13.49% |
+| smooth  | true                  |   0.00351545 | 24.540 |    -43.33% |
+| checker | false                 |   0.01639537 | 17.853 |     -1.55% |
+| checker | true                  |   0.00949695 | 20.224 |    -15.16% |
+| waves   | false                 |   0.02396619 | 16.204 |     -2.18% |
+| waves   | true                  |   0.00349023 | 24.571 |    -46.40% |
 
 ### step4: exclude frozen latent gradients
 
 Compared with step3. Six quality cases passed (finite error only; no PSNR threshold).
 
-| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
-|---|---|---:|---:|---:|
-| smooth | false | 0.00360238 | 24.434 | 0.00% |
-| smooth | true | 0.00351545 | 24.540 | 0.00% |
-| checker | false | 0.01639537 | 17.853 | 0.00% |
-| checker | true | 0.00949695 | 20.224 | 0.00% |
-| waves | false | 0.02396619 | 16.204 | 0.00% |
-| waves | true | 0.00349023 | 24.571 | 0.00% |
+| Fixture | Learned interpolation | Exported MSE |   PSNR | MSE change |
+| ------- | --------------------- | -----------: | -----: | ---------: |
+| smooth  | false                 |   0.00360238 | 24.434 |      0.00% |
+| smooth  | true                  |   0.00351545 | 24.540 |      0.00% |
+| checker | false                 |   0.01639537 | 17.853 |      0.00% |
+| checker | true                  |   0.00949695 | 20.224 |      0.00% |
+| waves   | false                 |   0.02396619 | 16.204 |      0.00% |
+| waves   | true                  |   0.00349023 | 24.571 |      0.00% |
 
 ### step5: independent G0/G1 pairs
 
 Compared with step4. Six quality cases passed (finite error only; no PSNR threshold).
 
-| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
-|---|---|---:|---:|---:|
-| smooth | false | 0.00369585 | 24.323 | 2.59% |
-| smooth | true | 0.00223058 | 26.516 | -36.55% |
-| checker | false | 0.01713714 | 17.661 | 4.52% |
-| checker | true | 0.00987279 | 20.056 | 3.96% |
-| waves | false | 0.02407228 | 16.185 | 0.44% |
-| waves | true | 0.00317351 | 24.985 | -9.07% |
+| Fixture | Learned interpolation | Exported MSE |   PSNR | MSE change |
+| ------- | --------------------- | -----------: | -----: | ---------: |
+| smooth  | false                 |   0.00369585 | 24.323 |      2.59% |
+| smooth  | true                  |   0.00223058 | 26.516 |    -36.55% |
+| checker | false                 |   0.01713714 | 17.661 |      4.52% |
+| checker | true                  |   0.00987279 | 20.056 |      3.96% |
+| waves   | false                 |   0.02407228 | 16.185 |      0.44% |
+| waves   | true                  |   0.00317351 | 24.985 |     -9.07% |
 
 ### step6: resolution-aware feature mip bands
 
 Compared with step5. Six quality cases passed (finite error only; no PSNR threshold).
 
-| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
-|---|---|---:|---:|---:|
-| smooth | false | 0.00257973 | 25.884 | -30.20% |
-| smooth | true | 0.00230994 | 26.364 | 3.56% |
-| checker | false | 0.00915303 | 20.384 | -46.59% |
-| checker | true | 0.00909203 | 20.413 | -7.91% |
-| waves | false | 0.02384627 | 16.226 | -0.94% |
-| waves | true | 0.00416928 | 23.799 | 31.38% |
+| Fixture | Learned interpolation | Exported MSE |   PSNR | MSE change |
+| ------- | --------------------- | -----------: | -----: | ---------: |
+| smooth  | false                 |   0.00257973 | 25.884 |    -30.20% |
+| smooth  | true                  |   0.00230994 | 26.364 |      3.56% |
+| checker | false                 |   0.00915303 | 20.384 |    -46.59% |
+| checker | true                  |   0.00909203 | 20.413 |     -7.91% |
+| waves   | false                 |   0.02384627 | 16.226 |     -0.94% |
+| waves   | true                  |   0.00416928 | 23.799 |     31.38% |
 
 ### step7: discrete texel training and decoded-value filtering
 
 Compared with step6. Six quality cases passed (finite error only; no PSNR threshold).
 
-| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
-|---|---|---:|---:|---:|
-| smooth | false | 0.00242112 | 26.160 | -6.15% |
-| smooth | true | 0.00185991 | 27.305 | -19.48% |
-| checker | false | 0.00514766 | 22.884 | -43.76% |
-| checker | true | 0.00281665 | 25.503 | -69.02% |
-| waves | false | 0.02368443 | 16.255 | -0.68% |
-| waves | true | 0.00135283 | 28.688 | -67.55% |
+| Fixture | Learned interpolation | Exported MSE |   PSNR | MSE change |
+| ------- | --------------------- | -----------: | -----: | ---------: |
+| smooth  | false                 |   0.00242112 | 26.160 |     -6.15% |
+| smooth  | true                  |   0.00185991 | 27.305 |    -19.48% |
+| checker | false                 |   0.00514766 | 22.884 |    -43.76% |
+| checker | true                  |   0.00281665 | 25.503 |    -69.02% |
+| waves   | false                 |   0.02368443 | 16.255 |     -0.68% |
+| waves   | true                  |   0.00135283 | 28.688 |    -67.55% |
 
 ### step8: consistent presets and opt-in paper profile
 
 Compared with step7. Six quality cases passed (finite error only; no PSNR threshold).
 
-| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
-|---|---|---:|---:|---:|
-| smooth | false | 0.00242112 | 26.160 | 0.00% |
-| smooth | true | 0.00185991 | 27.305 | 0.00% |
-| checker | false | 0.00514766 | 22.884 | 0.00% |
-| checker | true | 0.00281665 | 25.503 | 0.00% |
-| waves | false | 0.02368443 | 16.255 | 0.00% |
-| waves | true | 0.00135283 | 28.688 | 0.00% |
+| Fixture | Learned interpolation | Exported MSE |   PSNR | MSE change |
+| ------- | --------------------- | -----------: | -----: | ---------: |
+| smooth  | false                 |   0.00242112 | 26.160 |      0.00% |
+| smooth  | true                  |   0.00185991 | 27.305 |      0.00% |
+| checker | false                 |   0.00514766 | 22.884 |      0.00% |
+| checker | true                  |   0.00281665 | 25.503 |      0.00% |
+| waves   | false                 |   0.02368443 | 16.255 |      0.00% |
+| waves   | true                  |   0.00135283 | 28.688 |      0.00% |
 
 ### step9: bounded noise QAT and in-budget frozen adaptation
 
 Compared with step8. Six quality cases passed (finite error only; no PSNR threshold).
 
-| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
-|---|---|---:|---:|---:|
-| smooth | false | 0.00237807 | 26.238 | -1.78% |
-| smooth | true | 0.00154572 | 28.109 | -16.89% |
-| checker | false | 0.00553242 | 22.571 | 7.47% |
-| checker | true | 0.00219570 | 26.584 | -22.05% |
-| waves | false | 0.02387866 | 16.220 | 0.82% |
-| waves | true | 0.00126799 | 28.969 | -6.27% |
+| Fixture | Learned interpolation | Exported MSE |   PSNR | MSE change |
+| ------- | --------------------- | -----------: | -----: | ---------: |
+| smooth  | false                 |   0.00237807 | 26.238 |     -1.78% |
+| smooth  | true                  |   0.00154572 | 28.109 |    -16.89% |
+| checker | false                 |   0.00553242 | 22.571 |      7.47% |
+| checker | true                  |   0.00219570 | 26.584 |    -22.05% |
+| waves   | false                 |   0.02387866 | 16.220 |      0.82% |
+| waves   | true                  |   0.00126799 | 28.969 |     -6.27% |
 
 ### step10a: eight-texel positional encoding
 
 Compared with step9. Six quality cases passed (finite error only; no PSNR threshold).
 
-| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
-|---|---|---:|---:|---:|
-| smooth | false | 0.00237807 | 26.238 | 0.00% |
-| smooth | true | 0.00158167 | 28.009 | 2.33% |
-| checker | false | 0.00553242 | 22.571 | 0.00% |
-| checker | true | 0.00236230 | 26.267 | 7.59% |
-| waves | false | 0.02387866 | 16.220 | 0.00% |
-| waves | true | 0.00369953 | 24.319 | 191.76% |
+| Fixture | Learned interpolation | Exported MSE |   PSNR | MSE change |
+| ------- | --------------------- | -----------: | -----: | ---------: |
+| smooth  | false                 |   0.00237807 | 26.238 |      0.00% |
+| smooth  | true                  |   0.00158167 | 28.009 |      2.33% |
+| checker | false                 |   0.00553242 | 22.571 |      0.00% |
+| checker | true                  |   0.00236230 | 26.267 |      7.59% |
+| waves   | false                 |   0.02387866 | 16.220 |      0.00% |
+| waves   | true                  |   0.00369953 | 24.319 |    191.76% |
 
 ### step10b: retain measured default; expose paper PE option
 
 Compared with step10a. Six quality cases passed (finite error only; no PSNR threshold).
 
-| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
-|---|---|---:|---:|---:|
-| smooth | false | 0.00237807 | 26.238 | 0.00% |
-| smooth | true | 0.00154572 | 28.109 | -2.27% |
-| checker | false | 0.00553242 | 22.571 | 0.00% |
-| checker | true | 0.00219570 | 26.584 | -7.05% |
-| waves | false | 0.02387866 | 16.220 | 0.00% |
-| waves | true | 0.00126799 | 28.969 | -65.73% |
+| Fixture | Learned interpolation | Exported MSE |   PSNR | MSE change |
+| ------- | --------------------- | -----------: | -----: | ---------: |
+| smooth  | false                 |   0.00237807 | 26.238 |      0.00% |
+| smooth  | true                  |   0.00154572 | 28.109 |     -2.27% |
+| checker | false                 |   0.00553242 | 22.571 |      0.00% |
+| checker | true                  |   0.00219570 | 26.584 |     -7.05% |
+| waves   | false                 |   0.02387866 | 16.220 |      0.00% |
+| waves   | true                  |   0.00126799 | 28.969 |    -65.73% |
 
 ### step11: optional Lanczos source mipmaps
 
 Compared with step10b. Six quality cases passed (finite error only; no PSNR threshold).
 
-| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
-|---|---|---:|---:|---:|
-| smooth | false | 0.00237807 | 26.238 | 0.00% |
-| smooth | true | 0.00154572 | 28.109 | 0.00% |
-| checker | false | 0.00553242 | 22.571 | 0.00% |
-| checker | true | 0.00219570 | 26.584 | 0.00% |
-| waves | false | 0.02387866 | 16.220 | 0.00% |
-| waves | true | 0.00126799 | 28.969 | 0.00% |
+| Fixture | Learned interpolation | Exported MSE |   PSNR | MSE change |
+| ------- | --------------------- | -----------: | -----: | ---------: |
+| smooth  | false                 |   0.00237807 | 26.238 |      0.00% |
+| smooth  | true                  |   0.00154572 | 28.109 |      0.00% |
+| checker | false                 |   0.00553242 | 22.571 |      0.00% |
+| checker | true                  |   0.00219570 | 26.584 |      0.00% |
+| waves   | false                 |   0.02387866 | 16.220 |      0.00% |
+| waves   | true                  |   0.00126799 | 28.969 |      0.00% |
 
 ### Lanczos filter measurements
 
@@ -263,10 +263,10 @@ Compared with step10b. Six quality cases passed (finite error only; no PSNR thre
 downsampling against analytically ideal low-pass sinusoidal targets. This
 is a filter-quality measurement, separate from compression MSE.
 
-| Signal (cycles/source texel) | Box MSE | Lanczos MSE |
-|---|---:|---:|
-| 0.125 (passband) | 0.00289716 | 0.00006849 |
-| 0.375 (above new Nyquist) | 0.07322330 | 0.00005563 |
+| Signal (cycles/source texel) |    Box MSE | Lanczos MSE |
+| ---------------------------- | ---------: | ----------: |
+| 0.125 (passband)             | 0.00289716 |  0.00006849 |
+| 0.375 (above new Nyquist)    | 0.07322330 |  0.00005563 |
 
 Lanczos preserves negative lobes and signed physical channels. It can ring;
 these two frequency tests do not establish superiority for every material.
@@ -291,27 +291,27 @@ change model updates or the reconstruction metric.
 
 Compared with physical-baseline. Six quality cases passed (finite error only; no PSNR threshold).
 
-| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
-|---|---|---:|---:|---:|
-| smooth | false | 0.00069507 | 31.580 | -82.64% |
-| smooth | true | 0.00055200 | 32.581 | -79.67% |
-| checker | false | 0.00348914 | 24.573 | -84.77% |
-| checker | true | 0.00329273 | 24.824 | -61.55% |
-| waves | false | 0.02321669 | 16.342 | -4.47% |
-| waves | true | 0.00056270 | 32.497 | -78.58% |
+| Fixture | Learned interpolation | Exported MSE |   PSNR | MSE change |
+| ------- | --------------------- | -----------: | -----: | ---------: |
+| smooth  | false                 |   0.00069507 | 31.580 |    -82.64% |
+| smooth  | true                  |   0.00055200 | 32.581 |    -79.67% |
+| checker | false                 |   0.00348914 | 24.573 |    -84.77% |
+| checker | true                  |   0.00329273 | 24.824 |    -61.55% |
+| waves   | false                 |   0.02321669 | 16.342 |     -4.47% |
+| waves   | true                  |   0.00056270 | 32.497 |    -78.58% |
 
 ### convergence: 1260 updates (3x budget, separate comparison)
 
 Compared with step11. Six quality cases passed (finite error only; no PSNR threshold).
 
-| Fixture | Learned interpolation | Exported MSE | PSNR | MSE change |
-|---|---|---:|---:|---:|
-| smooth | false | 0.00063067 | 32.002 | -73.48% |
-| smooth | true | 0.00034864 | 34.576 | -77.44% |
-| checker | false | 0.00087724 | 30.569 | -84.14% |
-| checker | true | 0.00049994 | 33.011 | -77.23% |
-| waves | false | 0.02306910 | 16.370 | -3.39% |
-| waves | true | 0.00032023 | 34.945 | -74.75% |
+| Fixture | Learned interpolation | Exported MSE |   PSNR | MSE change |
+| ------- | --------------------- | -----------: | -----: | ---------: |
+| smooth  | false                 |   0.00063067 | 32.002 |    -73.48% |
+| smooth  | true                  |   0.00034864 | 34.576 |    -77.44% |
+| checker | false                 |   0.00087724 | 30.569 |    -84.14% |
+| checker | true                  |   0.00049994 | 33.011 |    -77.23% |
+| waves   | false                 |   0.02306910 | 16.370 |     -3.39% |
+| waves   | true                  |   0.00032023 | 34.945 |    -74.75% |
 
 ## Reproduction and validation
 
@@ -425,15 +425,14 @@ but Safari 27's driver subsequently timed out creating a session, even with a
 direct WebDriver request. A browser restart was requested. The successful Retina
 measurements are Playwright WebKit 26.6, not a claim of a completed Safari 27 test.
 
-
 WebKit verification after applying this across the website (medians of 20 frames
 after five warmup frames):
 
 | Component case | Frame interval | Submit-to-completion delay |
-| --- | --- | --- |
-| single | 17 ms | 11 ms |
-| trainer | 17 ms | 8 ms |
-| grid | 16.5 ms | 5.5 ms |
+| -------------- | -------------- | -------------------------- |
+| single         | 17 ms          | 11 ms                      |
+| trainer        | 17 ms          | 8 ms                       |
+| grid           | 16.5 ms        | 5.5 ms                     |
 
 All three cases passed in both WebKit and Chromium/Metal at DPR 2. TypeScript,
 all 32 unit tests, and the website production build passed.
@@ -455,11 +454,11 @@ renderer, retaining loss, finite-pixel, and shader-reuse checks.
 Chromium/Metal and WebKit each passed 16 cases (eight per DPR). At 1024×768 CSS,
 DPR 2, steady-state frame interval medians/p95 were:
 
-| Viewer | Chromium median / p95 | WebKit median / p95 |
-| --- | --- | --- |
-| Standalone | 16.6 / 17.3 ms | 17 / 18 ms |
-| Trainer comparison | 16.7 / 17.5 ms | 17 / 18 ms |
-| Gallery | 16.7 / 17.4 ms | 17 / 18 ms |
+| Viewer             | Chromium median / p95 | WebKit median / p95 |
+| ------------------ | --------------------- | ------------------- |
+| Standalone         | 16.6 / 17.3 ms        | 17 / 18 ms          |
+| Trainer comparison | 16.7 / 17.5 ms        | 17 / 18 ms          |
+| Gallery            | 16.7 / 17.4 ms        | 17 / 18 ms          |
 
 The first training profiles exposed startup stalls: maximum heartbeat gaps were
 379.4 ms in Chromium and 512 ms in WebKit. Subsequent profiles reported 39.4 ms
@@ -495,12 +494,12 @@ base64 payload lengths exactly (zero byte error in every case). For the small
 16px/two-level, 16-wide/one-hidden-layer, three-output fixture:
 
 | Setting (PE and dual on unless stated) | Payload bytes |
-| --- | --- |
-| 8-bit / training quantization off | 2,550 |
-| 4-bit | 1,870 |
-| 2-bit | 1,530 |
-| 8-bit, PE off | 1,782 |
-| 8-bit, dual grid off | 2,150 |
+| -------------------------------------- | ------------- |
+| 8-bit / training quantization off      | 2,550         |
+| 4-bit                                  | 1,870         |
+| 2-bit                                  | 1,530         |
+| 8-bit, PE off                          | 1,782         |
+| 8-bit, dual grid off                   | 2,150         |
 
 Previously the 4-bit and 2-bit estimates overstated this fixture by 680 and 1,020
 bytes. Browser tests drive the same TanStack form subscription as the trainer and
@@ -538,14 +537,14 @@ trilinear CPU-reference MSE remains 4.4391e-11 / 2.2938e-10 for 32/64-wide model
 
 At 1024×768 CSS and DPR 2, 100 steady frames after 20 warmup frames:
 
-| Engine / mode | Median frame interval | Median GPU completion delay | p95 completion delay |
-| --- | --- | --- | --- |
-| WebKit / nearest | 17 ms | 11 ms | 13 ms |
-| WebKit / stochastic | 17 ms | 11 ms | 13 ms |
-| WebKit / trilinear | 17 ms | 14 ms | 17 ms |
-| Chromium / nearest | 16.7 ms | 12.3 ms | 13 ms |
-| Chromium / stochastic | 16.7 ms | 12.3 ms | 12.9 ms |
-| Chromium / trilinear | 16.7 ms | 13.6 ms | 16.2 ms |
+| Engine / mode         | Median frame interval | Median GPU completion delay | p95 completion delay |
+| --------------------- | --------------------- | --------------------------- | -------------------- |
+| WebKit / nearest      | 17 ms                 | 11 ms                       | 13 ms                |
+| WebKit / stochastic   | 17 ms                 | 11 ms                       | 13 ms                |
+| WebKit / trilinear    | 17 ms                 | 14 ms                       | 17 ms                |
+| Chromium / nearest    | 16.7 ms               | 12.3 ms                     | 13 ms                |
+| Chromium / stochastic | 16.7 ms               | 12.3 ms                     | 12.9 ms              |
+| Chromium / trilinear  | 16.7 ms               | 13.6 ms                     | 16.2 ms              |
 
 These completion delays include the renderer's other work and GPU queueing; the
 1-versus-8 decoder count does not imply an eightfold whole-frame speedup. Summary
@@ -584,14 +583,14 @@ and the website production build passed.
 Median submit-to-GPU-completion delays for the 1024×768 CSS brick at DPR 2, with
 20 warmup + 100 measured frames:
 
-| Engine / mode | Previous uniform path | Specialized path |
-| --- | --- | --- |
-| webkit / nearest | 11.0 ms | 8.0 ms |
-| webkit / stochastic | 11.0 ms | 8.0 ms |
-| webkit / trilinear | 14.0 ms | 10.0 ms |
-| chromium / nearest | 12.3 ms | 5.4 ms |
-| chromium / stochastic | 12.3 ms | 9.9 ms |
-| chromium / trilinear | 13.6 ms | 86.8 ms |
+| Engine / mode         | Previous uniform path | Specialized path |
+| --------------------- | --------------------- | ---------------- |
+| webkit / nearest      | 11.0 ms               | 8.0 ms           |
+| webkit / stochastic   | 11.0 ms               | 8.0 ms           |
+| webkit / trilinear    | 14.0 ms               | 10.0 ms          |
+| chromium / nearest    | 12.3 ms               | 5.4 ms           |
+| chromium / stochastic | 12.3 ms               | 9.9 ms           |
+| chromium / trilinear  | 13.6 ms               | 86.8 ms          |
 
 Frame intervals remained near 17 ms. These are separate local runs and completion
 delays include queueing and all rendering work; the timing differences are not a

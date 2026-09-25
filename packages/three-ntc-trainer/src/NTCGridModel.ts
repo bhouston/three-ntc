@@ -6,9 +6,9 @@ const LATENT_INIT_SCALE = 0.35;
 // can't silently drift apart. These are display/GUI option lists, not hard
 // validation: `computeGridLevels` itself accepts any positive
 // `baseResolution`/`levels`/`mipsPerLevel` combination, not just these.
-const GRID_LEVELS_OPTIONS = [ 1, 2, 3, 4, 5, 6, 8 ];
-const GRID_BASE_RESOLUTION_OPTIONS = [ 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 ];
-const MLP_HIDDEN_SIZE_OPTIONS = [ 8, 16, 32, 64, 128 ];
+const GRID_LEVELS_OPTIONS = [1, 2, 3, 4, 5, 6, 8];
+const GRID_BASE_RESOLUTION_OPTIONS = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096];
+const MLP_HIDDEN_SIZE_OPTIONS = [8, 16, 32, 64, 128];
 // Hidden-layer activations offered in the GUI (see
 // NTCGridPyramidModel.js's `hiddenActivation` option / NTCMLP.js's
 // hardGELU doc comment) - 'relu' is the cheapest (a single max() per
@@ -16,7 +16,7 @@ const MLP_HIDDEN_SIZE_OPTIONS = [ 8, 16, 32, 64, 128 ];
 // neural texture compression paper's own hidden activation (Section 4.4), a
 // 3-piece GELU approximation, usually a quality win at a small extra ALU
 // cost per neuron.
-const MLP_ACTIVATION_OPTIONS = [ 'relu', 'hgelu' ];
+const MLP_ACTIVATION_OPTIONS = ['relu', 'hgelu'];
 
 // How many mip levels of an actual mipmap chain each stored feature level
 // covers by default (see this file's module doc comment, and
@@ -61,55 +61,51 @@ const MAX_GRID_RESOLUTION = 4096;
  * rounded to the nearest integer; `levels` and `mipsPerLevel` are each
  * clamped to >= 1 and rounded.
  */
-function computeGridLevels( baseResolution: number, levels: number, mipsPerLevel: number = DEFAULT_MIPS_PER_LEVEL ): number[] {
+function computeGridLevels(
+  baseResolution: number,
+  levels: number,
+  mipsPerLevel: number = DEFAULT_MIPS_PER_LEVEL,
+): number[] {
+  const resolutions: number[] = [];
+  const count = Math.max(1, Math.round(levels));
+  const step = Math.max(1, Math.round(mipsPerLevel));
+  let resolution = Math.min(MAX_GRID_RESOLUTION, Math.max(1, Math.round(baseResolution)));
 
-	const resolutions: number[] = [];
-	const count = Math.max( 1, Math.round( levels ) );
-	const step = Math.max( 1, Math.round( mipsPerLevel ) );
-	let resolution = Math.min( MAX_GRID_RESOLUTION, Math.max( 1, Math.round( baseResolution ) ) );
+  for (let i = 0; i < count; i++) {
+    resolutions.push(resolution);
 
-	for ( let i = 0; i < count; i ++ ) {
+    for (let k = 0; k < step; k++) resolution = Math.max(1, Math.floor(resolution / 2));
+  }
 
-		resolutions.push( resolution );
-
-		for ( let k = 0; k < step; k ++ ) resolution = Math.max( 1, Math.floor( resolution / 2 ) );
-
-	}
-
-	return resolutions;
-
+  return resolutions;
 }
 
 interface LatentGrid {
-	width: number;
-	height: number;
-	channels: number;
-	data: Float32Array;
+  width: number;
+  height: number;
+  channels: number;
+  data: Float32Array;
 }
 
-function createLatentGrid( width: number, height: number, channels: number, random: () => number ): LatentGrid {
+function createLatentGrid(width: number, height: number, channels: number, random: () => number): LatentGrid {
+  const data = new Float32Array(width * height * channels);
 
-	const data = new Float32Array( width * height * channels );
+  for (let i = 0; i < data.length; i++) {
+    data[i] = (random() * 2 - 1) * LATENT_INIT_SCALE;
+  }
 
-	for ( let i = 0; i < data.length; i ++ ) {
-
-		data[ i ] = ( random() * 2 - 1 ) * LATENT_INIT_SCALE;
-
-	}
-
-	return { width, height, channels, data };
-
+  return { width, height, channels, data };
 }
 
 export {
-	computeGridLevels,
-	createLatentGrid,
-	LATENT_INIT_SCALE,
-	GRID_LEVELS_OPTIONS,
-	GRID_BASE_RESOLUTION_OPTIONS,
-	MLP_HIDDEN_SIZE_OPTIONS,
-	MLP_ACTIVATION_OPTIONS,
-	MAX_GRID_RESOLUTION,
-	DEFAULT_MIPS_PER_LEVEL
+  computeGridLevels,
+  createLatentGrid,
+  LATENT_INIT_SCALE,
+  GRID_LEVELS_OPTIONS,
+  GRID_BASE_RESOLUTION_OPTIONS,
+  MLP_HIDDEN_SIZE_OPTIONS,
+  MLP_ACTIVATION_OPTIONS,
+  MAX_GRID_RESOLUTION,
+  DEFAULT_MIPS_PER_LEVEL,
 };
 export type { LatentGrid };

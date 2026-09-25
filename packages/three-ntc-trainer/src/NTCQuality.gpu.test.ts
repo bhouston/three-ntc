@@ -18,43 +18,86 @@ for (const fixture of ['smooth', 'checker', 'waves']) {
       const config = await (commands as any).benchmarkConfig();
       const activations = Array(4).fill(config.physical ? 'sigmoid' : 'linear');
       const u = uv();
-      const pattern = fixture === 'checker'
-        ? floor(u.x.mul(8)).add(floor(u.y.mul(8))).mod(2)
-        : sin(u.x.mul(fixture === 'waves' ? 100 : 6.283)).mul(sin(u.y.mul(25))).mul(0.4).add(0.5);
+      const pattern =
+        fixture === 'checker'
+          ? floor(u.x.mul(8))
+              .add(floor(u.y.mul(8)))
+              .mod(2)
+          : sin(u.x.mul(fixture === 'waves' ? 100 : 6.283))
+              .mul(sin(u.y.mul(25)))
+              .mul(0.4)
+              .add(0.5);
       // RGB albedo plus roughness; all four physical channels have range 1.
-      const source = await bakeColorNodeToTexture(renderer,
+      const source = await bakeColorNodeToTexture(
+        renderer,
         vec4(fixture === 'smooth' ? u.x : pattern, u.y, pattern, pattern.mul(0.7).add(0.15)),
-        64, { generateMipmaps: true });
-      const options = { gridChannels: 4, levels: 3, baseResolution: 16, mipsPerLevel: 2,
-        hiddenSizes: [16,16], hiddenActivation: 'hgelu', outputChannels: 4,
-        positionalEncoding, positionalEncodingPeriod:config.period, dualGrid: true, batchSize: 2048, iterations: config.iterations,
-        channelActivations:activations,
-        seed: 7, quantization: { mode: 'uint4' } };
+        64,
+        { generateMipmaps: true },
+      );
+      const options = {
+        gridChannels: 4,
+        levels: 3,
+        baseResolution: 16,
+        mipsPerLevel: 2,
+        hiddenSizes: [16, 16],
+        hiddenActivation: 'hgelu',
+        outputChannels: 4,
+        positionalEncoding,
+        positionalEncodingPeriod: config.period,
+        dualGrid: true,
+        batchSize: 2048,
+        iterations: config.iterations,
+        channelActivations: activations,
+        seed: 7,
+        quantization: { mode: 'uint4' },
+      };
       const result = await new NTCTrainer(options).train({ renderer, sourceTexture: source.texture });
-      const manifest = encodeNTC(result.cpuModel, {activeChannels: [{key:'albedo'}, {key:'roughness'}], constantValues:{}});
+      const manifest = encodeNTC(result.cpuModel, {
+        activeChannels: [{ key: 'albedo' }, { key: 'roughness' }],
+        constantValues: {},
+      });
       const loaded = new NTCLoader().parse(manifest).cpuModel;
       const metrics: Record<string, unknown> = {};
-      for (const [label, model] of [['trained', result.cpuModel], ['exported', loaded]] as const) {
+      for (const [label, model] of [
+        ['trained', result.cpuModel],
+        ['exported', loaded],
+      ] as const) {
         const mip = model.positionalEncoding ? null : buildMipChainTexture(model);
         const levels = buildLevelTextures(model);
-        let sum = 0, count = 0;
+        let sum = 0,
+          count = 0;
         const perMip: number[] = [];
         for (let lod = 0; lod <= 6; lod++) {
           const size = Math.max(1, 64 >> lod);
           const reference = await renderNodeToFloats(renderer, textureLevel(source.texture, uv(), lod), size);
           const values = evaluateNeuralTextureRaw(uv(), model, mip, null, float(lod), levels);
-          const decoded = await renderNodeToFloats(renderer, vec4(...values.map((v,i)=>applyChannelActivation(v,activations[i]))), size);
+          const decoded = await renderNodeToFloats(
+            renderer,
+            vec4(...values.map((v, i) => applyChannelActivation(v, activations[i]))),
+            size,
+          );
           let error = 0;
           for (let i = 0; i < reference.length; i++) error += (reference[i] - decoded[i]) ** 2;
           perMip.push(error / reference.length);
-          sum += error; count += reference.length;
+          sum += error;
+          count += reference.length;
         }
         metrics[label] = { mse: sum / count, psnr: -10 * Math.log10(sum / count), perMipMse: perMip };
         expect(Number.isFinite(sum)).toBe(true);
-        mip?.dispose(); levels.forEach(t => t.dispose());
+        mip?.dispose();
+        levels.forEach((t) => t.dispose());
       }
-      await (commands as any).recordMetric({fixture, positionalEncoding, seed:7,
-        iterations:result.iterations, physicalActivations:config.physical, positionalEncodingPeriod:config.period, batchSize:2048, sourceSize:64, ...metrics});
+      await (commands as any).recordMetric({
+        fixture,
+        positionalEncoding,
+        seed: 7,
+        iterations: result.iterations,
+        physicalActivations: config.physical,
+        positionalEncodingPeriod: config.period,
+        batchSize: 2048,
+        sourceSize: 64,
+        ...metrics,
+      });
       source.dispose();
     });
   }

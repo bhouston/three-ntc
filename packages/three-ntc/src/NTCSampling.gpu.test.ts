@@ -1,18 +1,18 @@
-import { HalfFloatType, Mesh, OrthographicCamera, PlaneGeometry, RenderTarget, Scene } from "three";
-import { float, floor, uv, vec2, vec3, vec4 } from "three/tsl";
-import { expect, it } from "vitest";
-import { commands } from "vitest/browser";
-import { evaluateNeuralTextureSampled } from "./NTCDecoderTSL.js";
-import { NTCNodeMaterial } from "./NTCNodeMaterial.js";
-import { buildLevelTextures } from "./NTCHalfFloatTexture.js";
-import { CHANNELS, getChannel, layoutChannels } from "./NTCFormat.js";
+import { HalfFloatType, Mesh, OrthographicCamera, PlaneGeometry, RenderTarget, Scene } from 'three';
+import { float, floor, uv, vec2, vec3, vec4 } from 'three/tsl';
+import { expect, it } from 'vitest';
+import { commands } from 'vitest/browser';
+import { evaluateNeuralTextureSampled } from './NTCDecoderTSL.js';
+import { NTCNodeMaterial } from './NTCNodeMaterial.js';
+import { buildLevelTextures } from './NTCHalfFloatTexture.js';
+import { CHANNELS, getChannel, layoutChannels } from './NTCFormat.js';
 import {
   evaluateNTCCpu,
   getRenderer,
   makeModel,
   readRenderTargetFloats,
   renderNodeToFloats,
-} from "../../../test/gpu-helpers.js";
+} from '../../../test/gpu-helpers.js';
 
 function fixture() {
   const model = makeModel(1, {
@@ -35,7 +35,7 @@ function fixture() {
 }
 const sigmoid = (x: number) => 1 / (1 + Math.exp(-x));
 
-it("nearest reconstructs exactly one texel at the nearest clamped physical mip", async () => {
+it('nearest reconstructs exactly one texel at the nearest clamped physical mip', async () => {
   const renderer = await getRenderer(),
     model = fixture(),
     textures = buildLevelTextures(model);
@@ -55,9 +55,9 @@ it("nearest reconstructs exactly one texel at the nearest clamped physical mip",
         level,
       ).map(sigmoid);
       const nodes = evaluateNeuralTextureSampled(vec2(u, v), model, textures, float(lod), [
-        "sigmoid",
-        "sigmoid",
-        "sigmoid",
+        'sigmoid',
+        'sigmoid',
+        'sigmoid',
       ]);
       const actual = await renderNodeToFloats(renderer, vec4(...nodes, 1), 1);
       expected.forEach((value, i) => expect(Math.abs(actual[i] - value)).toBeLessThan(0.001));
@@ -67,7 +67,7 @@ it("nearest reconstructs exactly one texel at the nearest clamped physical mip",
   }
 });
 
-it("stochastic samples individual decoded texels and its stratified mean matches trilinear filtering", async () => {
+it('stochastic samples individual decoded texels and its stratified mean matches trilinear filtering', async () => {
   const renderer = await getRenderer(),
     model = fixture(),
     textures = buildLevelTextures(model);
@@ -88,12 +88,7 @@ it("stochastic samples individual decoded texels and its stratified mean matches
     for (let y = 0; y < 2; y++)
       for (let x = 0; x < 2; x++) {
         const value = sigmoid(
-          evaluateNTCCpu(
-            model,
-            (Math.floor(px) + x + 0.5) / size,
-            (Math.floor(py) + y + 0.5) / size,
-            level,
-          )[0],
+          evaluateNTCCpu(model, (Math.floor(px) + x + 0.5) / size, (Math.floor(py) + y + 0.5) / size, level)[0],
         );
         possible.push(value);
         expected += value * 0.25 * (level ? lod : 1 - lod);
@@ -105,19 +100,18 @@ it("stochastic samples individual decoded texels and its stratified mean matches
       model,
       textures,
       float(lod),
-      ["sigmoid", "sigmoid", "sigmoid"],
-      "stochastic",
+      ['sigmoid', 'sigmoid', 'sigmoid'],
+      'stochastic',
       random,
     );
     const actual = await renderNodeToFloats(renderer, vec4(...nodes, 1), 8);
     const values = Array.from({ length: 64 }, (_, i) => actual[i * 4]);
-    for (const value of values)
-      expect(Math.min(...possible.map((p) => Math.abs(p - value)))).toBeLessThan(0.001);
+    for (const value of values) expect(Math.min(...possible.map((p) => Math.abs(p - value)))).toBeLessThan(0.001);
     expect(new Set(values).size).toBeGreaterThan(1);
     const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
     expect(Math.abs(mean - expected)).toBeLessThan(0.001);
     await (commands as any).recordMetric({
-      kind: "stochastic-filter-oracle",
+      kind: 'stochastic-filter-oracle',
       mean,
       expected,
       absoluteError: Math.abs(mean - expected),
@@ -127,16 +121,16 @@ it("stochastic samples individual decoded texels and its stratified mean matches
   }
 });
 
-it("rebuilds a shader containing only the selected sampling path and preserves model resources", async () => {
+it('rebuilds a shader containing only the selected sampling path and preserves model resources', async () => {
   const renderer = await getRenderer(),
     model = fixture();
   const material = new NTCNodeMaterial(
     model,
     {
-      activeChannels: layoutChannels([getChannel("albedo")]).channels,
+      activeChannels: layoutChannels([getChannel('albedo')]).channels,
       constantValues: Object.fromEntries(CHANNELS.map((c) => [c.key, c.defaultValue])),
     },
-    { debugView: "albedo", lodNode: float(0.25) },
+    { debugView: 'albedo', lodNode: float(0.25) },
   );
   const geometry = new PlaneGeometry(2, 2),
     scene = new Scene();
@@ -153,12 +147,12 @@ it("rebuilds a shader containing only the selected sampling path and preserves m
     return create(descriptor);
   };
   try {
-    expect(material.samplingMode).toBe("nearest");
+    expect(material.samplingMode).toBe('nearest');
     renderer.setRenderTarget(target);
     renderer.render(scene, camera);
     const nearest = await readRenderTargetFloats(renderer, target, 32),
       initialModules = shaders.length;
-    const fragment = shaders.find((code) => code.includes("@fragment"))!;
+    const fragment = shaders.find((code) => code.includes('@fragment'))!;
     const assertPath = (code: string, mode: string) => {
       expect(code).not.toContain('ntcSampleCount');
       // Hash integer constants identify stochastic sampling, independent of node names.
@@ -173,25 +167,25 @@ it("rebuilds a shader containing only the selected sampling path and preserves m
     const version = material.version;
     material.setSamplingMode('nearest');
     expect(material.version).toBe(version); // Re-selecting the current mode is a no-op.
-    material.setSamplingMode("trilinear");
+    material.setSamplingMode('trilinear');
     expect(material.version).toBeGreaterThan(version);
     renderer.render(scene, camera);
     const trilinear = await readRenderTargetFloats(renderer, target, 32);
     expect(shaders.length).toBeGreaterThan(initialModules);
-    assertPath(shaders.filter(code => code.includes('@fragment')).at(-1)!, 'trilinear');
+    assertPath(shaders.filter((code) => code.includes('@fragment')).at(-1)!, 'trilinear');
     const trilinearModules = shaders.length;
     expect(trilinear.some((value, i) => Math.abs(value - nearest[i]) > 0.001)).toBe(true);
-    material.samplingMode = "stochastic";
+    material.samplingMode = 'stochastic';
     renderer.render(scene, camera);
     const stochastic = await readRenderTargetFloats(renderer, target, 32);
     expect(shaders.length).toBeGreaterThan(trilinearModules);
-    assertPath(shaders.filter(code => code.includes('@fragment')).at(-1)!, 'stochastic');
+    assertPath(shaders.filter((code) => code.includes('@fragment')).at(-1)!, 'stochastic');
     // Three advances frameId on animation frames, not on every render pass.
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     renderer.render(scene, camera);
     const nextFrame = await readRenderTargetFloats(renderer, target, 32);
     expect(stochastic.some((value, i) => Math.abs(value - nextFrame[i]) > 0.001)).toBe(true);
-    material.setSamplingMode("nearest");
+    material.setSamplingMode('nearest');
     renderer.render(scene, camera);
     const restored = await readRenderTargetFloats(renderer, target, 32);
     expect(restored).toEqual(nearest);
@@ -204,7 +198,7 @@ it("rebuilds a shader containing only the selected sampling path and preserves m
     const updated = await readRenderTargetFloats(renderer, target, 32);
     expect(updated.some((value, i) => Math.abs(value - restored[i]) > 0.001)).toBe(true);
     expect(shaders).toHaveLength(modulesBeforeUpdate);
-    expect(() => material.setSamplingMode("invalid" as any)).toThrow();
+    expect(() => material.setSamplingMode('invalid' as any)).toThrow();
   } finally {
     device.createShaderModule = create;
     renderer.setRenderTarget(previous);

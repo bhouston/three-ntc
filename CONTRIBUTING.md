@@ -1,59 +1,59 @@
 # Contributing
 
-This is the shared workflow for human contributors, Claude, and Codex.
-Read this file before starting a task. Do not commit directly to `main` or `dev`.
+These rules apply to every contributor, human or AI agent (Claude, Codex, and others). This file is the single source of truth for the workflow; `AGENTS.md` and `CLAUDE.md` only point here.
 
-1. Before implementing a feature or fix, create a GitHub issue (or reuse the
-   supplied issue). Follow the feature template: description, motivation,
-   constraints, acceptance criteria. Agents may use `gh issue create`.
-2. Branch from current `origin/main`. Any branch name is fine; there is no
-   required naming convention.
-3. Use Conventional Commits for every commit and the PR title:
-   `type(optional-scope): description`. Types include `feat`, `fix`, `perf`,
-   `docs`, `chore`, `refactor`, `test`, `style`, `build`, `ci`, and `revert`.
-   Reference the issue in the commit body when useful. `feat` releases a minor,
-   `fix` and `perf` a patch, and `!` or a `BREAKING CHANGE:` footer a major.
-   Other types normally do not release. Do not manually bump package versions
-   or edit generated release notes. Husky runs commitlint on each local commit;
-   CI checks all implementation commits and the PR title.
-4. Install with `pnpm install --frozen-lockfile` using the Node version in
-   `.nvmrc` and pnpm version in `package.json`. Run `pnpm build`, `pnpm lint`,
-   `pnpm test`, `pnpm size`, `pnpm release:check`, and
-   `pnpm audit --prod --audit-level high`. Run `pnpm test:gpu` for GPU changes;
-   hosted SwiftShader GPU checks are advisory.
-5. Push the branch and open a PR **against `main`** with `Closes #<issue>` and
-   validation results. Use the PR template. Keep each feature PR focused.
-   PRs are merged with merge commits; do not squash. Do not bypass required
-   checks. Merging does not publish anything; it only runs CI.
-6. Releases are manual. When `main` has release-worthy commits ready to ship,
-   the maintainer runs `gh workflow run release.yml --ref main` (or the
-   Actions UI). The workflow re-runs quality checks against the exact commit
-   dispatched, aborting if `main` has since advanced, then runs
-   semantic-release to compute the version, generate the changelog, create the
-   tag/GitHub release, and publish both packages via npm trusted publishing
-   (OIDC). A dispatch with no release-worthy commits since the last release is
-   a successful no-op. Use the workflow's `dry_run` input to validate changes
-   without publishing.
+## Issue → branch → PR
 
-Unit coverage includes **all runtime and trainer TypeScript source**, including
-GPU paths that unit tests do not execute. Initial gates are statements 19%,
-branches 13%, functions 18%, lines 19%, based on measured coverage rather than an
-artificial 80% promise. Raise gates as CPU/GPU coverage improves; do not lower
-or exclude files just to pass. CI uploads HTML/LCOV reports and a summary.
-Bundle limits measure minified gzip ESM exports with three.js external:
-11,000 bytes runtime and 52,000 bytes trainer. Explain intentional limit changes.
-High/critical production dependency advisories block CI. The full development
-audit is visible but advisory while extract-zip has no patched registry release.
+1. **Start with an issue.** Before a feature, fix, or other tracked change, open a GitHub issue (or reuse one that already covers it) with the problem, motivation, constraints, and testable acceptance criteria. Agents use `gh issue create` with the same sections.
+2. **Branch from `main`.** Fetch and branch from current `origin/main`, named `<type>/<issue>-<short-description>` (for example `feat/42-batch-export`). Never commit directly to `main`. Use a separate worktree when you have unrelated local changes.
+3. **Commit with Conventional Commits** (see below). Reference the issue in the commit body where useful.
+4. **Run the local checks** below and fix failures before opening the PR.
+5. **Open a PR against `main`** with a Conventional Commit title, `Closes #<issue>` in the body, a description of the resulting behavior, and the validation you ran.
+6. **Merge only on green CI.** Every required check must pass. PRs are merged with merge commits (`gh pr merge --merge`); never squash or rebase-merge. Do not merge your own PR unless the maintainer asked you to.
 
-Both npm packages share one semantic-release version and changelog. The trainer
-is published with a registry dependency on that runtime version. `v*` Git tags
-are authoritative; checked-in manifests remain development placeholders.
-Generated `CHANGELOG.md` and npm tarballs are attached to each GitHub release,
-and the changelog is included in each package. No bot commits or branch
-protection bypass are needed. See [release setup](docs/releasing.md).
+`main` is the default branch and the only integration branch. There are no long-lived release, promotion, or sync branches.
 
-For another repository, copy this standard, the two agent pointer files,
-commitlint/Husky configuration and issue/PR templates. Adapt package names,
-release preparation, coverage and size limits before copying workflows. Validate
-a real issue/PR cycle before extracting a separate GitHub template repository;
-this repository's monorepo release configuration is not a universal template.
+## Commit format
+
+Use `type(optional-scope): description` in the imperative mood. Allowed types: `feat`, `fix`, `perf`, `docs`, `chore`, `refactor`, `test`, `style`, `build`, `ci`, `revert`.
+
+- `feat:` produces a minor release.
+- `fix:` and `perf:` produce a patch release.
+- `feat!:` (any type with `!`) or a `BREAKING CHANGE:` footer produces a major release.
+- Other types do not trigger a release on their own.
+
+Husky runs commitlint on every commit after `pnpm install`. CI checks the PR title and every commit in the PR. Git-generated merge commits are exempt.
+
+## Local checks
+
+Use the Node version in `.nvmrc` and the pnpm version pinned in `package.json` (`packageManager`).
+
+```sh
+pnpm install --frozen-lockfile
+pnpm build
+pnpm tsc
+pnpm lint
+pnpm test
+```
+
+The Husky pre-commit hook formats and lints staged files (`oxfmt`, `oxlint --fix`) and type-checks the workspace. CI runs the same checks plus any repository-specific gates, such as coverage floors, bundle-size budgets, package-content checks, and a dependency audit; see `.github/workflows/ci.yml`. Explain any intentional threshold change in the PR.
+
+## Releases
+
+Merging to `main` never publishes. A release is a separate, deliberate step that the maintainer triggers whenever the changes accumulated on `main` should ship:
+
+```sh
+gh workflow run release.yml --ref main                  # release
+gh workflow run release.yml --ref main -f dry_run=true  # preview only, publishes nothing
+```
+
+The Release workflow refuses any ref other than `main`, re-runs CI on the dispatched commit, and then uses semantic-release to compute the next version from the Conventional Commits since the last release tag, generate release notes, create the tag and GitHub Release, and publish:
+
+- npm packages, through npm trusted publishing (GitHub OIDC, no `NPM_TOKEN`);
+- VS Code extensions, where the repository has one, to the VS Code Marketplace and Open VSX.
+
+When there are no release-worthy commits, the run is a no-op. Never bump versions, edit changelogs, or push release tags by hand.
+
+## Security
+
+Report vulnerabilities privately through GitHub's private vulnerability reporting (see `SECURITY.md` where present), never in a public issue.

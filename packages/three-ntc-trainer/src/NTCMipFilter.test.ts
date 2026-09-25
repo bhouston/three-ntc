@@ -1,7 +1,7 @@
-import { expect, it } from "vitest";
-import { createLanczosMipChain } from "./NTCMipFilter.js";
+import { expect, it } from 'vitest';
+import { createLanczosMipChain } from './NTCMipFilter.js';
 
-it("preserves signed DC channels through odd and rectangular mip chains", () => {
+it('preserves signed DC channels through odd and rectangular mip chains', () => {
   const data = Float32Array.from({ length: 7 * 5 * 2 }, (_, i) => (i % 2 ? 2 : -0.75));
   const mips = createLanczosMipChain(data, 7, 5, 2);
   expect(mips.map((m) => [m.width, m.height])).toEqual([
@@ -15,7 +15,7 @@ it("preserves signed DC channels through odd and rectangular mip chains", () => 
 });
 
 for (const frequency of [1 / 8, 3 / 8]) {
-  it(`reduces ${frequency < 0.25 ? "passband attenuation" : "aliasing"} versus box mipmaps`, () => {
+  it(`reduces ${frequency < 0.25 ? 'passband attenuation' : 'aliasing'} versus box mipmaps`, () => {
     const size = 64;
     const signal = (x: number) => Math.cos(2 * Math.PI * frequency * x);
     const data = Float32Array.from({ length: size * size }, (_, i) => signal(i % size));
@@ -31,6 +31,6 @@ for (const frequency of [1 / 8, 3 / 8]) {
         lanczosMse += (mip.data[y * 32 + x] - ideal) ** 2 / 1024;
       }
     expect(lanczosMse).toBeLessThan(boxMse);
-    console.log("NTC_MIP_METRIC", JSON.stringify({ frequency, boxMse, lanczosMse }));
+    console.log('NTC_MIP_METRIC', JSON.stringify({ frequency, boxMse, lanczosMse }));
   });
 }

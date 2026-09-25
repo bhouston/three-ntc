@@ -67,6 +67,15 @@ logs and Git tag. Recover the missing package/release from the recorded build
 and version, or prepare a corrective release; an existing npm version cannot
 be overwritten. Do not delete a published version to repair a CI run.
 
+## Two-package release
+
+Both npm packages, `three-ntc` and `three-ntc-trainer`, share one semantic-release
+version and changelog. The trainer is published with a registry dependency on that
+runtime version, not a workspace link. `v*` Git tags are authoritative; checked-in
+manifests are development placeholders. Generated `CHANGELOG.md` and npm tarballs are
+attached to each GitHub release, and the changelog is included in each published
+package. No bot commits or branch protection bypass are needed.
+
 ## Validation and rollout
 
 The full dependency audit currently reports two high-severity `extract-zip@2.0.1`

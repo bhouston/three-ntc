@@ -54,7 +54,7 @@ jobs:
       - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
         with:
-          node-version-file: ".nvmrc"
+          node-version-file: '.nvmrc'
           cache: pnpm
       # @anolilab/semantic-release-pnpm exchanges its own OIDC token with pnpm
       # for trusted publishing; it does not rely on npm CLI's OIDC support.

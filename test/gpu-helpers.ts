@@ -27,11 +27,7 @@ export function getRenderer(): Promise<any> {
  * row-major. Pixel (x, y) saw `uv() === pixelUv(size, x, y)` - verified by
  * the harness sanity test in NTCDecoder.gpu.test.ts.
  */
-export async function renderNodeToFloats(
-  renderer: any,
-  vec4Node: any,
-  size: number,
-): Promise<Float32Array> {
+export async function renderNodeToFloats(renderer: any, vec4Node: any, size: number): Promise<Float32Array> {
   const renderTarget = await bakeColorNodeToTexture(renderer, vec4Node, size);
   const out = await readRenderTargetFloats(renderer, renderTarget, size);
   renderTarget.dispose();
@@ -39,25 +35,14 @@ export async function renderNodeToFloats(
 }
 
 /** Reads a `size` x `size` half-float render target back as RGBA floats. */
-export async function readRenderTargetFloats(
-  renderer: any,
-  renderTarget: any,
-  size: number,
-): Promise<Float32Array> {
-  const half: Uint16Array = await renderer.readRenderTargetPixelsAsync(
-    renderTarget,
-    0,
-    0,
-    size,
-    size,
-  );
+export async function readRenderTargetFloats(renderer: any, renderTarget: any, size: number): Promise<Float32Array> {
+  const half: Uint16Array = await renderer.readRenderTargetPixelsAsync(renderTarget, 0, 0, size, size);
   // WebGPU buffer readback rows are padded to 256 bytes (128 half-floats);
   // three.js hands that padding back for widths under 32 texels.
   const stride = Math.max(size * 4, 128);
   const out = new Float32Array(size * size * 4);
   for (let y = 0; y < size; y++) {
-    for (let i = 0; i < size * 4; i++)
-      out[y * size * 4 + i] = DataUtils.fromHalfFloat(half[y * stride + i]);
+    for (let i = 0; i < size * 4; i++) out[y * size * 4 + i] = DataUtils.fromHalfFloat(half[y * stride + i]);
   }
   return out;
 }
@@ -147,10 +132,7 @@ export function channelActivateDerivativeFromOutput(a: number, activation?: stri
 }
 
 /** Forward pass returning every layer's pre-activation `z` and activation `a` (a[0] = input). */
-export function forwardCpu(
-  decoder: { layers: any[] },
-  input: number[],
-): { z: number[][]; a: number[][] } {
+export function forwardCpu(decoder: { layers: any[] }, input: number[]): { z: number[][]; a: number[][] } {
   const z: number[][] = [];
   const a: number[][] = [input.slice()];
   for (const layer of decoder.layers) {
@@ -158,8 +140,7 @@ export function forwardCpu(
     const al: number[] = [];
     for (let o = 0; o < layer.outputSize; o++) {
       let s = layer.biases[o];
-      for (let i = 0; i < layer.inputSize; i++)
-        s += layer.weights[o * layer.inputSize + i] * a[a.length - 1][i];
+      for (let i = 0; i < layer.inputSize; i++) s += layer.weights[o * layer.inputSize + i] * a[a.length - 1][i];
       zl.push(s);
       al.push(activate(s, layer.activation));
     }
@@ -194,16 +175,23 @@ export function runtimeFeaturesCpu(cpuModel: any, u: number, v: number, lod: num
       const base = (wrap(y0 + dy, grid.height) * grid.width + wrap(x0 + dx, grid.width)) * channels;
       for (let c = 0; c < channels; c++) features.push(roundHalf(grid.data[base + c]));
     }
-    const size=Math.max(1,Math.floor((cpuModel.textureResolution ?? 2**maxLod)/(2**lod)));
-    features.push(...(cpuModel.positionalEncodingPeriod
-      ? positionalEncoding(u*size/cpuModel.positionalEncodingPeriod,v*size/cpuModel.positionalEncodingPeriod)
-      : positionalEncoding(x-x0,y-y0)));
+    const size = Math.max(1, Math.floor((cpuModel.textureResolution ?? 2 ** maxLod) / 2 ** lod));
+    features.push(
+      ...(cpuModel.positionalEncodingPeriod
+        ? positionalEncoding(
+            (u * size) / cpuModel.positionalEncodingPeriod,
+            (v * size) / cpuModel.positionalEncodingPeriod,
+          )
+        : positionalEncoding(x - x0, y - y0)),
+    );
   } else {
     const grid = grids[selectFeatureLevel(lod, grids.length, mipsPerLevel, cpuModel.lodOffset)];
     features = bilinearWrap(grid.data, grid.width, grid.height, channels, u, v, roundHalf);
   }
   if (cpuModel.dualGrid) {
-    const last = cpuModel.lowResGrids?.[selectFeatureLevel(lod,grids.length,mipsPerLevel,cpuModel.lodOffset)] ?? grids[grids.length - 1];
+    const last =
+      cpuModel.lowResGrids?.[selectFeatureLevel(lod, grids.length, mipsPerLevel, cpuModel.lodOffset)] ??
+      grids[grids.length - 1];
     features.push(...bilinearWrap(last.data, last.width, last.height, last.channels, u, v, roundHalf));
   }
   features.push(lod / Math.max(1, maxLod));

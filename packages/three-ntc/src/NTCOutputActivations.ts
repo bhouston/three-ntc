@@ -29,26 +29,22 @@ export type NTCActivation = 'sigmoid' | 'tanh' | 'softplus' | 'linear' | undefin
  * here, neural-appearance's roughness/opacity/scaledSigmoid outputs in
  * ../neural-appearance/NeuralAppearanceTSL.js) is this same formula.
  */
-function sigmoidTSL( xNode: any ): any {
-
-	return float( 1 ).div( float( 1 ).add( exp( xNode.negate() ) ) );
-
+function sigmoidTSL(xNode: any): any {
+  return float(1).div(float(1).add(exp(xNode.negate())));
 }
 
 /**
  * z -> a, the forward nonlinearity.
  */
-function applyChannelActivation( zNode: any, activation: NTCActivation ): any {
+function applyChannelActivation(zNode: any, activation: NTCActivation): any {
+  if (activation === 'sigmoid') return sigmoidTSL(zNode);
+  if (activation === 'tanh') return tanh(zNode);
 
-	if ( activation === 'sigmoid' ) return sigmoidTSL( zNode );
-	if ( activation === 'tanh' ) return tanh( zNode );
+  // Numerically stable softplus: log(1+e^z) computed as
+  // max(z,0) + log(1+e^-|z|), which never overflows exp() for large |z|.
+  if (activation === 'softplus') return max(zNode, float(0)).add(log(exp(zNode.abs().negate()).add(1)));
 
-	// Numerically stable softplus: log(1+e^z) computed as
-	// max(z,0) + log(1+e^-|z|), which never overflows exp() for large |z|.
-	if ( activation === 'softplus' ) return max( zNode, float( 0 ) ).add( log( exp( zNode.abs().negate() ).add( 1 ) ) );
-
-	return zNode;
-
+  return zNode;
 }
 
 /**
@@ -58,17 +54,15 @@ function applyChannelActivation( zNode: any, activation: NTCActivation ): any {
  * (`a - target`) into the pre-activation delta (`dL/dz`) the rest of the
  * backward pass expects.
  */
-function channelActivationDerivativeFromOutput( aNode: any, activation: NTCActivation ): any {
+function channelActivationDerivativeFromOutput(aNode: any, activation: NTCActivation): any {
+  if (activation === 'sigmoid') return aNode.mul(float(1).sub(aNode));
+  if (activation === 'tanh') return float(1).sub(aNode.mul(aNode));
 
-	if ( activation === 'sigmoid' ) return aNode.mul( float( 1 ).sub( aNode ) );
-	if ( activation === 'tanh' ) return float( 1 ).sub( aNode.mul( aNode ) );
+  // softplus: a = log(1+e^z)  =>  e^-a = 1/(1+e^z) = 1 - sigmoid(z)
+  // so da/dz = sigmoid(z) = 1 - e^-a.
+  if (activation === 'softplus') return float(1).sub(exp(aNode.negate()));
 
-	// softplus: a = log(1+e^z)  =>  e^-a = 1/(1+e^z) = 1 - sigmoid(z)
-	// so da/dz = sigmoid(z) = 1 - e^-a.
-	if ( activation === 'softplus' ) return float( 1 ).sub( exp( aNode.negate() ) );
-
-	return float( 1 );
-
+  return float(1);
 }
 
 export { sigmoidTSL, applyChannelActivation, channelActivationDerivativeFromOutput };

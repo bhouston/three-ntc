@@ -37,42 +37,44 @@
  */
 
 interface NTCProfile {
-	label: string;
-	description: string;
-	levels: number;
-	baseResolution: number;
-	hiddenSizes: number[];
-	hiddenActivation: string;
+  label: string;
+  description: string;
+  levels: number;
+  baseResolution: number;
+  hiddenSizes: number[];
+  hiddenActivation: string;
 }
 
 const NTC_PROFILES: Record<string, NTCProfile> = {
-	'mobile-fast': {
-		label: 'Mobile (fast)',
-		description: 'Smallest/cheapest decoder - 2 hidden layers x16, relu. Best default for unknown or low-end mobile GPUs.',
-		levels: 2,
-		baseResolution: 128,
-		hiddenSizes: [ 16, 16 ],
-		hiddenActivation: 'relu'
-	},
-	'mobile-balanced': {
-		label: 'Mobile (balanced)',
-		description: 'This addon\'s long-standing default shape - 2 hidden layers x32, relu.',
-		levels: 4,
-		baseResolution: 256,
-		hiddenSizes: [ 32, 32 ],
-		hiddenActivation: 'relu'
-	},
-	'desktop-quality': {
-		label: 'Desktop (quality)',
-		description: 'Closest match to the NVIDIA neural texture compression paper\'s own decoder - 2 hidden layers x64, hgelu. Highest quality, highest decode cost.',
-		levels: 4,
-		baseResolution: 512,
-		hiddenSizes: [ 64, 64 ],
-		hiddenActivation: 'hgelu'
-	}
+  'mobile-fast': {
+    label: 'Mobile (fast)',
+    description:
+      'Smallest/cheapest decoder - 2 hidden layers x16, relu. Best default for unknown or low-end mobile GPUs.',
+    levels: 2,
+    baseResolution: 128,
+    hiddenSizes: [16, 16],
+    hiddenActivation: 'relu',
+  },
+  'mobile-balanced': {
+    label: 'Mobile (balanced)',
+    description: "This addon's long-standing default shape - 2 hidden layers x32, relu.",
+    levels: 4,
+    baseResolution: 256,
+    hiddenSizes: [32, 32],
+    hiddenActivation: 'relu',
+  },
+  'desktop-quality': {
+    label: 'Desktop (quality)',
+    description:
+      "Closest match to the NVIDIA neural texture compression paper's own decoder - 2 hidden layers x64, hgelu. Highest quality, highest decode cost.",
+    levels: 4,
+    baseResolution: 512,
+    hiddenSizes: [64, 64],
+    hiddenActivation: 'hgelu',
+  },
 };
 
-const NTC_PROFILE_NAMES = Object.keys( NTC_PROFILES );
+const NTC_PROFILE_NAMES = Object.keys(NTC_PROFILES);
 
 /**
  * Returns the `{ levels, baseResolution, hiddenSizes, hiddenActivation }`
@@ -83,32 +85,32 @@ const NTC_PROFILE_NAMES = Object.keys( NTC_PROFILES );
  * ever covers the grid/MLP shape, never channel counts, quantization,
  * or training hyperparameters.
  */
-function getNTCProfile( name: string ): Pick<NTCProfile, 'levels' | 'baseResolution' | 'hiddenSizes' | 'hiddenActivation'> | null {
+function getNTCProfile(
+  name: string,
+): Pick<NTCProfile, 'levels' | 'baseResolution' | 'hiddenSizes' | 'hiddenActivation'> | null {
+  const profile = NTC_PROFILES[name];
 
-	const profile = NTC_PROFILES[ name ];
+  if (!profile) return null;
 
-	if ( ! profile ) return null;
+  const { levels, baseResolution, hiddenSizes, hiddenActivation } = profile;
 
-	const { levels, baseResolution, hiddenSizes, hiddenActivation } = profile;
-
-	return { levels, baseResolution, hiddenSizes: hiddenSizes.slice(), hiddenActivation };
-
+  return { levels, baseResolution, hiddenSizes: hiddenSizes.slice(), hiddenActivation };
 }
 
-export {
-	NTC_PROFILES,
-	NTC_PROFILE_NAMES,
-	getNTCProfile
-};
+export { NTC_PROFILES, NTC_PROFILE_NAMES, getNTCProfile };
 export type { NTCProfile };
 
 /** UI controls and training shape derive from the same profile. */
 export function getNTCProfileControls(name: string) {
-	const profile = getNTCProfile(name);
-	if (!profile) return null;
-	return {levels:profile.levels, baseResolution:profile.baseResolution,
-		hiddenSize:profile.hiddenSizes[0], hiddenLayers:profile.hiddenSizes.length,
-		hiddenActivation:profile.hiddenActivation};
+  const profile = getNTCProfile(name);
+  if (!profile) return null;
+  return {
+    levels: profile.levels,
+    baseResolution: profile.baseResolution,
+    hiddenSize: profile.hiddenSizes[0],
+    hiddenLayers: profile.hiddenSizes.length,
+    hiddenActivation: profile.hiddenActivation,
+  };
 }
 
 /** Paper architecture and full training budget. This is intentionally opt-in:
@@ -116,12 +118,28 @@ export function getNTCProfileControls(name: string) {
  * Both grids use uint4 here; this is not a claim of a particular table-2 bitrate.
  */
 export function getNTCPaperProfile(textureResolution: number) {
-	if (!Number.isInteger(textureResolution) || textureResolution < 16 ||
-		!Number.isInteger(Math.log2(textureResolution))) throw new Error('Paper profile requires a power-of-two texture resolution >= 16.');
-	const baseResolution = textureResolution / 4;
-	return {textureResolution, baseResolution, levels:Math.max(1,Math.floor(Math.log(baseResolution)/Math.log(4))),
-		gridChannels:8, lowResChannels:12, mipsPerLevel:2, positionalEncoding:true, positionalEncodingPeriod:8, dualGrid:true,
-		hiddenSizes:[64,64], hiddenActivation:'hgelu', batchSize:8*256*256,
-		iterations:250000, learningRate:0.01, weightsLearningRate:0.005, cosineAnnealingScale:0,
-		mipFilter:'lanczos' as const, quantization:{mode:'uint4'}, retrainAfterQuantize:0.05};
+  if (!Number.isInteger(textureResolution) || textureResolution < 16 || !Number.isInteger(Math.log2(textureResolution)))
+    throw new Error('Paper profile requires a power-of-two texture resolution >= 16.');
+  const baseResolution = textureResolution / 4;
+  return {
+    textureResolution,
+    baseResolution,
+    levels: Math.max(1, Math.floor(Math.log(baseResolution) / Math.log(4))),
+    gridChannels: 8,
+    lowResChannels: 12,
+    mipsPerLevel: 2,
+    positionalEncoding: true,
+    positionalEncodingPeriod: 8,
+    dualGrid: true,
+    hiddenSizes: [64, 64],
+    hiddenActivation: 'hgelu',
+    batchSize: 8 * 256 * 256,
+    iterations: 250000,
+    learningRate: 0.01,
+    weightsLearningRate: 0.005,
+    cosineAnnealingScale: 0,
+    mipFilter: 'lanczos' as const,
+    quantization: { mode: 'uint4' },
+    retrainAfterQuantize: 0.05,
+  };
 }

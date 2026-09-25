@@ -51,15 +51,15 @@ const material = new NTCNodeMaterial(cpuModel, channelClassification, {
 
 // Sampling changes rebuild the TSL graph and compile a specialized shader on next use.
 material.setSamplingMode('stochastic'); // or 'nearest' / 'trilinear'
-material.samplingMode = 'nearest';     // equivalent property setter
-material.setLodBias(1);                // live uniform; positive bias selects finer mips
+material.samplingMode = 'nearest'; // equivalent property setter
+material.setLodBias(1); // live uniform; positive bias selects finer mips
 ```
 
-| Mode | MLP evaluations per material sample | Behavior |
-| --- | --- | --- |
-| `nearest` | 1 | Reconstruct the nearest physical texel at the nearest mip. |
-| `stochastic` | 1 | Randomly select a texel and mip with trilinear sampling probabilities. Noise varies by screen pixel and frame. |
-| `trilinear` | 8 | Reconstruct and blend four texels at each of two mip levels. |
+| Mode         | MLP evaluations per material sample | Behavior                                                                                                       |
+| ------------ | ----------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `nearest`    | 1                                   | Reconstruct the nearest physical texel at the nearest mip.                                                     |
+| `stochastic` | 1                                   | Randomly select a texel and mip with trilinear sampling probabilities. Noise varies by screen pixel and frame. |
+| `trilinear`  | 8                                   | Reconstruct and blend four texels at each of two mip levels.                                                   |
 
 Sampling mode is a JavaScript build-time choice, not a shader uniform. Each shader
 contains only its selected sampling path. Changing the property or calling the setter
