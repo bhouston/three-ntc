@@ -1,4 +1,12 @@
-import { constantEqualsDefault, getChannel, type NTCChannelClassification } from 'three-ntc';
+import {
+  constantEqualsDefault,
+  getChannel,
+  type NTCChannelClassification,
+  type NTCManifest,
+  type NTCManifestLevel,
+  type NTCCpuModel,
+  type MLPLayer,
+} from 'three-ntc';
 import { computeGridLevels } from 'three-ntc-trainer';
 import { estimateModelSize, type ModelSizeSettings } from './model-size.js';
 
@@ -61,13 +69,13 @@ export function configuredModelInfo(
 
 /** Uses the loaded architecture and actual encoded blocks, including G1 and mixed bit depths. */
 export function loadedModelInfo(
-  manifest: any,
-  cpuModel: any,
+  manifest: NTCManifest,
+  cpuModel: NTCCpuModel,
   classification: NTCChannelClassification,
   name: string,
 ): ModelInfoData {
   const blocks = [...manifest.latents.levels, ...(manifest.latents.lowResLevels ?? [])];
-  const grids: ModelInfoData['grids'] = blocks.map((grid: any, i: number) => ({
+  const grids: ModelInfoData['grids'] = blocks.map((grid: NTCManifestLevel, i: number) => ({
     group: i < manifest.latents.levels.length ? 'G0' : 'G1',
     width: grid.width,
     height: grid.height,
@@ -75,15 +83,18 @@ export function loadedModelInfo(
     bits: Number(grid.dtype.replace('uint', '')),
   }));
   const layers = cpuModel.decoder.layers;
-  const mlpParams = layers.reduce((sum: number, layer: any) => sum + layer.weights.length + layer.biases.length, 0);
+  const mlpParams = layers.reduce(
+    (sum: number, layer: MLPLayer) => sum + layer.weights.length + layer.biases.length,
+    0,
+  );
   const flopsPerDecode = layers.reduce(
-    (sum: number, layer: any) => sum + 2 * layer.inputSize * layer.outputSize + layer.outputSize,
+    (sum: number, layer: MLPLayer) => sum + 2 * layer.inputSize * layer.outputSize + layer.outputSize,
     0,
   );
   return {
     name,
     grids,
-    layers: layers.map((layer: any) => ({ inputSize: layer.inputSize, outputSize: layer.outputSize })),
+    layers: layers.map((layer: MLPLayer) => ({ inputSize: layer.inputSize, outputSize: layer.outputSize })),
     size: {
       mlpParams,
       inputSize: layers[0].inputSize,

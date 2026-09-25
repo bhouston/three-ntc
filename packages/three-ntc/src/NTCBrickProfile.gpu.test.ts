@@ -49,10 +49,10 @@ it('profiles the shipped brick in a standalone 1024px viewer without training', 
   const device = renderer.backend.device,
     previous = renderer.getRenderTarget();
   const errors: string[] = [];
-  const listener = (e: any) => errors.push(e.error.message);
+  const listener = (e: { error: { message: string } }) => errors.push(e.error.message);
   device.addEventListener('uncapturederror', listener);
   let alive = true;
-  device.lost.then((info: any) => {
+  device.lost.then((info: { message: string }) => {
     if (alive) errors.push(`Device lost: ${info.message}`);
   });
   try {
@@ -88,7 +88,7 @@ it('profiles the shipped brick in a standalone 1024px viewer without training', 
           }
         }
     }
-    await (commands as any).recordMetric({
+    await commands.recordMetric({
       kind: 'brick-viewer',
       adapter: Object.fromEntries(
         ['vendor', 'architecture', 'device', 'description'].map((k) => [k, device.adapterInfo?.[k]]),

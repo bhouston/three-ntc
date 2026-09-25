@@ -68,7 +68,7 @@ for (const hiddenSize of [32, 64])
     const device = renderer.backend.device;
     const create = device.createShaderModule.bind(device);
     const shaders: string[] = [];
-    device.createShaderModule = (descriptor: any) => {
+    device.createShaderModule = (descriptor: { code: string }) => {
       shaders.push(descriptor.code);
       return create(descriptor);
     };
@@ -137,7 +137,7 @@ for (const hiddenSize of [32, 64])
     }
     textures.forEach((t) => t.dispose());
     times.oracleRenders = performance.now() - start;
-    await (commands as any).recordMetric({
+    await commands.recordMetric({
       times,
       kind: 'runtime-shader',
       hiddenSize,
