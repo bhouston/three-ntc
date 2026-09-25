@@ -9,13 +9,13 @@ import { CHANNELS } from 'three-ntc';
 describe('NTCSource', () => {
   it('classifies active and constant channels', () => {
     const material = { colorNode: {}, roughness: 0.4, side: 2, transparent: true };
-    const result = classifyMaterialChannels(material as any);
+    const result = classifyMaterialChannels(material);
 
-    expect(result.activeChannels.map((channel: any) => channel.key)).toEqual(['albedo']);
+    expect(result.activeChannels.map((channel) => channel.key)).toEqual(['albedo']);
     expect(result.constantValues.roughness).toBe(0.4);
     expect(result.renderFlags).toEqual({ side: 2, transparent: true });
 
-    const empty = classifyMaterialChannels({} as any);
+    const empty = classifyMaterialChannels({});
     expect(empty.activeChannels.length).toBe(0);
     expect(Object.keys(empty.constantValues).length).toBe(CHANNELS.length);
     expect(empty.constantValues.normal).toEqual([0, 0, 1]);

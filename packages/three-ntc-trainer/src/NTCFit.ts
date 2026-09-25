@@ -1,7 +1,9 @@
 import { NTCNodeMaterial } from 'three-ntc';
-import { CHANNELS, buildChannelActivations } from 'three-ntc';
-import { NTCTrainer } from './NTCTrainer.js';
+import { CHANNELS, buildChannelActivations, type NTCChannel } from 'three-ntc';
+import { NTCTrainer, type NTCTrainerOptions, type NTCTrainProgress } from './NTCTrainer.js';
 import { bakeMaterialToTextures, classifyMaterialChannels } from './NTCSource.js';
+import type { ThreeRenderer, ThreeMaterial, ThreeMath, ThreeRenderTarget } from './ThreeTypes.js';
+import type { NTCGridPyramidModel } from './NTCGridPyramidModel.js';
 
 /**
  * End-to-end convenience path covering the sequence a from-scratch consumer
@@ -28,7 +30,15 @@ import { bakeMaterialToTextures, classifyMaterialChannels } from './NTCSource.js
  * network to fit; construct directly from a classification's
  * `constantValues` in that case instead.
  */
-async function fitNTCMaterial(renderer: any, material: any, options: any = {}) {
+interface NTCFitOptions extends NTCTrainerOptions {
+  resolution?: number;
+  debugView?: string;
+  channels?: NTCChannel[];
+  uvTransform?: ThreeMath;
+  onProgress?: ((progress: NTCTrainProgress & { material: ThreeMaterial }) => void) | null;
+}
+
+async function fitNTCMaterial(renderer: ThreeRenderer, material: ThreeMaterial, options: NTCFitOptions = {}) {
   const {
     onProgress,
     resolution = 512,
@@ -61,16 +71,39 @@ async function fitNTCMaterial(renderer: any, material: any, options: any = {}) {
 
   const trainer = new NTCTrainer({
     outputChannels: channelClassification.totalChannels,
-    channelActivations: buildChannelActivations(channelClassification.activeChannels),
+    // `buildChannelActivations` returns `NTCActivation[]` (`undefined` meaning
+    // "plain linear" - see `NTCOutputActivations.js`'s doc comment); mapped to
+    // `'linear'` here since `undefined` and `'linear'` are handled identically
+    // downstream and `NTCTrainerOptions.channelActivations` is a plain `string[]`.
+    channelActivations: buildChannelActivations(channelClassification.activeChannels).map((a) => a ?? 'linear'),
     uvTransform,
     ...trainerOptions,
   });
 
-  let current: any = null;
+  let current: ThreeMaterial | null = null;
 
-  const rebuild = (cpuModel: any) => {
+  const rebuild = (cpuModel: NTCGridPyramidModel) => {
     const previous = current;
-    current = new NTCNodeMaterial(cpuModel, channelClassification, { debugView, channels });
+    // `NTCNodeMaterial`'s `NTCCpuModel` type (see `three-ntc`'s
+    // NTCDecoderTSL.ts) types `decoder.layers[].weights`/`.biases` as
+    // `Float32Array` where this package's `MLP` keeps plain `number[]`
+    // while training - both are index/length-compatible with every
+    // consumer (`packLayerWeightsMat4` accepts either), so this is a
+    // type-shape adapter, not a value change.
+    current = new NTCNodeMaterial(
+      {
+        ...cpuModel,
+        decoder: {
+          layers: cpuModel.decoder.layers.map((layer) => ({
+            ...layer,
+            weights: Float32Array.from(layer.weights),
+            biases: Float32Array.from(layer.biases),
+          })),
+        },
+      },
+      channelClassification,
+      { debugView, channels },
+    );
     if (previous) previous.dispose();
 
     return current;
@@ -79,9 +112,9 @@ async function fitNTCMaterial(renderer: any, material: any, options: any = {}) {
   try {
     const result = await trainer.train({
       renderer,
-      sourceTextures: renderTargets.map((renderTarget: any) => renderTarget.texture),
+      sourceTextures: renderTargets.map((renderTarget: ThreeRenderTarget) => renderTarget.texture),
       onProgress: onProgress
-        ? (progress: any) => onProgress({ ...progress, material: rebuild(progress.cpuModel) })
+        ? (progress: NTCTrainProgress) => onProgress({ ...progress, material: rebuild(progress.cpuModel) })
         : null,
     });
 

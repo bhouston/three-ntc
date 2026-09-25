@@ -1,4 +1,17 @@
-import { encodeNTC } from './NTCManifest.js';
+import { encodeNTC, type EncodableCpuModel } from './NTCManifest.js';
+import type { NTCLayoutChannel } from 'three-ntc';
+
+/**
+ * The minimal shape `NTCExporter.parse` needs off a trained material - an
+ * `NTCNodeMaterial` instance satisfies this, but so does any object
+ * exposing the same fields (see the class doc comment above).
+ */
+interface NTCExportableMaterial {
+  cpuModel: EncodableCpuModel;
+  activeChannels: NTCLayoutChannel[];
+  side?: unknown;
+  transparent?: boolean;
+}
 
 /**
  * An exporter for `.ntc` (Neural Texture Compression) assets.
@@ -29,16 +42,23 @@ class NTCExporter {
    * @param options - The export options.
    * @return The `.ntc` manifest - JSON-serializable as-is (`JSON.stringify( manifest )`).
    */
-  parse(material: any, options: NTCExporterOptions = {}): any {
+  parse(material: NTCExportableMaterial, options: NTCExporterOptions = {}) {
     if (!material || !material.cpuModel || !material.activeChannels) {
       throw new Error(
         'THREE.NTCExporter: material must be a trained NTCNodeMaterial (missing cpuModel/activeChannels).',
       );
     }
 
+    // `_constantValues` is a private field on the real `NTCNodeMaterial`
+    // class (three-ntc), so `NTCExportableMaterial` deliberately doesn't
+    // declare it - TS forbids naming a class's private member on an
+    // unrelated structural type. Read defensively through an inline shape
+    // instead of widening the whole parameter back to `any`.
+    const constantValues = (material as unknown as { _constantValues?: Record<string, unknown> })._constantValues || {};
+
     const channelClassification = {
       activeChannels: material.activeChannels,
-      constantValues: material._constantValues || {},
+      constantValues,
       totalChannels: material.cpuModel.outputChannels,
       packCount: Math.ceil(material.cpuModel.outputChannels / 4),
       renderFlags: { side: material.side, transparent: material.transparent },

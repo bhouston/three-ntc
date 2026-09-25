@@ -5,7 +5,7 @@ const floatSupport = new WeakMap<object, Promise<boolean>>();
 // WebGPU advertises integer atomics, but some Safari Metal translators fail
 // to compile atomicCompareExchangeWeak. Probe the actual accumulation helper,
 // rather than guessing support from the user agent or the WebGPU feature list.
-function supportsFloatAccumulation(device: any): Promise<boolean> {
+function supportsFloatAccumulation(device: GPUDevice): Promise<boolean> {
   let pending = floatSupport.get(device);
   if (!pending) {
     pending = (async () => {
@@ -38,7 +38,7 @@ function supportsFloatAccumulation(device: any): Promise<boolean> {
 }
 
 export async function resolveGradientPrecision(
-  device: any,
+  device: GPUDevice,
   requested: 'auto' | 'fixed' | 'float',
 ): Promise<'fixed' | 'float'> {
   if (requested === 'fixed') return 'fixed';
@@ -53,7 +53,7 @@ export async function resolveGradientPrecision(
   return 'fixed';
 }
 
-export async function validateGPUDispatch(device: any, dispatch: () => void): Promise<void> {
+export async function validateGPUDispatch(device: GPUDevice, dispatch: () => void): Promise<void> {
   device.pushErrorScope('validation');
   try {
     dispatch();

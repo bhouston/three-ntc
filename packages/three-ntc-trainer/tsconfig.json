@@ -3,6 +3,7 @@
   "compilerOptions": {
     "composite": true,
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node", "@webgpu/types"],
     "noUncheckedIndexedAccess": false,
     "paths": {
       "three-ntc": ["../three-ntc/src/index.ts"]

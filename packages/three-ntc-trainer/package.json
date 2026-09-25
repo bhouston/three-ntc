@@ -44,6 +44,7 @@
     "three-ntc": "workspace:^"
   },
   "devDependencies": {
+    "@webgpu/types": "^0.1.74",
     "three": "^0.186.0"
   },
   "peerDependencies": {

@@ -3,8 +3,14 @@ import * as THREE from 'three';
 // 'three' entrypoint.
 import { NodeMaterial } from 'three/webgpu';
 import { vec4 } from 'three/tsl';
-
-type TSLNode = any;
+import type {
+  TSLNode,
+  ThreeRenderer,
+  ThreeMaterial,
+  ThreeTexture,
+  ThreeRenderTarget,
+  ThreeMath,
+} from './ThreeTypes.js';
 
 /**
  * Bakes an arbitrary TSL color node (e.g. a MaterialX base-color graph -
@@ -15,11 +21,11 @@ type TSLNode = any;
  * pass since there's no per-sample atlas tiling to do here.
  */
 async function bakeColorNodeToTexture(
-  renderer: any,
+  renderer: ThreeRenderer,
   colorNode: TSLNode,
   resolution = 512,
-  { generateMipmaps = false, uvTransform = null as any } = {},
-): Promise<any> {
+  { generateMipmaps = false, uvTransform = null as ThreeMath | null } = {},
+): Promise<ThreeRenderTarget> {
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 4);
   camera.position.set(0, 0, 2);
@@ -138,7 +144,7 @@ async function bakeColorNodeToTexture(
  * doesn't try to walk the graph looking for an `<image>` node - it simply
  * hands the whole color expression to `bakeColorNodeToTexture`.
  */
-function extractBaseColorNode(materialXMaterial: any): TSLNode | null {
+function extractBaseColorNode(materialXMaterial: ThreeMaterial): TSLNode | null {
   if (!materialXMaterial) return null;
   if (materialXMaterial.colorNode) return materialXMaterial.colorNode;
 
@@ -149,8 +155,8 @@ function extractBaseColorNode(materialXMaterial: any): TSLNode | null {
  * Loads a plain image file (PNG/JPG/etc.) as a GPU texture, decoding sRGB to
  * the renderer's linear working color space like any other albedo map.
  */
-function loadImageTexture(url: string): Promise<any> {
-  return new THREE.TextureLoader().loadAsync(url).then((texture: any) => {
+function loadImageTexture(url: string): Promise<ThreeTexture> {
+  return new THREE.TextureLoader().loadAsync(url).then((texture: ThreeTexture) => {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
@@ -173,19 +179,19 @@ function loadImageTexture(url: string): Promise<any> {
  * disposing the render target's own copy of the texture, never both.
  */
 class NTCTextureSource {
-  texture: any;
-  renderTarget: any | null;
+  texture: ThreeTexture;
+  renderTarget: ThreeRenderTarget | null;
 
-  constructor(texture: any, renderTarget: any | null = null) {
+  constructor(texture: ThreeTexture, renderTarget: ThreeRenderTarget | null = null) {
     this.texture = texture;
     this.renderTarget = renderTarget;
   }
 
   static async fromBakedColorNode(
-    renderer: any,
+    renderer: ThreeRenderer,
     colorNode: TSLNode,
     resolution = 512,
-    uvTransform: any = null,
+    uvTransform: ThreeMath | null = null,
   ): Promise<NTCTextureSource> {
     // `generateMipmaps: true` - this is the actual training-source bake
     // path (see bakeColorNodeToTexture's doc comment on its default).

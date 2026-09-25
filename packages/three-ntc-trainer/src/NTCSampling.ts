@@ -1,4 +1,5 @@
 import { float, floor, log, uint, vec2 } from 'three/tsl';
+import type { TSLNode } from './ThreeTypes.js';
 
 // Counter-based integer hashing: separate streams for U, V, mip, and mixture.
 // Keeping the top 24 bits makes the float conversion exact on CPU and GPU.
@@ -9,7 +10,7 @@ export function trainingRandom(sample: number, step: number, stream: number): nu
   return ((x ^ (x >>> 16)) >>> 8) / 16777216;
 }
 
-export function trainingRandomTSL(sample: any, step: any, stream: number): any {
+export function trainingRandomTSL(sample: TSLNode, step: TSLNode, stream: number): TSLNode {
   const a = uint(sample)
     .add(uint(step).mul(uint(0x9e3779b9)))
     .add(uint(stream).mul(uint(0x85ebca6b)))
@@ -19,11 +20,11 @@ export function trainingRandomTSL(sample: any, step: any, stream: number): any {
   return float(a.bitXor(a.shiftRight(16)).shiftRight(8)).div(16777216);
 }
 
-export function trainingUVTSL(sample: any, step: any): any {
+export function trainingUVTSL(sample: TSLNode, step: TSLNode): TSLNode {
   return vec2(trainingRandomTSL(sample, step, 0), trainingRandomTSL(sample, step, 1));
 }
 
-export function trainingLodTSL(sample: any, step: any, maxLod: number): any {
+export function trainingLodTSL(sample: TSLNode, step: TSLNode, maxLod: number): TSLNode {
   const area = floor(log(trainingRandomTSL(sample, step, 2).max(1 / 16777216)).div(-Math.log(4)));
   const uniform = floor(trainingRandomTSL(sample, step, 3).mul(maxLod + 1));
   return trainingRandomTSL(sample, step, 4).lessThan(0.05).select(uniform, area).clamp(0, maxLod);

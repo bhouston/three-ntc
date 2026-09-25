@@ -5,7 +5,7 @@
 // Runs under the `gpu` vitest project (see /vitest.config.ts).
 import { MeshPhysicalNodeMaterial } from 'three/webgpu';
 import { float, sin, uv, vec3 } from 'three/tsl';
-import { NTCLoader, NTCNodeMaterial } from 'three-ntc';
+import { NTCLoader, NTCNodeMaterial, type NTCChannelClassification } from 'three-ntc';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { fitNTCMaterial } from './NTCFit.js';
@@ -20,10 +20,12 @@ import {
   readRenderTargetFloats,
   renderNodeToFloats,
 } from '../../../test/gpu-helpers.js';
+import type { ThreeRenderer, ThreeMaterial } from './ThreeTypes.js';
+import type { NTCGridPyramidModel } from './NTCGridPyramidModel.js';
 
 const SIZE = 64;
 
-let renderer: any;
+let renderer: ThreeRenderer;
 beforeAll(async () => {
   renderer = await getRenderer();
 });
@@ -40,7 +42,7 @@ const trainerOptions = {
 };
 
 /** Albedo as the pipeline sees it: the first bake target's RGB. */
-async function bakeAlbedo(material: any): Promise<Float32Array> {
+async function bakeAlbedo(material: ThreeMaterial): Promise<Float32Array> {
   const classification = classifyMaterialChannels(material);
   expect(classification.activeChannels[0].key).toBe('albedo');
   const [rt] = await bakeMaterialToTextures(renderer, material, SIZE, classification.activeChannels);
@@ -49,23 +51,23 @@ async function bakeAlbedo(material: any): Promise<Float32Array> {
   return pixels;
 }
 
-function renderAlbedo(cpuModel: any, classification: any): Promise<Float32Array> {
+function renderAlbedo(cpuModel: NTCGridPyramidModel, classification: NTCChannelClassification): Promise<Float32Array> {
   const material = new NTCNodeMaterial(cpuModel, classification, {
     debugView: 'albedo',
     lodNode: float(0),
   });
-  const pixels = renderNodeToFloats(renderer, (material as any).colorNode, SIZE);
+  const pixels = renderNodeToFloats(renderer, material.colorNode, SIZE);
   pixels.finally(() => material.dispose());
   return pixels;
 }
 
 /** fit -> render -> export -> reload -> render, returning what to assert on. */
-async function fitExportReload(material: any) {
+async function fitExportReload(material: ThreeMaterial) {
   const source = await bakeAlbedo(material);
   const losses: number[] = [];
   const fit = await fitNTCMaterial(renderer, material, {
     ...trainerOptions,
-    onProgress: ({ loss }: any) => losses.push(loss),
+    onProgress: ({ loss }) => losses.push(loss),
   });
   const trained = await renderAlbedo(fit.cpuModel, fit.channelClassification);
 
@@ -81,7 +83,7 @@ describe('fit -> export -> load -> render', () => {
   it('reconstructs a smooth procedural albedo and survives the .ntc round trip', async () => {
     const material = new MeshPhysicalNodeMaterial();
     const u = uv();
-    (material as any).colorNode = vec3(
+    material.colorNode = vec3(
       u.x,
       u.y,
       sin(u.x.mul(6.283))
@@ -96,8 +98,8 @@ describe('fit -> export -> load -> render', () => {
     expect(psnr(source, trained)).toBeGreaterThan(30);
 
     // Export metadata carries the training configuration through.
-    expect(manifest.latents.levels.map((l: any) => l.dtype)).toEqual(['uint8', 'uint8']);
-    expect(reloaded.channelClassification.activeChannels.map((c: any) => c.key)).toEqual(['albedo']);
+    expect(manifest.latents.levels.map((l) => l.dtype)).toEqual(['uint8', 'uint8']);
+    expect(reloaded.channelClassification.activeChannels.map((c) => c.key)).toEqual(['albedo']);
     expect(reloaded.cpuModel.maxLod).toBe(Math.log2(SIZE));
 
     // QAT trained against uint8 rounding, and the MLP is stored as float16:
@@ -113,7 +115,7 @@ describe('fit -> export -> load -> render', () => {
       uvSpace: 'top-left',
       throwOnErrors: true,
     });
-    const material = Object.values(materials)[0] as any;
+    const material = Object.values(materials)[0];
     expect(material).toBeDefined();
 
     const { losses, source, trained, roundTripped, fit } = await fitExportReload(material);
