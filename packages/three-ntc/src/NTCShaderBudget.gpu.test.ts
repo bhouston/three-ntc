@@ -1,12 +1,11 @@
 import { AmbientLight, Mesh, OrthographicCamera, PlaneGeometry, RenderTarget, Scene, HalfFloatType } from 'three';
 import { float, vec2, vec4 } from 'three/tsl';
 import { expect, it } from 'vitest';
-import { commands } from 'vitest/browser';
 import { NTCNodeMaterial } from './NTCNodeMaterial.js';
 import { CHANNELS, getChannel, layoutChannels } from './NTCFormat.js';
 import { evaluateNeuralTextureFiltered } from './NTCDecoderTSL.js';
 import { buildLevelTextures } from './NTCHalfFloatTexture.js';
-import { getRenderer, makeModel, evaluateNTCCpu, renderNodeToFloats, readRenderTargetFloats } from '../../../test/gpu-helpers.js';
+import { getRenderer, makeModel, evaluateNTCCpu, renderNodeToFloats, readRenderTargetFloats, recordMetric } from '../../../test/gpu-helpers.js';
 
 // Conservative WGSL private-storage accounting: round every vector and struct
 // member up to 16 bytes. Unknown types fail the test instead of undercounting.
@@ -87,5 +86,5 @@ for(const hiddenSize of [32,64]) it(`keeps the ${hiddenSize}-wide full physical 
   }
   textures.forEach(t=>t.dispose());
   times.oracleRenders=performance.now()-start;
-  await (commands as any).recordMetric({times,kind:'runtime-shader',hiddenSize,privateBytesUpperBound:bytes,mse:squaredError/expected.length});
+  await recordMetric({times,kind:'runtime-shader',hiddenSize,privateBytesUpperBound:bytes,mse:squaredError/expected.length});
 });

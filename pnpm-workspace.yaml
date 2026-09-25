@@ -5,6 +5,7 @@ allowBuilds:
   edgedriver: false
   esbuild: true
   geckodriver: false
+  webgpu: true
 
 link-workspace-packages: true
 

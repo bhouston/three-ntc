@@ -2,12 +2,11 @@ import { AmbientLight, EquirectangularReflectionMapping, DirectionalLight, HalfF
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import hdrUrl from '../../website/public/textures/equirectangular/san_giuseppe_bridge_2k.hdr?url';
 import { expect, it } from 'vitest';
-import { commands } from 'vitest/browser';
 import { float, uv, vec4 } from 'three/tsl';
 import { evaluateNeuralTextureRaw } from './NTCDecoderTSL.js';
 import { NTCNodeMaterial } from './NTCNodeMaterial.js';
 import { NTCLoader } from './NTCLoader.js';
-import { getRenderer, readRenderTargetFloats, evaluateNTCCpu, pixelUv, renderNodeToFloats } from '../../../test/gpu-helpers.js';
+import { getRenderer, readRenderTargetFloats, evaluateNTCCpu, pixelUv, renderNodeToFloats, recordMetric } from '../../../test/gpu-helpers.js';
 import brick from '../../website/public/ntc/brick.ntc?raw';
 
 it('profiles the shipped brick in a standalone 1024px viewer without training',async()=>{
@@ -49,7 +48,7 @@ it('profiles the shipped brick in a standalone 1024px viewer without training',a
         }
       }
     }
-    await (commands as any).recordMetric({kind:'brick-viewer',adapter:Object.fromEntries(
+    await recordMetric({kind:'brick-viewer',adapter:Object.fromEntries(
       ['vendor','architecture','device','description'].map(k=>[k,device.adapterInfo?.[k]])),
       rawCpuMse:squaredError/observations,model:cpuModel.decoder.layers.map(l=>[l.inputSize,l.outputSize]),firstFrameMs:times[0],steadyFrameMs:times.slice(1),errors});
   } finally {

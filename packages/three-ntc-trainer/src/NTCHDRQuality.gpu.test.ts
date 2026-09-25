@@ -1,8 +1,7 @@
 import { expect, it } from 'vitest';
-import { commands } from 'vitest/browser';
 import { uv, vec4, float } from 'three/tsl';
 import { getChannel, layoutChannels, buildChannelActivations, NTCLoader, applyChannelActivation } from 'three-ntc';
-import { getRenderer, renderNodeToFloats } from '../../../test/gpu-helpers.js';
+import { getRenderer, renderNodeToFloats, recordMetric } from '../../../test/gpu-helpers.js';
 import { NTCTrainer } from './NTCTrainer.js';
 import { bakeColorNodeToTexture } from './NTCTextureSource.js';
 import { encodeNTC } from './NTCManifest.js';
@@ -35,6 +34,6 @@ it('fits and reloads HDR emission beyond the legacy sigmoid ceiling', async () =
    } finally { textures.forEach(t=>t.dispose()); }
   }
   expect(metrics[1].mse).toBeLessThan(metrics[0].mse*0.1);
-  await commands.recordMetric({kind:'hdr-emission',size,iterations:420,batchSize:512,seed:7,metrics});
+  await recordMetric({kind:'hdr-emission',size,iterations:420,batchSize:512,seed:7,metrics});
  } finally { source.dispose(); }
 });

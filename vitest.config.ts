@@ -55,10 +55,38 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          // Pure WebGPU compute/shader tests: no DOM, no visual output.
+          // Real headless WebGPU via Dawn in plain Node - no browser launch.
+          name: 'gpu-node',
+          environment: 'webgpu-node',
+          include: ['packages/three-ntc/src/**/*.gpu.test.ts', 'packages/three-ntc-trainer/src/**/*.gpu.test.ts'],
+          // These load a `?url` HDR asset or parse MaterialX XML via DOMParser -
+          // both need a real browser DOM, not Dawn-in-Node's minimal shims.
+          exclude: ['**/node_modules/**', '**/dist/**', '**/NTCBrickProfile.gpu.test.ts', '**/NTCBrickFallback.gpu.test.ts', '**/NTCEndToEnd.gpu.test.ts'],
+          testTimeout: 120_000,
+          hookTimeout: 120_000,
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'gpu',
           fileParallelism: !safari,
           include: ['packages/**/*.gpu.test.ts'],
-          exclude: ['**/node_modules/**', '**/dist/**'],
+          // Covered by the faster `gpu-node` project now; kept here only for
+          // packages/website (real DOM/RAF) and NTCBrickProfile/NTCPreviewProfile,
+          // which scripts/profile-browsers.mjs runs across real browsers on purpose.
+          exclude: [
+            '**/node_modules/**', '**/dist/**',
+            '**/NTCShaderBudget.gpu.test.ts', '**/NTCPreviewUpdate.gpu.test.ts',
+            '**/NTCDecoder.gpu.test.ts', '**/NTCFiltering.gpu.test.ts',
+            '**/three-ntc/src/NTCSampling.gpu.test.ts',
+            '**/NTCTexelSampling.gpu.test.ts', '**/NTCHDRQuality.gpu.test.ts',
+            '**/NTCQuality.gpu.test.ts', '**/NTCTraining.gpu.test.ts',
+            '**/NTCFrozenGradients.gpu.test.ts', '**/three-ntc-trainer/src/NTCSampling.gpu.test.ts',
+            '**/NTCFloatAtomic.gpu.test.ts', '**/NTCLanczosSource.gpu.test.ts',
+            '**/NTCPositionalEncoding.gpu.test.ts', '**/NTCNoiseQuantization.gpu.test.ts',
+          ],
           testTimeout: 120_000,
           hookTimeout: 120_000,
           browser: {

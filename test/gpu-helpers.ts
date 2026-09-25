@@ -11,6 +11,20 @@ import { WebGPURenderer } from 'three/webgpu';
 import { selectFeatureLevel, POSITIONAL_ENCODING_OCTAVES } from 'three-ntc';
 import { bakeColorNodeToTexture, createNTCGridPyramidModel, createRandom } from 'three-ntc-trainer';
 
+/** Logs a benchmark measurement the same way the `recordMetric` browser command does. */
+export function recordMetric(metric: unknown): void {
+  console.log('NTC_METRIC ' + JSON.stringify(metric));
+}
+
+/** Mirrors the `benchmarkConfig` browser command for tests running under `webgpu-node`. */
+export function benchmarkConfig(): { iterations: number; physical: boolean; period: number } {
+  return {
+    iterations: Number(process.env.NTC_BENCH_ITERATIONS || 420),
+    physical: process.env.NTC_BENCH_PHYSICAL === '1',
+    period: Number(process.env.NTC_BENCH_PE_PERIOD || 0),
+  };
+}
+
 let rendererInit: Promise<any> | null = null;
 
 export function getRenderer(): Promise<any> {

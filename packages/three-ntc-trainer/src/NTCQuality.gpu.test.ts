@@ -2,20 +2,19 @@
 // fixed so each implementation commit can be compared with its predecessor.
 import { float, floor, sin, textureLevel, uv, vec4 } from 'three/tsl';
 import { expect, it } from 'vitest';
-import { commands } from 'vitest/browser';
 import { applyChannelActivation, NTCLoader } from 'three-ntc';
 import { NTCTrainer } from './NTCTrainer.js';
 import { encodeNTC } from './NTCManifest.js';
 import { bakeColorNodeToTexture } from './NTCTextureSource.js';
 import { buildLevelTextures, buildMipChainTexture } from '../../three-ntc/src/NTCHalfFloatTexture.js';
 import { evaluateNeuralTextureRaw } from '../../three-ntc/src/NTCDecoderTSL.js';
-import { getRenderer, renderNodeToFloats } from '../../../test/gpu-helpers.js';
+import { getRenderer, renderNodeToFloats, recordMetric, benchmarkConfig } from '../../../test/gpu-helpers.js';
 
 for (const fixture of ['smooth', 'checker', 'waves']) {
   for (const positionalEncoding of [false, true]) {
     it(`measures ${fixture}, positionalEncoding=${positionalEncoding}`, async () => {
       const renderer = await getRenderer();
-      const config = await (commands as any).benchmarkConfig();
+      const config = await benchmarkConfig();
       const activations = Array(4).fill(config.physical ? 'sigmoid' : 'linear');
       const u = uv();
       const pattern = fixture === 'checker'
@@ -53,7 +52,7 @@ for (const fixture of ['smooth', 'checker', 'waves']) {
         expect(Number.isFinite(sum)).toBe(true);
         mip?.dispose(); levels.forEach(t => t.dispose());
       }
-      await (commands as any).recordMetric({fixture, positionalEncoding, seed:7,
+      await recordMetric({fixture, positionalEncoding, seed:7,
         iterations:result.iterations, physicalActivations:config.physical, positionalEncodingPeriod:config.period, batchSize:2048, sourceSize:64, ...metrics});
       source.dispose();
     });

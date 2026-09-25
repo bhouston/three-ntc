@@ -1,7 +1,6 @@
 import { expect, it, vi } from 'vitest';
-import { commands } from 'vitest/browser';
 import { buildChannelActivations } from 'three-ntc';
-import { getRenderer } from '../../../test/gpu-helpers.js';
+import { getRenderer, recordMetric } from '../../../test/gpu-helpers.js';
 import { MaterialXLoader, classifyMaterialChannels, bakeMaterialToTextures, NTCTrainer } from './index.js';
 import brick from '../../website/public/materialx/brick.mtlx?raw';
 
@@ -49,7 +48,7 @@ it('trains the default brick with identical results after an atomic compiler fai
     expect(compiler).toHaveBeenCalled();
     expect(weights[1]).toEqual(weights[0]);
     expect(metrics[1].lastLoss).toBe(metrics[0].lastLoss);
-    await commands.recordMetric({ kind: 'default-brick-safari-fallback', sourceResolution: 1024,
+    await recordMetric({ kind: 'default-brick-safari-fallback', sourceResolution: 1024,
       batchSize: 8192, scheduleIterations: 10000, simulatedCompilerFailure: true, metrics });
   } finally {
     compiler.mockRestore();

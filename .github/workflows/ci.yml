@@ -7,7 +7,7 @@ on:
   workflow_call:
     inputs:
       skip-gpu:
-        description: Skip duplicate advisory GPU tests when called by the release workflow.
+        description: Skip duplicate GPU tests when called by the release workflow.
         type: boolean
         default: false
 
@@ -113,6 +113,39 @@ jobs:
 
       - name: GPU tests
         run: pnpm test:gpu
+
+  gpu-node:
+    if: ${{ !inputs.skip-gpu }}
+    name: GPU (WebGPU via Dawn in Node)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      # Dawn needs Vulkan; hosted runners have no GPU, so use Mesa's
+      # software Vulkan driver (lavapipe). See vitest-environment-webgpu-node's
+      # README: https://github.com/bhouston/vitest-gpu/blob/main/packages/vitest-environment-webgpu-node/README.md#linux-and-ci
+      - name: Install Vulkan software rendering (lavapipe)
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgles2 libgl1-mesa-dri mesa-vulkan-drivers
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: GPU tests (Node)
+        run: pnpm test:gpu:node
+        env:
+          LIBGL_ALWAYS_SOFTWARE: "1"
 
   coverage-badge:
     name: Publish coverage badge

@@ -77,6 +77,9 @@ importers:
       vitest:
         specifier: ^4.1.10
         version: 4.1.11(@types/node@22.20.1)(@vitest/browser-playwright@4.1.11)(@vitest/browser-webdriverio@4.1.11)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.0))
+      vitest-environment-webgpu-node:
+        specifier: ^2.0.0
+        version: 2.0.0(typescript@5.9.3)(vitest@4.1.11)
       webdriverio:
         specifier: ^9.31.7
         version: 9.31.7
@@ -2609,6 +2612,9 @@ packages:
   '@wdio/utils@9.31.7':
     resolution: {integrity: sha512-tl4YCHX4yoGTzQXyzxArquNaju26Kl71UxNkLe/5vxRD98UlsjMhU5TqNlll+5DqvxiFa79fpc06HU/cHB6vJg==}
     engines: {node: '>=18.20.0'}
+
+  '@webgpu/types@0.1.74':
+    resolution: {integrity: sha512-lgiI4hbuLcI9unnm2cL/tvCaQU45dp0xcLWJh5uB/9MBGvIA4F8XIk7nSiBeg+K4xWGYwgZKn80LmERI5CxoTA==}
 
   '@zip.js/zip.js@2.13.1':
     resolution: {integrity: sha512-D+iRyi2/uBCXPDQBhz2Z+Emcj2Cd8K/FG0y0l8WFeZJAZiP46m7cCajsGW3ktSq1HWov3nogZxyQ3FBisxOQSQ==}
@@ -5735,6 +5741,16 @@ packages:
       vite:
         optional: true
 
+  vitest-environment-webgpu-node@2.0.0:
+    resolution: {integrity: sha512-iEMW4xRN0mjcaKI4sGn50wBY12P3Vlr8Se8J9WSNtLWpaDQE1BbQdEsKeNlPkenM6WXwVOyzJ+OAG9Yqq8wT1Q==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      typescript: '>=6'
+      vitest: '>=3 <5'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   vitest@4.1.11:
     resolution: {integrity: sha512-fhACrNXUidIbGSBr5FlbuBkO7VWC1ZyLl0DO4CU2DrQoAPxX84Ysxs+HeGQpii5lZWV1Q4gBZTTu49mF+A6Edw==}
     engines: {node: ^20.0.0 || ^22.0.0 || >=24.0.0}
@@ -5796,6 +5812,9 @@ packages:
     peerDependenciesMeta:
       puppeteer-core:
         optional: true
+
+  webgpu@0.6.1:
+    resolution: {integrity: sha512-T+B65/j2jhyFjbWHsVZ4TJw0nk0RVT27lG+nL3V5IIYMsvuVYKYOUli/yJhMpwvXAwqVPZehakWvTjxk+mK8LQ==}
 
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
@@ -8394,6 +8413,8 @@ snapshots:
       - bare-buffer
       - react-native-b4a
       - supports-color
+
+  '@webgpu/types@0.1.74': {}
 
   '@zip.js/zip.js@2.13.1': {}
 
@@ -11426,6 +11447,15 @@ snapshots:
     optionalDependencies:
       vite: 8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.0)
 
+  vitest-environment-webgpu-node@2.0.0(typescript@5.9.3)(vitest@4.1.11):
+    dependencies:
+      vitest: 4.1.11(@types/node@22.20.1)(@vitest/browser-playwright@4.1.11)(@vitest/browser-webdriverio@4.1.11)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.0))
+      webgpu: 0.6.1
+    optionalDependencies:
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - supports-color
+
   vitest@4.1.11(@types/node@22.20.1)(@vitest/browser-playwright@4.1.11)(@vitest/browser-webdriverio@4.1.11)(@vitest/coverage-v8@4.1.11)(vite@8.2.2(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.11
@@ -11521,6 +11551,13 @@ snapshots:
       - react-native-b4a
       - supports-color
       - utf-8-validate
+
+  webgpu@0.6.1:
+    dependencies:
+      '@webgpu/types': 0.1.74
+      debug: 4.4.3
+    transitivePeerDependencies:
+      - supports-color
 
   webidl-conversions@3.0.1: {}
 

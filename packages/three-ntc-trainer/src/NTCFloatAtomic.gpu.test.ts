@@ -1,7 +1,6 @@
 import { expect, it } from 'vitest';
-import { commands } from 'vitest/browser';
 import { Fn, float, vec4 } from 'three/tsl';
-import { getRenderer } from '../../../test/gpu-helpers.js';
+import { getRenderer, recordMetric } from '../../../test/gpu-helpers.js';
 import { createAdamParameterBuffers, disposeAdamParameterBuffers } from './NTCGPUKernelsTSL.js';
 import { atomicAddFloat } from './NTCFloatAtomic.js';
 import { NTCGPUModel } from './NTCGPUModel.js';
@@ -18,7 +17,7 @@ for (const [count, contribution] of [[2048,1e-7], [524288,-0.0625]]) {
    const value=new Float32Array(await r.getArrayBufferAsync(buffers.gradAttribute))[0];
    const expected=count*contribution;
    expect(Math.abs(value-expected)).toBeLessThan(Math.abs(expected)*1e-4);
-   await commands.recordMetric({kind:'gradient-precision',count,contribution,expected,actual:value});
+   await recordMetric({kind:'gradient-precision',count,contribution,expected,actual:value});
   } finally { disposeAdamParameterBuffers(buffers,r); }
  });
 }
@@ -48,6 +47,6 @@ it('a nonzero sigmoid residual produces a corrective update below the old fixed-
    } finally { gpu.dispose(); }
   }
   expect(metrics[1].mse).toBeLessThan(metrics[0].mse*0.65);
-  await commands.recordMetric({kind:'sigmoid-dead-zone',measurements:metrics});
+  await recordMetric({kind:'sigmoid-dead-zone',measurements:metrics});
  } finally { source.dispose(); }
 });

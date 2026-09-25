@@ -1,7 +1,6 @@
 import { HalfFloatType, Mesh, OrthographicCamera, PlaneGeometry, RenderTarget, Scene } from "three";
 import { float, floor, uv, vec2, vec3, vec4 } from "three/tsl";
 import { expect, it } from "vitest";
-import { commands } from "vitest/browser";
 import { evaluateNeuralTextureSampled } from "./NTCDecoderTSL.js";
 import { NTCNodeMaterial } from "./NTCNodeMaterial.js";
 import { buildLevelTextures } from "./NTCHalfFloatTexture.js";
@@ -11,6 +10,7 @@ import {
   getRenderer,
   makeModel,
   readRenderTargetFloats,
+  recordMetric,
   renderNodeToFloats,
 } from "../../../test/gpu-helpers.js";
 
@@ -116,7 +116,7 @@ it("stochastic samples individual decoded texels and its stratified mean matches
     expect(new Set(values).size).toBeGreaterThan(1);
     const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
     expect(Math.abs(mean - expected)).toBeLessThan(0.001);
-    await (commands as any).recordMetric({
+    await recordMetric({
       kind: "stochastic-filter-oracle",
       mean,
       expected,
