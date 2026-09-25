@@ -22,6 +22,7 @@ import {
   vec3,
   vec4,
 } from 'three/tsl';
+import type { TSLNode, NTCConstantValue, NTCMatrix3Like } from './NTCTSLTypes.js';
 import {
   buildLevelTextures,
   packDecoder,
@@ -45,21 +46,21 @@ import { constantToNode, reconstructFinalNormal } from './NTCOutputTypes.js';
 /** What `NTCLoader.parse()` / a live trainer's classification step produces. */
 export interface NTCChannelClassification {
   activeChannels: NTCLayoutChannel[];
-  constantValues: Record<string, any>;
+  constantValues: Record<string, unknown>;
   totalChannels?: number;
   packCount?: number;
-  renderFlags?: { side?: any; transparent?: boolean } | null;
+  renderFlags?: { side?: unknown; transparent?: boolean } | null;
 }
 
 /** Options accepted by `NTCNodeMaterial`'s constructor. */
 export interface NTCNodeMaterialOptions {
   channels?: NTCChannel[];
-  renderer?: any | null;
+  renderer?: unknown;
   /** Shader-build choice, default nearest. Stochastic needs temporal reconstruction for a stable image. */
   samplingMode?: NTCSamplingMode;
-  uvTransform?: any;
-  lodNode?: any;
-  lodBias?: number | any;
+  uvTransform?: NTCMatrix3Like;
+  lodNode?: TSLNode;
+  lodBias?: number | TSLNode;
   debugView?: string;
 }
 
@@ -75,8 +76,12 @@ export interface NTCNodeMaterialOptions {
  * consumer downstream of `sliceChannels` already sees values in the
  * channel's natural physical range.
  */
-function sliceChannels(outputs: any[], activeChannels: NTCLayoutChannel[], activated = false): Record<string, any> {
-  const slices: Record<string, any> = {};
+function sliceChannels(
+  outputs: TSLNode[],
+  activeChannels: NTCLayoutChannel[],
+  activated = false,
+): Record<string, TSLNode> {
+  const slices: Record<string, TSLNode> = {};
 
   for (const channel of activeChannels) {
     const values = [];
@@ -108,7 +113,7 @@ function sliceChannels(outputs: any[], activeChannels: NTCLayoutChannel[], activ
  * Uses the source resolution when available. Positive lodBias retains this
  * library's historical convention of choosing finer mips.
  */
-function computeAutoLodNode(coord: any, maxLod: number, lodBias: number | any = 0, resolution = 2 ** maxLod): any {
+function computeAutoLodNode(coord: TSLNode, maxLod: number, lodBias: number | TSLNode = 0, resolution = 2 ** maxLod) {
   const texelCoord = coord.mul(resolution);
   const footprint = max(texelCoord.dFdx().length(), texelCoord.dFdy().length()).max(1e-6);
 
@@ -128,7 +133,7 @@ function computeAutoLodNode(coord: any, maxLod: number, lodBias: number | any = 
  * non-uniform scale in the transform easier to read than the gradient
  * alone would.
  */
-function buildTextureUvDebugColorNode(uvNode: any): any {
+function buildTextureUvDebugColorNode(uvNode: TSLNode) {
   const cell = fract(uvNode.mul(10));
   const distanceToNearestGridLine = min(cell, cell.oneMinus());
   const lineHalfWidth = 0.04;
@@ -165,21 +170,21 @@ function buildTextureUvDebugColorNode(uvNode: any): any {
  *
  * @three_import import { NTCNodeMaterial } from 'three/addons/ntc/NTCNodeMaterial.js';
  */
-class NTCNodeMaterial extends (MeshPhysicalNodeMaterial as any) {
+class NTCNodeMaterial extends MeshPhysicalNodeMaterial {
   cpuModel: NTCCpuModel;
   activeChannels: NTCLayoutChannel[];
   channels: NTCChannel[];
   private _samplingMode: NTCSamplingMode;
-  mipChainTexture: any;
-  levelTextures: any[] | null;
-  uvTransform: any;
+  mipChainTexture: TSLNode;
+  levelTextures: TSLNode[] | null;
+  uvTransform: NTCMatrix3Like;
 
-  private _localUv: any;
-  private _slices!: Record<string, any>; // Initialized by _buildSamplingGraph in the constructor.
-  private _constantValues: Record<string, any>;
-  private _shadedColorNode: any;
-  private _lodBiasUniform: any;
-  private _lodNode: any;
+  private _localUv: TSLNode;
+  private _slices!: Record<string, TSLNode>; // Initialized by _buildSamplingGraph in the constructor.
+  private _constantValues: Record<string, unknown>;
+  private _shadedColorNode: TSLNode;
+  private _lodBiasUniform: TSLNode;
+  private _lodNode: TSLNode;
   private _decoderParameters: ReturnType<typeof packDecoder>;
   private _modelShape: string;
 
@@ -306,7 +311,7 @@ class NTCNodeMaterial extends (MeshPhysicalNodeMaterial as any) {
       { length: cpuModel.outputChannels },
       (_, i) => activeChannels.find((c) => i >= c.offset && i < c.offset + c.size)?.activation,
     );
-    let random: any;
+    let random: TSLNode;
     if (this._samplingMode === 'stochastic') {
       // Only stochastic shaders depend on screen coordinates, frame ID, or hashing.
       const seed = uint(screenCoordinate.x)
@@ -339,7 +344,7 @@ class NTCNodeMaterial extends (MeshPhysicalNodeMaterial as any) {
     // legacy strength/rotation pair, leave a property untouched, ...).
     for (const channel of channels) {
       if (isActive(channel.key)) channel.applyActive(this, slices[channel.key]);
-      else if (initialize) channel.applyConstant(this, constantValues[channel.key]);
+      else if (initialize) channel.applyConstant(this, constantValues[channel.key] as NTCConstantValue);
     }
 
     // `albedo`'s applyActive stashes its trained colorNode as
@@ -364,7 +369,7 @@ class NTCNodeMaterial extends (MeshPhysicalNodeMaterial as any) {
     if (view === 'shaded') {
       this.lights = true;
       this.toneMapped = true;
-      if (this._shadedColorNode) (this as any).colorNode = this._shadedColorNode;
+      if (this._shadedColorNode) this.colorNode = this._shadedColorNode;
     } else if (FRAME_VIEWS.includes(view)) {
       // Debug-only views of the raw tangentWorld/bitangentWorld frame
       // itself, bypassing the trained network entirely - see
@@ -379,7 +384,7 @@ class NTCNodeMaterial extends (MeshPhysicalNodeMaterial as any) {
       this.lights = false;
       this.toneMapped = false;
       const frameNode = view === 'tangent' ? tangentWorld : bitangentWorld;
-      (this as any).colorNode = buildFrameViewColorNode(frameNode);
+      this.colorNode = buildFrameViewColorNode(frameNode);
     } else if (view === 'textureUv') {
       // Debug-only, neural-material-only (see this module's export
       // comment and webgpu_materials_neural_texture_compression_
@@ -394,7 +399,7 @@ class NTCNodeMaterial extends (MeshPhysicalNodeMaterial as any) {
       // tiled exactly the way the source image's own UV space was.
       this.lights = false;
       this.toneMapped = false;
-      (this as any).colorNode = buildTextureUvDebugColorNode(this._localUv);
+      this.colorNode = buildTextureUvDebugColorNode(this._localUv);
     } else {
       // Tone mapping (ACES etc.) is meant for real lit HDR output, not a
       // flat diagnostic color - left at its default (true) here, it gets
@@ -432,7 +437,7 @@ class NTCNodeMaterial extends (MeshPhysicalNodeMaterial as any) {
         ? channel.type === 'normal'
           ? reconstructFinalNormal(this._slices[view])
           : this._slices[view]
-        : constantToNode(this._constantValues[view]);
+        : constantToNode(this._constantValues[view] as NTCConstantValue);
 
       // `channel.size` (2, for a `type: 'normal'` channel) describes the
       // *trained* (dx, dy) payload, not this preview value - for those
@@ -444,7 +449,7 @@ class NTCNodeMaterial extends (MeshPhysicalNodeMaterial as any) {
       // NTCOutputTypes.js), so all three components actually reach
       // the display color, matching the familiar blue-dominant
       // tangent-space normal map palette instead of a z-less yellow one.
-      (this as any).colorNode = buildDebugViewColorNode(channel, value);
+      this.colorNode = buildDebugViewColorNode(channel, value);
     }
 
     this.needsUpdate = true;

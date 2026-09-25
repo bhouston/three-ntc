@@ -12,6 +12,17 @@ import {
 } from 'three';
 import { selectFeatureLevel } from './NTCMipBands.js';
 
+/**
+ * Minimal writable shape of the `DataArrayTexture` instances this module
+ * builds/mutates in place - `three` ships no public types (see
+ * `three-shims.d.ts`), so this only names the fields actually read/written
+ * here (`image.{width,height,depth,data}`, `needsUpdate`).
+ */
+export interface NTCLevelTexture {
+  image: { width: number; height: number; depth: number; data: Uint16Array };
+  needsUpdate: boolean;
+}
+
 /** One decoded stored feature-grid level (see NTCLoader.ts's `decodeLevel`). */
 export interface NTCGrid {
   width: number;
@@ -59,8 +70,12 @@ function createHalfFloatLatentTexture(
   data: Float32Array | number[],
   width: number,
   height: number,
-  { channels = 4, wrap = RepeatWrapping, filter = LinearFilter }: { channels?: number; wrap?: any; filter?: any } = {},
-): any {
+  {
+    channels = 4,
+    wrap = RepeatWrapping,
+    filter = LinearFilter,
+  }: { channels?: number; wrap?: number; filter?: number } = {},
+) {
   const packed = packHalfFloatRGBA(data, channels);
   const texture = new DataTexture(packed, width, height, RGBAFormat, HalfFloatType);
 
@@ -85,7 +100,7 @@ function createHalfFloatLatentTexture(
  * training kernel's own `wrapIndexTSL` addressing without needing to
  * reproduce that index math here.
  */
-function updateLevelTextures(cpuModel: NTCMipChainModel, textures: any[]): void {
+function updateLevelTextures(cpuModel: NTCMipChainModel, textures: NTCLevelTexture[]): void {
   const grids = [...cpuModel.grids, ...(cpuModel.lowResGrids || [])];
   if (textures.length !== grids.length) throw new Error('NTC grid count changed; rebuild the material.');
   for (let g = 0; g < grids.length; g++) {
@@ -105,7 +120,7 @@ function updateLevelTextures(cpuModel: NTCMipChainModel, textures: any[]): void 
   }
 }
 
-function buildLevelTextures(cpuModel: NTCMipChainModel): any[] {
+function buildLevelTextures(cpuModel: NTCMipChainModel) {
   const textures = [...cpuModel.grids, ...(cpuModel.lowResGrids || [])].map((grid) => {
     const depth = Math.ceil(grid.channels / 4);
     const texture = new DataArrayTexture(
@@ -249,10 +264,7 @@ function buildMipChainLevels(cpuModel: NTCMipChainModel): MipChainLevel[] {
  * Intermediate mips satisfy GPU allocation rules; decoding must not sample them.
  * New runtime paths use native per-level textures instead.
  */
-function buildMipChainTexture(
-  cpuModel: NTCMipChainModel,
-  { interpolation = true }: { interpolation?: boolean } = {},
-): any {
+function buildMipChainTexture(cpuModel: NTCMipChainModel, { interpolation = true }: { interpolation?: boolean } = {}) {
   const levels = buildMipChainLevels(cpuModel);
   const mipmaps = levels.map((level) => ({
     data: packHalfFloatRGBA(level.data, level.channels),
