@@ -3,6 +3,13 @@ import * as THREE from 'three';
 import { WebGPURenderer } from 'three/webgpu';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
+import type { NTCNodeMaterial } from 'three-ntc';
+
+// This `three` version ships no type declarations (see three-shims.d.ts), so
+// every import from it is `any`; deriving instance types from the namespace
+// itself keeps these annotations honest instead of writing `any` outright.
+type Mesh = InstanceType<typeof THREE.Mesh>;
+type Texture = InstanceType<typeof THREE.Texture>;
 
 // Same environment map NTCViewer uses, for a matching look.
 const HDR_ENVIRONMENT_URL = '/textures/equirectangular/san_giuseppe_bridge_2k.hdr';
@@ -15,7 +22,7 @@ const ROTATION_SPEED = (2 * Math.PI) / 30;
 
 export interface NTCGridSlot {
   label: string;
-  material: any | null;
+  material: NTCNodeMaterial | null;
 }
 
 /**
@@ -25,7 +32,7 @@ export interface NTCGridSlot {
  */
 export function NTCGridViewer({ slots }: { slots: NTCGridSlot[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const meshesRef = useRef<any[]>([]);
+  const meshesRef = useRef<Mesh[]>([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -72,9 +79,9 @@ export function NTCGridViewer({ slots }: { slots: NTCGridSlot[] }) {
     meshesRef.current = meshes;
 
     let disposed = false;
-    let envTexture: any = null;
+    let envTexture: Texture | null = null;
 
-    new HDRLoader().load(HDR_ENVIRONMENT_URL, (texture: any) => {
+    new HDRLoader().load(HDR_ENVIRONMENT_URL, (texture: Texture) => {
       if (disposed) return;
       texture.mapping = THREE.EquirectangularReflectionMapping;
       envTexture = texture;

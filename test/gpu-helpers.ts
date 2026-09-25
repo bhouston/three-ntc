@@ -8,12 +8,25 @@
 // packages already export) so the two can disagree.
 import { DataUtils } from 'three';
 import { WebGPURenderer } from 'three/webgpu';
-import { selectFeatureLevel, POSITIONAL_ENCODING_OCTAVES } from 'three-ntc';
-import { bakeColorNodeToTexture, createNTCGridPyramidModel, createRandom } from 'three-ntc-trainer';
+import { selectFeatureLevel, POSITIONAL_ENCODING_OCTAVES, type NTCCpuModel, type MLPLayer } from 'three-ntc';
+import {
+  bakeColorNodeToTexture,
+  createNTCGridPyramidModel,
+  createRandom,
+  type NTCGridPyramidOptions,
+} from 'three-ntc-trainer';
 
-let rendererInit: Promise<any> | null = null;
+// 'three/webgpu' ships no type declarations in this repo (every import from
+// it resolves to `any` - see three-shims.d.ts); `InstanceType<typeof ...>`
+// recovers the instance type instead of writing `any` outright. TSL nodes
+// and GPU render targets are the same deliberately-untyped shape one level
+// up (see three-ntc-trainer/src/NTCTextureSource.ts's local `TSLNode = any`)
+// - `unknown` keeps that honest without a cast at every call site.
+type Renderer = InstanceType<typeof WebGPURenderer>;
 
-export function getRenderer(): Promise<any> {
+let rendererInit: Promise<Renderer> | null = null;
+
+export function getRenderer(): Promise<Renderer> {
   rendererInit ??= (async () => {
     const renderer = new WebGPURenderer({ antialias: false });
     await renderer.init();
@@ -27,7 +40,7 @@ export function getRenderer(): Promise<any> {
  * row-major. Pixel (x, y) saw `uv() === pixelUv(size, x, y)` - verified by
  * the harness sanity test in NTCDecoder.gpu.test.ts.
  */
-export async function renderNodeToFloats(renderer: any, vec4Node: any, size: number): Promise<Float32Array> {
+export async function renderNodeToFloats(renderer: Renderer, vec4Node: unknown, size: number): Promise<Float32Array> {
   const renderTarget = await bakeColorNodeToTexture(renderer, vec4Node, size);
   const out = await readRenderTargetFloats(renderer, renderTarget, size);
   renderTarget.dispose();
@@ -35,7 +48,11 @@ export async function renderNodeToFloats(renderer: any, vec4Node: any, size: num
 }
 
 /** Reads a `size` x `size` half-float render target back as RGBA floats. */
-export async function readRenderTargetFloats(renderer: any, renderTarget: any, size: number): Promise<Float32Array> {
+export async function readRenderTargetFloats(
+  renderer: Renderer,
+  renderTarget: unknown,
+  size: number,
+): Promise<Float32Array> {
   const half: Uint16Array = await renderer.readRenderTargetPixelsAsync(renderTarget, 0, 0, size, size);
   // WebGPU buffer readback rows are padded to 256 bytes (128 half-floats);
   // three.js hands that padding back for widths under 32 texels.
@@ -132,7 +149,7 @@ export function channelActivateDerivativeFromOutput(a: number, activation?: stri
 }
 
 /** Forward pass returning every layer's pre-activation `z` and activation `a` (a[0] = input). */
-export function forwardCpu(decoder: { layers: any[] }, input: number[]): { z: number[][]; a: number[][] } {
+export function forwardCpu(decoder: { layers: MLPLayer[] }, input: number[]): { z: number[][]; a: number[][] } {
   const z: number[][] = [];
   const a: number[][] = [input.slice()];
   for (const layer of decoder.layers) {
@@ -142,7 +159,7 @@ export function forwardCpu(decoder: { layers: any[] }, input: number[]): { z: nu
       let s = layer.biases[o];
       for (let i = 0; i < layer.inputSize; i++) s += layer.weights[o * layer.inputSize + i] * a[a.length - 1][i];
       zl.push(s);
-      al.push(activate(s, layer.activation));
+      al.push(activate(s, layer.activation ?? ''));
     }
     z.push(zl);
     a.push(al);
@@ -155,7 +172,7 @@ export function forwardCpu(decoder: { layers: any[] }, input: number[]): { z: nu
  * (hardware trilinear over the half-float mip chain for the plain path,
  * nearest 4-tap + positional encoding otherwise), followed by the LOD scalar.
  */
-export function runtimeFeaturesCpu(cpuModel: any, u: number, v: number, lod: number): number[] {
+export function runtimeFeaturesCpu(cpuModel: NTCCpuModel, u: number, v: number, lod: number): number[] {
   const { channels, grids, mipsPerLevel, maxLod } = cpuModel;
   let features: number[];
   if (cpuModel.positionalEncoding) {
@@ -199,13 +216,16 @@ export function runtimeFeaturesCpu(cpuModel: any, u: number, v: number, lod: num
 }
 
 /** Raw decoder outputs (before any per-channel output activation) at (u, v, lod). */
-export function evaluateNTCCpu(cpuModel: any, u: number, v: number, lod: number): number[] {
+export function evaluateNTCCpu(cpuModel: NTCCpuModel, u: number, v: number, lod: number): number[] {
   const { a } = forwardCpu(cpuModel.decoder, runtimeFeaturesCpu(cpuModel, u, v, lod));
   return a[a.length - 1];
 }
 
-export function makeModel(seed: number, options: Record<string, unknown>): any {
-  return createNTCGridPyramidModel(options as any, createRandom(seed));
+export function makeModel(
+  seed: number,
+  options: Record<string, unknown>,
+): ReturnType<typeof createNTCGridPyramidModel> {
+  return createNTCGridPyramidModel(options as NTCGridPyramidOptions, createRandom(seed));
 }
 
 export function maxAbsDiff(a: ArrayLike<number>, b: ArrayLike<number>): number {
