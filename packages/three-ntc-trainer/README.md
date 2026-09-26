@@ -4,6 +4,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/three-ntc-trainer.svg)](https://www.npmjs.com/package/three-ntc-trainer)
 [![ci](https://github.com/bhouston/three-ntc/actions/workflows/ci.yml/badge.svg)](https://github.com/bhouston/three-ntc/actions/workflows/ci.yml)
 [![Live demo](https://img.shields.io/badge/demo-three--ntc.ben3d.ca-blue)](https://three-ntc.ben3d.ca)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/fwupDN493R)
 
 GPU trainer that bakes a three.js material (MaterialX or plain baked textures) into a compact
 `.ntc` Neural Texture Compression model — a shared multiresolution latent grid plus MLP decoder,
