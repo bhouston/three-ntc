@@ -12,6 +12,7 @@ const NTC_PAPER_URL = 'https://research.nvidia.com/labs/rtr/neural_texture_compr
 const GRID_CENTER_INDEX = 4;
 
 export function GalleryPage() {
+  const [loadErrors, setLoadErrors] = useState<string[]>([]);
   const [slots, setSlots] = useState<NTCGridSlot[]>(() =>
     Array.from({ length: 9 }, () => ({ label: '', material: null })),
   );
@@ -22,12 +23,13 @@ export function GalleryPage() {
 
     // Kick every file's load off at once, then fill the whole grid in one
     // shot once they've all resolved, rather than trickling in one at a time.
-    void Promise.all(EXAMPLE_FILES.map((file) => loadNtcFromUrl(file.value))).then((loaded) => {
+    void Promise.allSettled(EXAMPLE_FILES.map((file) => loadNtcFromUrl(file.value))).then((loaded) => {
       if (cancelled) return;
+      setLoadErrors(loaded.flatMap((result, i) => result.status === 'rejected' ? [`${EXAMPLE_FILES[i].label}: ${String(result.reason)}`] : []));
       setSlots((prev) => {
         const next = [...prev];
         loaded.forEach((result, fileIndex) => {
-          next[gridIndices[fileIndex]] = { label: EXAMPLE_FILES[fileIndex].label, material: result.material };
+          if (result.status === 'fulfilled') next[gridIndices[fileIndex]] = { label: EXAMPLE_FILES[fileIndex].label, material: result.value.material };
         });
         return next;
       });
@@ -40,6 +42,7 @@ export function GalleryPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 p-6">
+      {loadErrors.length > 0 && <p role="alert" className="rounded-md border border-destructive p-4 text-sm">Some gallery materials could not load: {loadErrors.join('; ')}</p>}
       <div className="flex flex-col gap-3 text-center">
         <h1 className="text-2xl font-semibold">Neural Texture Compression for Three.js</h1>
         <p className="mx-auto max-w-2xl text-sm text-muted-foreground">

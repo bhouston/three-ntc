@@ -41,12 +41,13 @@ export function ViewerPage() {
 
   const loadFromUrl = useCallback(
     async (url: string) => {
-      const res = await fetch(url);
-      if (!res.ok) {
-        toast.error(`Failed to fetch ${url}`);
-        return;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        await load(await res.text(), url);
+      } catch (error) {
+        toast.error(`Failed to fetch ${url}: ${error instanceof Error ? error.message : String(error)}`);
       }
-      await load(await res.text(), url);
     },
     [load],
   );
