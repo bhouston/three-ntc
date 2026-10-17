@@ -1,0 +1,28 @@
+{
+  "name": "ntc-docs",
+  "private": true,
+  "scripts": {
+    "api": "node scripts/generate-api.mjs",
+    "build": "pnpm api && docusaurus build && node scripts/copy-tools.mjs",
+    "dev": "pnpm --filter ntc-playground... build && pnpm api && node scripts/copy-tools.mjs --dev && docusaurus start --port 3300",
+    "serve": "docusaurus serve --port 3300",
+    "tsc": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@docusaurus/core": "3.10.2",
+    "@docusaurus/module-type-aliases": "3.10.2",
+    "@docusaurus/preset-classic": "3.10.2",
+    "@docusaurus/theme-classic": "3.10.2",
+    "@docusaurus/tsconfig": "3.10.2",
+    "@docusaurus/types": "3.10.2",
+    "@mdx-js/react": "^3.1.1",
+    "@types/react": "^19.2.0",
+    "clsx": "^2.1.1",
+    "ntc-playground": "workspace:*",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "typedoc": "^0.28.20",
+    "typedoc-plugin-markdown": "^4.14.0",
+    "typescript": "~5.9.3"
+  }
+}

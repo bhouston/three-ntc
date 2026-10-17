@@ -327,7 +327,7 @@ export function getMaterialXSampleUrl(key: string, root: string = DEFAULT_MATERI
 }
 
 /**
- * Populates a <select> element with one <option> per sample (in the
+ * Populates a `<select>` element with one `<option>` per sample (in the
  * catalog's alphabetical-by-file order) followed by a trailing, disabled
  * "Custom file" option - matching the pattern the original addon's neural-*
  * examples used for their "Open .mtlx" file picker.
