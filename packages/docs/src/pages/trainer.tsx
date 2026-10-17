@@ -1,6 +1,7 @@
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import ToolEmbed from '../components/ToolEmbed';
 
 export default function Trainer() {
   const tools = useBaseUrl('/tools/');
@@ -13,12 +14,7 @@ export default function Trainer() {
           your GPU and requires WebGPU over HTTPS or localhost.{' '}
           <Link to="/docs/training">Follow the training guide.</Link>
         </p>
-        <iframe
-          title="Neural texture compression trainer"
-          src={`${tools}?view=trainer`}
-          className="ntc-tool-frame"
-          allow="fullscreen"
-        />
+        <ToolEmbed view="trainer" />
         <p>
           <a href={`${tools}?view=trainer`} target="_blank" rel="noreferrer">
             Open the trainer in a full window ↗

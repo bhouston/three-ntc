@@ -4,6 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { ToolHostContext } from '@/lib/tool-host';
 
 function Select(props: React.ComponentProps<typeof SelectPrimitive.Root>) {
   return <SelectPrimitive.Root data-slot="select" {...props} />;
@@ -87,7 +88,7 @@ function SelectContent({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal container={React.useContext(ToolHostContext)}>
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(

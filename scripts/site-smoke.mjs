@@ -31,6 +31,7 @@ try {
     ['runtime-api', 'docs/api/runtime/classes/NTCLoader/'],
     ['theory', 'docs/theory/'],
     ['demo-page', 'demo/'],
+    ['embedded-viewer', 'demo/?view=viewer'],
     ['trainer-page', 'trainer/'],
     ['gallery', 'tools/?view=gallery'],
     ['viewer', 'tools/?view=viewer'],
@@ -42,20 +43,30 @@ try {
       await page.locator('canvas').first().waitFor({ timeout: 30000 });
       await page.waitForTimeout(4000);
     }
-    if (name === 'demo-page' || name === 'trainer-page') {
-      await page.frameLocator('iframe').locator('canvas').first().waitFor({ timeout: 30000 });
+    if (name === 'demo-page' || name === 'trainer-page' || name === 'embedded-viewer') {
+      if (await page.locator('iframe').count()) throw new Error('Tools must mount directly without iframes');
+      if (await page.getByRole('navigation', { name: 'Interactive tools' }).count())
+        throw new Error('Embedded tools must not duplicate navigation');
+      await page.locator('canvas').first().waitFor({ timeout: 30000 });
+      await page.waitForTimeout(4000);
     }
-    if (name === 'trainer') {
+    if (name === 'trainer-page') {
       // A small real GPU fit exercises baking, compute, progress, and export.
       await page.getByRole('slider').first().focus();
       await page.keyboard.press('Home');
       await page.getByRole('button', { name: 'Train', exact: true }).click();
+      await page.getByRole('button', { name: 'Train', exact: true }).waitFor({ timeout: 120000 });
       const save = page.getByRole('button', { name: 'Save .ntc', exact: true });
       await save.waitFor();
       await page.waitForFunction(
-        () =>
-          ![...document.querySelectorAll('button')].find((button) => button.textContent.trim() === 'Save .ntc')
-            ?.disabled,
+        () => {
+          const tool = document.querySelector('.ntc-tool-embed > div')?.shadowRoot;
+          const button = [...(tool?.querySelectorAll('button') ?? [])].find(
+            (candidate) => candidate.textContent.trim() === 'Save .ntc',
+          );
+          return button && !button.disabled;
+        },
+        null,
         { timeout: 120000 },
       );
       const downloading = page.waitForEvent('download');

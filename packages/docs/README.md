@@ -19,8 +19,11 @@ TypeDoc uses TypeScript 5.9; the library is checked independently with the works
 compiler. Authored guides are in `docs/`.
 
 The playground's production build is copied to `build/tools/` after Docusaurus
-builds. Its assets are relative, so it works both in an iframe and a full window
-under a project subpath. `pnpm docs:dev` builds and stages the playground in the
+builds, including an ES module and stylesheet for direct React mounting. The
+Docusaurus `ToolEmbed` component mounts the local tools in a shadow root to
+isolate their styles; there are no iframes or requests to the old website.
+Embedded tools omit the standalone navigation. Assets resolve relative to the
+module, so they work under a project subpath. `pnpm docs:dev` stages the tools in the
 ignored `static/tools/` directory before serving authored documentation. For
 interactive tool hot reload, use `pnpm --filter ntc-playground dev` separately.
 
