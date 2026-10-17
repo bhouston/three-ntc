@@ -1,0 +1,178 @@
+import { useSourceSearch } from '@/lib/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+
+import type { NTCSamplingMode } from 'three-ntc';
+import { SamplingModeSelect } from '@/components/SamplingModeSelect';
+import { ModelInfo } from '@/components/ModelInfo';
+import { NTCViewer } from '@/components/NTCViewer';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Field, FieldLabel } from '@/components/ui/field';
+import { Slider } from '@/components/ui/slider';
+import { DEFAULT_LOD_BIAS, EXAMPLE_FILES, type LoadedMaterial, parseNtc } from '@/lib/ntc-examples';
+
+export function ViewerPage() {
+  const { src, navigate } = useSourceSearch();
+  const [loaded, setLoaded] = useState<LoadedMaterial | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [samplingMode, setSamplingMode] = useState<NTCSamplingMode>('nearest');
+  const [lodBias, setLodBias] = useState(DEFAULT_LOD_BIAS);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const load = useCallback(async (text: string, sourceLabel: string) => {
+    setLoading(true);
+    try {
+      const result = await parseNtc(text);
+      setLoaded(result);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to load ${sourceLabel}: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loaded?.material?.setLodBias(lodBias);
+    loaded?.material?.setSamplingMode(samplingMode);
+  }, [loaded, lodBias, samplingMode]);
+
+  const loadFromUrl = useCallback(
+    async (url: string) => {
+      const res = await fetch(url);
+      if (!res.ok) {
+        toast.error(`Failed to fetch ${url}`);
+        return;
+      }
+      await load(await res.text(), url);
+    },
+    [load],
+  );
+
+  const loadFromFile = useCallback(
+    async (file: File) => {
+      await load(await file.text(), file.name);
+      void navigate({ search: {} });
+    },
+    [load, navigate],
+  );
+
+  // ?src= drives the loaded material - a relative URL matches an example by
+  // its `value`, a full URL loads external material shared via that link.
+  // Falls back to the first example when the param is absent.
+  useEffect(() => {
+    if (src === null) return;
+    void loadFromUrl(src ?? EXAMPLE_FILES[0].value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [src]);
+
+  return (
+    <div className="grid flex-1 grid-cols-1 gap-4 p-4 md:grid-cols-[1fr_320px]">
+      <div className="relative min-h-[320px] max-h-[100cqw] overflow-hidden rounded-xl border border-border bg-black [container-type:inline-size]">
+        <NTCViewer material={loaded?.material ?? null} />
+        {!loaded && !loading && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
+            Load a .ntc file to preview it
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Load material</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <select
+              value={src ?? EXAMPLE_FILES[0].value}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                void navigate({ search: { src: e.target.value } });
+              }}
+              className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {EXAMPLE_FILES.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                const file = e.dataTransfer.files[0];
+                if (!file) return;
+                void loadFromFile(file);
+              }}
+              onClick={() => fileInputRef.current?.click()}
+              className={`rounded-lg border-2 border-dashed p-6 text-center text-sm transition-colors ${
+                dragOver ? 'border-primary bg-accent text-foreground' : 'border-border text-muted-foreground'
+              }`}
+            >
+              Drag & drop a .ntc file here, or click to browse
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".ntc"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void loadFromFile(file);
+                e.target.value = '';
+              }}
+            />
+
+            <Button variant="outline" disabled>
+              {loading ? 'Loading…' : 'Ready'}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Runtime settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <SamplingModeSelect value={samplingMode} onChange={setSamplingMode} />
+            <Field>
+              <FieldLabel>LOD bias (force finer): {lodBias.toFixed(2)}</FieldLabel>
+              <Slider
+                min={-4}
+                max={16}
+                step={0.25}
+                value={[lodBias]}
+                onValueChange={([v]) => {
+                  setLodBias(v);
+                }}
+              />
+            </Field>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Model Info</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loaded ? (
+              <ModelInfo info={loaded.info} samplingMode={samplingMode} />
+            ) : (
+              <p className="text-sm text-muted-foreground">No material loaded yet.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
