@@ -30,8 +30,9 @@ claimed, so the old website continues serving its existing domain.
 
 `.github/workflows/pages.yml` builds and deploys on pushes to main and manual
 dispatches. The repository's Pages build source must be **GitHub Actions** when
-using this workflow. The initial deployment may use a `gh-pages` branch until
-this workflow is merged; switch Pages to GitHub Actions after merging.
+using this workflow. The initial deployment was published from a `gh-pages`
+snapshot; the repository is then configured for GitHub Actions so the workflow
+takes over after merge. No merge is required to view the initial deployment.
 
 The trainer requires WebGPU and a secure context. GPU visual checks must use a
 physical adapter; software renderers do not count as validation.
