@@ -201,6 +201,7 @@ export function TrainerPage() {
 
   const materialXMaterialRef = useRef<MaterialXTeacherMaterial | null>(null);
   const uvTransformRef = useRef<Matrix3>(new THREE.Matrix3());
+  const lifetimeRef = useRef(0);
   const activeTrainerRef = useRef<NTCTrainer | null>(null);
   const previewMaterialRef = useRef<NTCNodeMaterial | null>(null);
   const sourceTexturesRef = useRef<Awaited<ReturnType<typeof bakeMaterialToTextures>> | null>(null);
@@ -253,6 +254,20 @@ export function TrainerPage() {
     for (const rt of sourceTexturesRef.current ?? []) rt.dispose();
     sourceTexturesRef.current = null;
   }, []);
+
+  useEffect(() => {
+    // A generation also protects against React StrictMode effect remounts.
+    lifetimeRef.current += 1;
+    return () => {
+      lifetimeRef.current += 1;
+      if (activeTrainerRef.current) {
+        // The training promise owns source textures until its GPU work finishes.
+        activeTrainerRef.current.abort();
+      } else {
+        disposeSourceTextures();
+      }
+    };
+  }, [disposeSourceTextures]);
 
   const rebuildPreviewMaterial = useCallback(
     (renderer: SharedRenderer, cpuModel: NTCCpuModel, classification: NTCChannelClassification, lodBias: number) => {
@@ -394,6 +409,8 @@ export function TrainerPage() {
   );
 
   const train = useCallback(async () => {
+    const lifetime = lifetimeRef.current;
+    const isCurrent = () => lifetimeRef.current === lifetime;
     const material = materialXMaterialRef.current;
     if (!material || !channelClassification) return;
 
@@ -408,6 +425,7 @@ export function TrainerPage() {
 
     try {
       const renderer = await getSharedRenderer();
+      if (!isCurrent()) return;
       disposeSourceTextures();
       const renderTargets = await bakeMaterialToTextures(
         renderer,
@@ -416,6 +434,10 @@ export function TrainerPage() {
         channelClassification.activeChannels,
         uvTransformRef.current,
       );
+      if (!isCurrent()) {
+        for (const target of renderTargets) target.dispose();
+        return;
+      }
       sourceTexturesRef.current = renderTargets;
 
       setStatus('Training...');
@@ -449,11 +471,14 @@ export function TrainerPage() {
         renderer,
         sourceTextures: renderTargets.map((rt) => rt.texture),
         onProgress: (progress: NTCTrainProgress) => {
+          if (!isCurrent()) return;
           const isLast = progress.iteration >= progress.iterations - 1;
           addLossPoint({ iteration: progress.iteration, loss: progress.loss }, isLast);
           rebuildPreviewMaterial(renderer, progress.cpuModel, channelClassification, Number(values.lodBias));
         },
       });
+
+      if (!isCurrent()) return;
 
       // `trainer.train()`'s inferred return type carries its internal
       // NTCGridPyramidModel shape (missing `wrap`), not the NTCCpuModel shape
@@ -469,10 +494,11 @@ export function TrainerPage() {
       setStatus(result.stoppedEarly ? 'Stopped.' : 'Training complete.');
     } catch (err) {
       console.error(err);
-      setStatus(errorMessage(err));
+      if (isCurrent()) setStatus(errorMessage(err));
     } finally {
       activeTrainerRef.current = null;
-      setIsTraining(false);
+      if (isCurrent()) setIsTraining(false);
+      else disposeSourceTextures();
     }
   }, [channelClassification, values, disposeSourceTextures, rebuildPreviewMaterial, resetLoss, addLossPoint]);
 

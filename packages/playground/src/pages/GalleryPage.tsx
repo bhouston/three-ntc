@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { NTCGridViewer, type NTCGridSlot } from '@/components/NTCGridViewer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { EXAMPLE_FILES, loadNtcFromUrl } from '@/lib/ntc-examples';
+import { EXAMPLE_FILES, loadNtcFromUrl, type LoadedMaterial } from '@/lib/ntc-examples';
 
 const NTC_PAPER_URL = 'https://research.nvidia.com/labs/rtr/neural_texture_compression/';
 
@@ -18,11 +18,19 @@ export function GalleryPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const ownedMaterials = new Set<LoadedMaterial['material']>();
     const gridIndices = Array.from({ length: 9 }, (_, i) => i).filter((i) => i !== GRID_CENTER_INDEX);
 
     // Kick every file's load off at once, then fill the whole grid in one
     // shot once they've all resolved, rather than trickling in one at a time.
-    void Promise.allSettled(EXAMPLE_FILES.map((file) => loadNtcFromUrl(file.value))).then((loaded) => {
+    void Promise.allSettled(
+      EXAMPLE_FILES.map(async (file) => {
+        const loaded = await loadNtcFromUrl(file.value);
+        if (cancelled) loaded.material.dispose();
+        else ownedMaterials.add(loaded.material);
+        return loaded;
+      }),
+    ).then((loaded) => {
       if (cancelled) return;
       setLoadErrors(
         loaded.flatMap((result, i) =>
@@ -41,6 +49,8 @@ export function GalleryPage() {
 
     return () => {
       cancelled = true;
+      for (const material of ownedMaterials) material.dispose();
+      ownedMaterials.clear();
     };
   }, []);
 
@@ -109,3 +119,4 @@ export function GalleryPage() {
     </div>
   );
 }
+
