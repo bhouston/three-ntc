@@ -4,7 +4,6 @@ import { NTCGridViewer, type NTCGridSlot } from '@/components/NTCGridViewer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EXAMPLE_FILES, loadNtcFromUrl } from '@/lib/ntc-examples';
 
-
 const NTC_PAPER_URL = 'https://research.nvidia.com/labs/rtr/neural_texture_compression/';
 
 // 3x3 grid, empty center slot - EXAMPLE_FILES has 8 entries, one per
@@ -25,11 +24,16 @@ export function GalleryPage() {
     // shot once they've all resolved, rather than trickling in one at a time.
     void Promise.allSettled(EXAMPLE_FILES.map((file) => loadNtcFromUrl(file.value))).then((loaded) => {
       if (cancelled) return;
-      setLoadErrors(loaded.flatMap((result, i) => result.status === 'rejected' ? [`${EXAMPLE_FILES[i].label}: ${String(result.reason)}`] : []));
+      setLoadErrors(
+        loaded.flatMap((result, i) =>
+          result.status === 'rejected' ? [`${EXAMPLE_FILES[i].label}: ${String(result.reason)}`] : [],
+        ),
+      );
       setSlots((prev) => {
         const next = [...prev];
         loaded.forEach((result, fileIndex) => {
-          if (result.status === 'fulfilled') next[gridIndices[fileIndex]] = { label: EXAMPLE_FILES[fileIndex].label, material: result.value.material };
+          if (result.status === 'fulfilled')
+            next[gridIndices[fileIndex]] = { label: EXAMPLE_FILES[fileIndex].label, material: result.value.material };
         });
         return next;
       });
@@ -42,7 +46,11 @@ export function GalleryPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 p-6">
-      {loadErrors.length > 0 && <p role="alert" className="rounded-md border border-destructive p-4 text-sm">Some gallery materials could not load: {loadErrors.join('; ')}</p>}
+      {loadErrors.length > 0 && (
+        <p role="alert" className="rounded-md border border-destructive p-4 text-sm">
+          Some gallery materials could not load: {loadErrors.join('; ')}
+        </p>
+      )}
       <div className="flex flex-col gap-3 text-center">
         <h1 className="text-2xl font-semibold">Neural Texture Compression for Three.js</h1>
         <p className="mx-auto max-w-2xl text-sm text-muted-foreground">
@@ -67,7 +75,7 @@ export function GalleryPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <a href="?view=viewer">
+        <a href="?view=viewer" aria-label="Open material viewer">
           <Card className="h-full transition-colors hover:bg-accent">
             <CardHeader>
               <CardTitle className="text-primary underline underline-offset-4">Viewer</CardTitle>
@@ -80,7 +88,7 @@ export function GalleryPage() {
           </Card>
         </a>
 
-        <a href="?view=trainer">
+        <a href="?view=trainer" aria-label="Open material trainer">
           <Card className="h-full transition-colors hover:bg-accent">
             <CardHeader>
               <CardTitle className="text-primary underline underline-offset-4">Trainer</CardTitle>

@@ -19,6 +19,10 @@ original material, so scenes can carry far richer materials without blowing up d
 
 Try it live at **[three-ntc.ben3d.ca](https://three-ntc.ben3d.ca)**.
 
+The new **[documentation website](https://bhouston.github.io/three-ntc/)** includes
+generated runtime and trainer API references, integration guides, an interactive
+demo and trainer, and a theory explainer. The original demo remains available.
+
 ## Usage
 
 ```js
@@ -41,6 +45,8 @@ const mesh = new THREE.Mesh(geometry, material);
   [README](packages/three-ntc-trainer/README.md) for install/usage.
 - [`packages/website`](packages/website) — demo site (viewer + trainer UI), TanStack Start + Router +
   Tailwind + shadcn/ui.
+- [`packages/docs`](packages/docs) — static Docusaurus documentation website.
+- [`packages/playground`](packages/playground) — static browser viewer, gallery, and trainer embedded in the documentation site.
 - [`packages/cli`](packages/cli) — command-line trainer (stub).
 
 ## Development

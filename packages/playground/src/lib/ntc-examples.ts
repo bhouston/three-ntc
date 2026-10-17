@@ -26,12 +26,12 @@ export type LoadedMaterialGrid = {
   height: number;
   channels: number;
   bits: number;
-}
+};
 
 export type LoadedMaterialMLPLayer = {
   inputSize: number;
   outputSize: number;
-}
+};
 
 export type LoadedMaterial = {
   info: ModelInfoData;
@@ -42,7 +42,7 @@ export type LoadedMaterial = {
   grids: LoadedMaterialGrid[];
   mlpLayers: LoadedMaterialMLPLayer[];
   material: NTCNodeMaterial;
-}
+};
 
 export async function parseNtc(text: string): Promise<LoadedMaterial> {
   const manifest = JSON.parse(text);

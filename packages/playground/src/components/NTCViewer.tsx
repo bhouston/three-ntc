@@ -168,7 +168,10 @@ export function NTCViewer({
     let envTexture: Texture | null = null;
 
     new HDRLoader().load(HDR_ENVIRONMENT_URL, (texture: Texture) => {
-      if (disposed) { texture.dispose(); return; }
+      if (disposed) {
+        texture.dispose();
+        return;
+      }
       texture.mapping = THREE.EquirectangularReflectionMapping;
       envTexture = texture;
       scene.environment = texture;
@@ -190,19 +193,23 @@ export function NTCViewer({
 
     const clock = new THREE.Clock();
 
-    renderer.init().then(() => {
-      if (disposed) return;
-      resize();
-      renderer.setAnimationLoop(() => {
-        const dt = clock.getDelta();
-        mesh.rotation.y += ROTATION_SPEED * dt;
-        teacherMesh.rotation.y += ROTATION_SPEED * dt;
-        controls.update();
-        renderer.render(scene, camera);
+    renderer
+      .init()
+      .then(() => {
+        if (disposed) return;
+        resize();
+        renderer.setAnimationLoop(() => {
+          const dt = clock.getDelta();
+          mesh.rotation.y += ROTATION_SPEED * dt;
+          teacherMesh.rotation.y += ROTATION_SPEED * dt;
+          controls.update();
+          renderer.render(scene, camera);
+        });
+      })
+      .catch((error: unknown) => {
+        if (!disposed)
+          setRenderError(`Unable to initialize WebGPU: ${error instanceof Error ? error.message : String(error)}`);
       });
-    }).catch((error: unknown) => {
-      if (!disposed) setRenderError(`Unable to initialize WebGPU: ${error instanceof Error ? error.message : String(error)}`);
-    });
 
     return () => {
       disposed = true;
@@ -292,8 +299,17 @@ export function NTCViewer({
     previous?.dispose();
   }, [shape]);
 
-  return <>
-    <canvas ref={canvasRef} className="block h-full w-full" />
-    {renderError && <p role="alert" className="absolute inset-0 flex items-center justify-center bg-black/80 p-6 text-center text-white">{renderError}. Use a browser and device with WebGPU support.</p>}
-  </>;
+  return (
+    <>
+      <canvas ref={canvasRef} className="block h-full w-full" />
+      {renderError && (
+        <p
+          role="alert"
+          className="absolute inset-0 flex items-center justify-center bg-black/80 p-6 text-center text-white"
+        >
+          {renderError}. Use a browser and device with WebGPU support.
+        </p>
+      )}
+    </>
+  );
 }

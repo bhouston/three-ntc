@@ -14,11 +14,10 @@ import { NTCLoader, NTCNodeMaterial } from 'three-ntc';
 const loader = new NTCLoader();
 loader.setPath('/materials/');
 const asset = await loader.loadAsync('gold.ntc');
-const material = new NTCNodeMaterial(
-  asset.cpuModel,
-  asset.channelClassification,
-  { samplingMode: 'nearest', lodBias: 0 },
-);
+const material = new NTCNodeMaterial(asset.cpuModel, asset.channelClassification, {
+  samplingMode: 'nearest',
+  lodBias: 0,
+});
 
 // Attach to a mesh rendered by three.js WebGPURenderer.
 mesh.material = material;
@@ -35,16 +34,16 @@ Catch load errors at your application's boundary and present a useful failure st
 
 Filtering is a runtime choice independent of training and export:
 
-| Mode | Decoder evaluations per sample | Result |
-| --- | --- | --- |
-| `nearest` (default) | 1 | Nearest physical texel at the nearest mip; lowest decode cost. |
-| `stochastic` | 1 | Random texel and mip sampled with trilinear probabilities; introduces noise. |
-| `trilinear` | 8 | Four reconstructed texels at each of two mips, blended deterministically. |
+| Mode                | Decoder evaluations per sample | Result                                                                       |
+| ------------------- | ------------------------------ | ---------------------------------------------------------------------------- |
+| `nearest` (default) | 1                              | Nearest physical texel at the nearest mip; lowest decode cost.               |
+| `stochastic`        | 1                              | Random texel and mip sampled with trilinear probabilities; introduces noise. |
+| `trilinear`         | 8                              | Four reconstructed texels at each of two mips, blended deterministically.    |
 
 ```ts
 material.setSamplingMode('trilinear');
 material.samplingMode = 'nearest'; // Equivalent property setter.
-material.setLodBias(1);            // Positive selects finer mips.
+material.setLodBias(1); // Positive selects finer mips.
 ```
 
 Changing sampling mode rebuilds the TSL graph and triggers shader compilation on the next render. Selecting the existing mode is a no-op. LOD bias changes a live uniform. Sampling settings are not saved in `.ntc` files.

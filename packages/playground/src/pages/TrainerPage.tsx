@@ -60,7 +60,7 @@ type MaterialXTeacherMaterial = {
   type?: string;
   materialXSurfaceShaderNode?: unknown;
   materialXDocument?: unknown;
-}
+};
 
 type MaterialXLoaderInstance = InstanceType<typeof MaterialXLoader>;
 type MaterialXAsset = Awaited<ReturnType<MaterialXLoaderInstance['loadAsync']>>;

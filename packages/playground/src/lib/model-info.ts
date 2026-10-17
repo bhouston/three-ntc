@@ -21,7 +21,7 @@ export type ModelInfoData = {
   activeChannels: string[];
   constantChannels: string[];
   trainingQuantizationOff?: boolean;
-}
+};
 
 function channelLists(classification?: NTCChannelClassification | null) {
   const activeChannels = (classification?.activeChannels ?? []).map((channel) => channel.key);

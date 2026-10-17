@@ -8,9 +8,9 @@ three-ntc stores a material's varying texture channels in a learned feature grid
 
 The project has two published packages:
 
-| Package | Purpose |
-| --- | --- |
-| `three-ntc` | Load `.ntc` assets and render `NTCNodeMaterial`. |
+| Package             | Purpose                                                                  |
+| ------------------- | ------------------------------------------------------------------------ |
+| `three-ntc`         | Load `.ntc` assets and render `NTCNodeMaterial`.                         |
 | `three-ntc-trainer` | Bake materials, train models with GPU compute, and export `.ntc` assets. |
 
 ## Install
@@ -46,8 +46,7 @@ export async function mountNTCDemo(container: HTMLElement) {
   container.appendChild(renderer.domElement);
 
   try {
-    const { cpuModel, channelClassification } =
-      await new NTCLoader().loadAsync('/gold.ntc');
+    const { cpuModel, channelClassification } = await new NTCLoader().loadAsync('/gold.ntc');
     const material = new NTCNodeMaterial(cpuModel, channelClassification);
     const geometry = new THREE.SphereGeometry(1, 48, 32);
     const scene = new THREE.Scene();

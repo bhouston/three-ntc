@@ -2,6 +2,7 @@ packages:
   - packages/*
 
 allowBuilds:
+  core-js: false
   edgedriver: false
   esbuild: true
   geckodriver: false

@@ -23,7 +23,7 @@ const ROTATION_SPEED = (2 * Math.PI) / 30;
 export type NTCGridSlot = {
   label: string;
   material: NTCNodeMaterial | null;
-}
+};
 
 /**
  * One shared WebGPU scene/camera/OrbitControls showing every slot's material
@@ -83,7 +83,10 @@ export function NTCGridViewer({ slots }: { slots: NTCGridSlot[] }) {
     let envTexture: Texture | null = null;
 
     new HDRLoader().load(HDR_ENVIRONMENT_URL, (texture: Texture) => {
-      if (disposed) { texture.dispose(); return; }
+      if (disposed) {
+        texture.dispose();
+        return;
+      }
       texture.mapping = THREE.EquirectangularReflectionMapping;
       envTexture = texture;
       scene.environment = texture;
@@ -104,18 +107,22 @@ export function NTCGridViewer({ slots }: { slots: NTCGridSlot[] }) {
 
     const clock = new THREE.Clock();
 
-    renderer.init().then(() => {
-      if (disposed) return;
-      resize();
-      renderer.setAnimationLoop(() => {
-        const dt = clock.getDelta();
-        for (const mesh of meshes) mesh.rotation.y += ROTATION_SPEED * dt;
-        controls.update();
-        renderer.render(scene, camera);
+    renderer
+      .init()
+      .then(() => {
+        if (disposed) return;
+        resize();
+        renderer.setAnimationLoop(() => {
+          const dt = clock.getDelta();
+          for (const mesh of meshes) mesh.rotation.y += ROTATION_SPEED * dt;
+          controls.update();
+          renderer.render(scene, camera);
+        });
+      })
+      .catch((error: unknown) => {
+        if (!disposed)
+          setRenderError(`Unable to initialize WebGPU: ${error instanceof Error ? error.message : String(error)}`);
       });
-    }).catch((error: unknown) => {
-      if (!disposed) setRenderError(`Unable to initialize WebGPU: ${error instanceof Error ? error.message : String(error)}`);
-    });
 
     return () => {
       disposed = true;
@@ -143,8 +150,17 @@ export function NTCGridViewer({ slots }: { slots: NTCGridSlot[] }) {
     });
   }, [slots]);
 
-  return <>
-    <canvas ref={canvasRef} className="block h-full w-full" />
-    {renderError && <p role="alert" className="absolute inset-0 flex items-center justify-center bg-black/80 p-6 text-center text-white">{renderError}. Use a browser and device with WebGPU support.</p>}
-  </>;
+  return (
+    <>
+      <canvas ref={canvasRef} className="block h-full w-full" />
+      {renderError && (
+        <p
+          role="alert"
+          className="absolute inset-0 flex items-center justify-center bg-black/80 p-6 text-center text-white"
+        >
+          {renderError}. Use a browser and device with WebGPU support.
+        </p>
+      )}
+    </>
+  );
 }

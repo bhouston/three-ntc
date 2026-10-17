@@ -18,14 +18,25 @@ function SupportedTools() {
   useEffect(() => {
     let cancelled = false;
     const gpu = (navigator as Navigator & { gpu?: GPUAccess }).gpu;
-    if (!gpu) { setSupported(false); return; }
-    void gpu.requestAdapter().then((adapter) => {
-      if (!cancelled) setSupported(Boolean(adapter));
-    }).catch(() => { if (!cancelled) setSupported(false); });
-    return () => { cancelled = true; };
+    void (gpu?.requestAdapter() ?? Promise.resolve(null))
+      .then((adapter) => {
+        if (!cancelled) setSupported(Boolean(adapter));
+      })
+      .catch(() => {
+        if (!cancelled) setSupported(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
   if (supported === null) return <p className="p-6">Checking WebGPU availability…</p>;
-  if (!supported) return <p role="alert" className="p-6">These interactive tools require WebGPU. Use a WebGPU enabled browser on a supported device. Documentation remains available outside this tool.</p>;
+  if (!supported)
+    return (
+      <p role="alert" className="p-6">
+        These interactive tools require WebGPU. Use a WebGPU enabled browser on a supported device. Documentation
+        remains available outside this tool.
+      </p>
+    );
   return <Page />;
 }
 
@@ -35,12 +46,20 @@ createRoot(document.getElementById('root')!).render(
       <div className="flex min-h-screen flex-col bg-background text-foreground antialiased">
         <nav aria-label="Interactive tools" className="flex flex-wrap gap-4 border-b border-border px-4 py-3">
           {Object.keys(pages).map((name) => (
-            <a key={name} href={`?view=${name}`} aria-current={name === view ? 'page' : undefined}
-              className="text-sm capitalize underline underline-offset-4">{name}</a>
+            <a
+              key={name}
+              href={`?view=${name}`}
+              aria-current={name === view ? 'page' : undefined}
+              className="text-sm capitalize underline underline-offset-4"
+            >
+              {name}
+            </a>
           ))}
           <span className="ml-auto text-sm text-muted-foreground">WebGPU required for training</span>
         </nav>
-        <main className="flex flex-1 flex-col"><SupportedTools /></main>
+        <main className="flex flex-1 flex-col">
+          <SupportedTools />
+        </main>
       </div>
       <Toaster />
     </ThemeProvider>

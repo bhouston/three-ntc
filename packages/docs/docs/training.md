@@ -21,7 +21,8 @@ This example creates a procedural source without any external images. `renderer`
 ```ts
 import { MeshPhysicalNodeMaterial } from 'three/webgpu';
 import { mix, sin, uv, vec3 } from 'three/tsl';
-import { fitNTCMaterial, NTCExporter } from 'three-ntc-trainer';
+import { fitNTCMaterial, NTCExporter, type NTCTrainProgress } from 'three-ntc-trainer';
+import type { NTCNodeMaterial } from 'three-ntc';
 
 const source = new MeshPhysicalNodeMaterial();
 const stripe = sin(uv().x.mul(40)).mul(0.5).add(0.5);
@@ -37,7 +38,7 @@ try {
     hiddenSizes: [32, 32],
     iterations: 3000,
     quantization: { mode: 'uint8' },
-    onProgress: ({ iteration, iterations, loss, material }) => {
+    onProgress: ({ iteration, iterations, loss, material }: NTCTrainProgress & { material: NTCNodeMaterial }) => {
       previewMesh.material = material;
       console.log(`${iteration}/${iterations}: ${loss}`);
     },
@@ -78,15 +79,15 @@ Only graphs and surface mappings supported by this implementation can be baked f
 
 Start with a small bake resolution and model, confirm the source channels, then increase capacity or iterations after inspecting the result.
 
-| Option | Effect |
-| --- | --- |
-| `resolution` | Bake resolution used by `fitNTCMaterial()`; defaults to 512. |
-| `baseResolution`, `levels`, `gridChannels` | Feature-grid capacity, memory, and exported size. |
-| `hiddenSizes`, `hiddenActivation` | Decoder capacity and per-sample shading cost. |
-| `iterations`, `batchSize` | Optimization budget and GPU workload. Defaults are 3000 and 4096. |
-| `learningRate`, `weightsLearningRate` | Optimization rates for latents and optionally decoder weights. |
-| `dualGrid`, `positionalEncoding` | Optional richer decoder input with increased cost. |
-| `quantization` | Latent storage precision and quantization-aware training. |
+| Option                                     | Effect                                                            |
+| ------------------------------------------ | ----------------------------------------------------------------- |
+| `resolution`                               | Bake resolution used by `fitNTCMaterial()`; defaults to 512.      |
+| `baseResolution`, `levels`, `gridChannels` | Feature-grid capacity, memory, and exported size.                 |
+| `hiddenSizes`, `hiddenActivation`          | Decoder capacity and per-sample shading cost.                     |
+| `iterations`, `batchSize`                  | Optimization budget and GPU workload. Defaults are 3000 and 4096. |
+| `learningRate`, `weightsLearningRate`      | Optimization rates for latents and optionally decoder weights.    |
+| `dualGrid`, `positionalEncoding`           | Optional richer decoder input with increased cost.                |
+| `quantization`                             | Latent storage precision and quantization-aware training.         |
 
 `getNTCProfile(name)` returns model-shape options for `mobile-fast`, `mobile-balanced`, or `desktop-quality`; spread them into the fit options. Names describe intended cost tiers, not a device compatibility guarantee or fixed bitrate. Profile values can differ from the bare trainer defaults.
 

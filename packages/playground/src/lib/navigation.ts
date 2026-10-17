@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 
 // Keep shareable material URLs without requiring a server-side router.
 export function useSourceSearch() {
-  const [src, setSrc] = useState<string | null | undefined>(() => new URLSearchParams(location.search).get('src') ?? undefined);
+  const [src, setSrc] = useState<string | null | undefined>(
+    () => new URLSearchParams(location.search).get('src') ?? undefined,
+  );
   useEffect(() => {
     const update = () => setSrc(new URLSearchParams(location.search).get('src') ?? undefined);
     addEventListener('popstate', update);

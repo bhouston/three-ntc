@@ -16,7 +16,7 @@ export type ModelSizeSettings = {
   positionalEncoding: boolean;
   dualGrid: boolean;
   quantization: 'none' | 'uint8' | 'uint4' | 'uint2';
-}
+};
 
 /** The website trains four-channel G0 and G1 grids. No model allocation needed. */
 export function estimateModelSize(settings: ModelSizeSettings, outputChannels: number) {
