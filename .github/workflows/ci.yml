@@ -104,6 +104,29 @@ jobs:
         if: always()
         run: node scripts/report-coverage.mjs
 
+  node-compat:
+    name: node-compat (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24, 26]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Unit tests
+        run: pnpm exec vitest run --project unit
+
   gpu:
     if: ${{ !inputs.skip-gpu }}
     name: GPU (WebGPU in headless Chromium)
