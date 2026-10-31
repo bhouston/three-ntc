@@ -37,15 +37,15 @@
     "esbuild": "^0.28.2",
     "husky": "^9.1.7",
     "lint-staged": "^17.3.0",
-    "oxfmt": "^0.58.0",
+    "oxfmt": "^0.75.0",
     "oxlint": "^1.73.0",
     "playwright": "^1.63.0",
     "semantic-release": "^25.0.9",
     "three": "0.186.0",
     "typescript": "^7.0.2",
-    "vite": "^8.1.3",
+    "vite": "^8.3.5",
     "vitest": "^5.0.2",
-    "webdriverio": "^9.31.7"
+    "webdriverio": "^10.1.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,mjs,cjs}": [
@@ -57,5 +57,5 @@
   "engines": {
     "node": ">=22"
   },
-  "packageManager": "pnpm@11.27.0"
+  "packageManager": "pnpm@12.16.1"
 }
