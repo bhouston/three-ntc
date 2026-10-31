@@ -42,7 +42,7 @@
     "playwright": "^1.63.0",
     "semantic-release": "^25.0.9",
     "three": "0.186.0",
-    "typescript": "^7.0.2",
+    "typescript": "7.1.0-beta",
     "vite": "^8.3.5",
     "vitest": "^5.0.2",
     "webdriverio": "^10.1.0"
