@@ -55,7 +55,7 @@ function renderAlbedo(cpuModel: any, classification: any): Promise<Float32Array>
     lodNode: float(0),
   });
   const pixels = renderNodeToFloats(renderer, (material as any).colorNode, SIZE);
-  pixels.finally(() => material.dispose());
+  void pixels.finally(() => material.dispose());
   return pixels;
 }
 

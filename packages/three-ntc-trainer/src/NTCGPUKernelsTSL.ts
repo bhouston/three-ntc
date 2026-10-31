@@ -184,7 +184,7 @@ function forwardDenseLayerTSL({
   weightsOffset: number;
   biasesOffset: number;
   zBase: TSLNode;
-  aBase?: TSLNode | null;
+  aBase?: TSLNode;
   activation?: string;
 }): void {
   Loop({ start: 0, end: outputSize, type: 'int', name: 'j', condition: '<' }, ({ j }: { j: TSLNode }) => {
@@ -377,7 +377,7 @@ function createAdamComputeNode({
   maxGradientNormUniform: TSLNode;
   learningRateUniform: TSLNode;
   stepUniform: TSLNode;
-  invBatchUniform?: TSLNode | null;
+  invBatchUniform?: TSLNode;
   offset?: number;
   count: number;
   beta1?: number;

@@ -7,5 +7,5 @@
       "three-ntc": ["../three-ntc/src/index.ts"]
     }
   },
-  "references": [{ "path": "../three-ntc" }, { "path": "../three-ntc-trainer" }]
+  "references": [{ "path": "../three-ntc/tsconfig.build.json" }, { "path": "../three-ntc-trainer/tsconfig.build.json" }]
 }

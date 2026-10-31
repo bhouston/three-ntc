@@ -115,7 +115,7 @@ function createVec4Storage(vectors: TSLNode[]): PackedStorage<TSLNode> {
 
 // Packs a flat array of scalar TSL nodes/plain numbers into vec4-grouped TSL
 // nodes, zero-padding the final group if `inputs.length` isn't a multiple of 4.
-function packVec4Inputs(inputs: (TSLNode | number)[]): TSLNode[] {
+function packVec4Inputs(inputs: TSLNode[]): TSLNode[] {
   const groups = [];
   const groupCount = Math.ceil(inputs.length / 4);
 
