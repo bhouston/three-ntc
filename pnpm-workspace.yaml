@@ -6,7 +6,7 @@ allowBuilds:
   esbuild: true
   geckodriver: false
 
-link-workspace-packages: true
+linkWorkspacePackages: true
 
 minimumReleaseAgeExclude:
   - three
