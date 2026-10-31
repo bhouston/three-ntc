@@ -138,7 +138,7 @@ async function bakeColorNodeToTexture(
  * doesn't try to walk the graph looking for an `<image>` node - it simply
  * hands the whole color expression to `bakeColorNodeToTexture`.
  */
-function extractBaseColorNode(materialXMaterial: any): TSLNode | null {
+function extractBaseColorNode(materialXMaterial: any): TSLNode {
   if (!materialXMaterial) return null;
   if (materialXMaterial.colorNode) return materialXMaterial.colorNode;
 
@@ -174,9 +174,9 @@ function loadImageTexture(url: string): Promise<any> {
  */
 class NTCTextureSource {
   texture: any;
-  renderTarget: any | null;
+  renderTarget: any;
 
-  constructor(texture: any, renderTarget: any | null = null) {
+  constructor(texture: any, renderTarget: any = null) {
     this.texture = texture;
     this.renderTarget = renderTarget;
   }

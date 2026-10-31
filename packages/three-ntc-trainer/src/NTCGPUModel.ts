@@ -56,7 +56,7 @@ interface NTCTextureModelLayout {
   hiddenSizes: number[];
   hiddenActivation: string;
   outputChannels: number;
-  channelActivations: string[] | null;
+  channelActivations: Array<string | undefined> | null;
   textureResolution: number;
   maxLod: number;
   lodOffset: number;
@@ -81,7 +81,7 @@ interface NTCGPUModelOptions extends NTCGridPyramidOptions {
   learningRate?: number;
   weightsLearningRate?: number;
   maxGradientNorm?: number;
-  channelActivations?: string[];
+  channelActivations?: Array<string | undefined>;
   quantization?: NTCQuantizationOptions;
 }
 

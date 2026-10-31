@@ -1,9 +1,10 @@
 {
   "extends": "../../tsconfig.node.json",
-  "include": ["**/*.ts", "**/*.tsx"],
+  "include": ["**/*.ts", "**/*.tsx", "../../test/performance-metrics.ts"],
+  "exclude": ["node_modules", "dist", ".output", ".nitro", ".tanstack"],
   "compilerOptions": {
     "composite": true,
-    "rootDir": ".",
+    "rootDir": "../..",
     "noEmit": true,
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
@@ -14,5 +15,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "references": [{ "path": "../three-ntc" }, { "path": "../three-ntc-trainer" }]
+  "references": [{ "path": "../three-ntc/tsconfig.build.json" }, { "path": "../three-ntc-trainer/tsconfig.build.json" }]
 }

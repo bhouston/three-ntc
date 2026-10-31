@@ -1,0 +1,18 @@
+{
+  "extends": "../tsconfig.node.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "tsBuildInfoFile": null,
+    "rootDir": "..",
+    "types": ["node", "vite/client"],
+    "paths": {
+      "three-ntc": ["../packages/three-ntc/src/index.ts"],
+      "three-ntc-trainer": ["../packages/three-ntc-trainer/src/index.ts"]
+    }
+  },
+  "include": ["./**/*", "../packages/three-ntc/src/three-shims.d.ts"],
+  "exclude": ["node_modules"]
+}

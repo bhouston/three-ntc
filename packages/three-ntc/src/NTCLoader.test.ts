@@ -73,6 +73,7 @@ it('preserves legacy emissive sigmoid and reads explicit HDR activations', () =>
   expect(loader.parse(manifest).channelClassification.activeChannels[0].activation).toBe('sigmoid');
   manifest.channels.encodings = { emissive: { activation: 'softplus' } };
   expect(loader.parse(manifest).channelClassification.activeChannels[0].activation).toBe('softplus');
+  // @ts-expect-error -- deliberately invalid activation
   manifest.channels.encodings.emissive.activation = 'unknown';
   expect(() => loader.parse(manifest)).toThrow(/Invalid activation/);
 });

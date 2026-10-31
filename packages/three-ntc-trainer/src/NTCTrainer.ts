@@ -1,6 +1,6 @@
 import { resolveGradientPrecision, validateGPUDispatch } from './NTCGPUCapabilities.js';
 import { createLanczosSourceTexture } from './NTCLanczosSource.js';
-import { createNTCGridPyramidModel } from './NTCGridPyramidModel.js';
+import { createNTCGridPyramidModel, type NTCGridPyramidModel } from './NTCGridPyramidModel.js';
 import { DEFAULT_MIPS_PER_LEVEL } from './NTCGridModel.js';
 import { NTCGPUModel } from './NTCGPUModel.js';
 import {
@@ -13,6 +13,7 @@ import { createResetGradientNormComputeNode } from './NTCGPUKernelsTSL.js';
 import { getLearningRate, createRandom, yieldToBrowser } from './NTCTrainingUtils.js';
 import {
   DEFAULT_QUANTIZATION_OPTIONS,
+  type NTCQuantizationOptions,
   QUANTIZATION_SCHEMES,
   resolveQuantizationConfig,
   refreshGPUQuantizationRange,
@@ -124,10 +125,10 @@ interface NTCTrainerOptions {
   maxGradientNorm?: number;
   seed?: number;
   name?: string;
-  quantization?: typeof DEFAULT_QUANTIZATION_OPTIONS;
+  quantization?: NTCQuantizationOptions;
   retrainAfterQuantize?: number;
   textureResolution?: number;
-  channelActivations?: string[];
+  channelActivations?: Array<string | undefined>;
   uvTransform?: any;
   [key: string]: unknown;
 }
@@ -137,7 +138,7 @@ interface NTCTrainProgress {
   iterations: number;
   loss: number;
   learningRate: number;
-  cpuModel: any;
+  cpuModel: NTCGridPyramidModel;
   gpuModel: NTCGPUModel;
 }
 

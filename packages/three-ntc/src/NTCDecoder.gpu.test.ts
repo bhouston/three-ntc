@@ -14,7 +14,7 @@ import { evaluateNTCCpu, getRenderer, makeModel, pixelUv, renderNodeToFloats } f
 
 const SIZE = 32;
 
-let renderer;
+let renderer: Awaited<ReturnType<typeof getRenderer>>;
 beforeAll(async () => {
   renderer = await getRenderer();
 });

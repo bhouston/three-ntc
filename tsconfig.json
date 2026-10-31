@@ -4,8 +4,8 @@
   "files": [],
   "include": [],
   "references": [
-    { "path": "./packages/three-ntc" },
-    { "path": "./packages/three-ntc-trainer" },
+    { "path": "./packages/three-ntc/tsconfig.build.json" },
+    { "path": "./packages/three-ntc-trainer/tsconfig.build.json" },
     { "path": "./packages/website" },
     { "path": "./packages/cli" }
   ]
