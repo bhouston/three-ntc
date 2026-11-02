@@ -89,7 +89,7 @@ function inferAlbedoUvTransform(
  * image lookup somewhere feeding albedo, and if so which one", not
  * enumerate the whole graph.
  */
-function findImageNode(materialX: MaterialXDocument, rootChild: MaterialXNode, maxNodes: number): MaterialXNode | null {
+function findImageNode(materialX: MaterialXDocument, rootChild: MaterialXNode, maxNodes: number): MaterialXNode {
   const root = resolveUpstreamNode(materialX, rootChild);
   if (!root) return null;
 
@@ -206,7 +206,7 @@ const UV_FLOW_INPUT: Record<string, string> = {
  * test.mtlx` sample) would dead-end on the `<output>` node itself instead of
  * reaching the `<image>`/transform nodes behind it.
  */
-function resolveUpstreamNode(materialX: MaterialXDocument, child: MaterialXNode): MaterialXNode | null {
+function resolveUpstreamNode(materialX: MaterialXDocument, child: MaterialXNode): MaterialXNode {
   let node = child && child.hasReference ? materialX.getMaterialXNode(child.referencePath) : null;
 
   let guard = 0;
@@ -224,22 +224,22 @@ function resolveUpstreamNode(materialX: MaterialXDocument, child: MaterialXNode)
  * animated. An absent input (using its node-type default) is not dynamic -
  * there's nothing to be uncertain about.
  */
-function isDynamicChild(child: MaterialXNode | null | undefined): boolean {
+function isDynamicChild(child: MaterialXNode): boolean {
   return Boolean(child) && !child.isConst && child.hasReference;
 }
 
-function constVector(child: MaterialXNode | null | undefined, fallback: number[]): number[] {
+function constVector(child: MaterialXNode, fallback: number[]): number[] {
   if (!child || !child.isConst) return fallback;
 
   const vector = child.getVector();
   return vector.length > 0 ? vector : fallback;
 }
 
-function constFloat(child: MaterialXNode | null | undefined, fallback: number): number {
+function constFloat(child: MaterialXNode, fallback: number): number {
   return constVector(child, [fallback])[0];
 }
 
-function constVec2(child: MaterialXNode | null | undefined, fallback: number[]): [number, number] {
+function constVec2(child: MaterialXNode, fallback: number[]): [number, number] {
   const vector = constVector(child, fallback);
   return vector.length >= 2 ? [vector[0], vector[1]] : [vector[0], vector[0]];
 }

@@ -54,7 +54,7 @@ it.each(cases)(
       render = prototype.render;
     const frames: { intervalMs: number; completedMs: number }[] = [];
     const errors: string[] = [];
-    let renderer: Renderer | undefined,
+    let renderer: Renderer,
       lastFrame = 0,
       active = true;
     let finish!: () => void;
