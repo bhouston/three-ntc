@@ -74,8 +74,9 @@ export default defineConfig({
           fileParallelism: !safari,
           include: ['packages/**/*.gpu.test.ts'],
           exclude: ['**/node_modules/**', '**/dist/**'],
-          testTimeout: 120_000,
-          hookTimeout: 120_000,
+          // Software Vulkan is slow on the 1024px profiling cases.
+          testTimeout: ci ? 300_000 : 120_000,
+          hookTimeout: ci ? 300_000 : 120_000,
           browser: {
             commands: {
               benchmarkConfig: async () => ({
