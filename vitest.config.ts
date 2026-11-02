@@ -97,7 +97,7 @@ export default defineConfig({
                   launchOptions: {
                     args: webkit ? [] : chromiumWebGPUArgs,
                     // Playwright adds this on Linux, which makes Dawn pick SwiftShader over lavapipe.
-                    ...(ci ? { ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] } : {}),
+                    ...(ci ? { channel: 'chrome' as const, ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] } : {}),
                   },
                   contextOptions: { deviceScaleFactor: Number(process.env.NTC_DEVICE_SCALE_FACTOR || 1) },
                 }),
