@@ -131,8 +131,9 @@ jobs:
     if: ${{ !inputs.skip-gpu }}
     name: GPU (WebGPU in headless Chromium)
     runs-on: ubuntu-latest
-    # No GPU on hosted runners: Chromium falls back to SwiftShader (software
-    # Vulkan), see /vitest.config.ts. Advisory until it proves stable.
+    # No GPU on hosted runners: Chromium runs headed under xvfb on Mesa
+    # lavapipe (software Vulkan), like three.js e2e; see /vitest.config.ts.
+    # Advisory until it proves stable.
     continue-on-error: true
     steps:
       - name: Checkout
@@ -155,8 +156,15 @@ jobs:
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
 
+      - name: Install Vulkan drivers and xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mesa-vulkan-drivers xvfb
+
       - name: GPU tests
-        run: pnpm test:gpu
+        env:
+          VK_DRIVER_FILES: /usr/share/vulkan/icd.d/lvp_icd.x86_64.json
+        run: xvfb-run -a pnpm test:gpu
 
   coverage-badge:
     name: Publish coverage badge

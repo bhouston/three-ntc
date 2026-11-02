@@ -8,16 +8,21 @@ const webkit = process.env.NTC_BROWSER === 'webkit';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 
-// WebGPU in headless Chromium: the 'new' headless mode keeps the GPU
-// process. The default Vulkan launch uses SwiftShader on this Mac. Set
-// NTC_GPU_BACKEND=metal to test Apple hardware explicitly; profiles record
-// the actual adapter so software/hardware timings cannot be confused.
+// WebGPU in Chromium. Locally: 'new' headless keeps the GPU process; the
+// default Vulkan launch uses SwiftShader on this Mac. Set NTC_GPU_BACKEND=metal
+// to test Apple hardware explicitly; profiles record the actual adapter so
+// software/hardware timings cannot be confused. In CI (no GPU) we mirror
+// three.js: Mesa lavapipe (software Vulkan, VK_DRIVER_FILES set in ci.yml),
+// headed under xvfb.
+const ci = !!process.env.CI;
 const chromiumWebGPUArgs = [
-  '--headless=new',
+  ...(ci ? [] : ['--headless=new']),
   '--enable-unsafe-webgpu',
   ...(process.env.NTC_GPU_BACKEND === 'metal' ? ['--use-angle=metal'] : ['--enable-features=Vulkan']),
   '--ignore-gpu-blocklist',
-  ...(process.env.CI ? ['--use-angle=swiftshader', '--use-vulkan=swiftshader'] : []),
+  ...(ci
+    ? ['--disable-vulkan-surface', '--disable-gpu-driver-bug-workarounds', '--disable-gpu-watchdog', '--no-sandbox']
+    : []),
 ];
 
 export default defineConfig({
@@ -65,6 +70,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'gpu',
+          setupFiles: ['./vitest.gpu-setup.ts'],
           fileParallelism: !safari,
           include: ['packages/**/*.gpu.test.ts'],
           exclude: ['**/node_modules/**', '**/dist/**'],
@@ -82,7 +88,7 @@ export default defineConfig({
               },
             },
             enabled: true,
-            headless: !safari,
+            headless: !safari && !ci,
             screenshotFailures: false,
             provider: safari
               ? webdriverio({ logLevel: 'error', connectionRetryCount: 0, connectionRetryTimeout: 60_000 })
