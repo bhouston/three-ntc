@@ -94,7 +94,11 @@ export default defineConfig({
             provider: safari
               ? webdriverio({ logLevel: 'error', connectionRetryCount: 0, connectionRetryTimeout: 60_000 })
               : playwright({
-                  launchOptions: { args: webkit ? [] : chromiumWebGPUArgs },
+                  launchOptions: {
+                    args: webkit ? [] : chromiumWebGPUArgs,
+                    // Playwright adds this on Linux, which makes Dawn pick SwiftShader over lavapipe.
+                    ...(ci ? { ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] } : {}),
+                  },
                   contextOptions: { deviceScaleFactor: Number(process.env.NTC_DEVICE_SCALE_FACTOR || 1) },
                 }),
             instances: [{ browser: safari ? 'safari' : webkit ? 'webkit' : 'chromium' }],
