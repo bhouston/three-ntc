@@ -18,4 +18,4 @@ export const main = async () => {
     .help().argv;
 };
 
-main();
+void main();
