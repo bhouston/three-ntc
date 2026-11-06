@@ -10,7 +10,7 @@ import {
   SphereGeometry,
 } from 'three';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
-import hdrUrl from '../../website/public/textures/equirectangular/san_giuseppe_bridge_2k.hdr?url';
+import hdrUrl from '../../playground/public/textures/equirectangular/san_giuseppe_bridge_2k.hdr?url';
 import { expect, it } from 'vitest';
 import { commands } from 'vitest/browser';
 import { float, uv, vec4 } from 'three/tsl';
@@ -24,7 +24,7 @@ import {
   pixelUv,
   renderNodeToFloats,
 } from '../../../test/gpu-helpers.js';
-import brick from '../../website/public/ntc/brick.ntc?raw';
+import brick from '../../playground/public/ntc/brick.ntc?raw';
 
 it('profiles the shipped brick in a standalone 1024px viewer without training', async () => {
   const renderer = await getRenderer();

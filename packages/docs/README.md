@@ -1,7 +1,7 @@
 # three-ntc documentation site
 
-The Docusaurus site is a static sibling of the legacy TanStack Start demo. The
-legacy `packages/website` remains in the repository but is no longer deployed.
+The Docusaurus site is the deployed documentation site; the viewer, trainer and gallery
+come from `packages/playground`.
 
 From the repository root:
 
@@ -21,7 +21,7 @@ compiler. Authored guides are in `docs/`.
 The playground's production build is copied to `build/tools/` after Docusaurus
 builds, including an ES module and stylesheet for direct React mounting. The
 Docusaurus `ToolEmbed` component mounts the local tools in a shadow root to
-isolate their styles; there are no iframes or requests to the old website.
+isolate their styles; there are no iframes.
 Embedded tools omit the standalone navigation. Assets resolve relative to the
 module, so they work under a project subpath. `pnpm docs:dev` stages the tools in the
 ignored `static/tools/` directory before serving authored documentation. For

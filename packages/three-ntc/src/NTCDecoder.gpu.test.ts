@@ -117,7 +117,7 @@ describe('evaluateNeuralTextureRaw matches the CPU reference decoder', () => {
 });
 
 describe('shipped .ntc assets', () => {
-  const assets = import.meta.glob('../../website/public/ntc/*.ntc', {
+  const assets = import.meta.glob('../../playground/public/ntc/*.ntc', {
     query: '?raw',
     import: 'default',
     eager: true,
