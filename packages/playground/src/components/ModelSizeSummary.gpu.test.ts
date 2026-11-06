@@ -5,7 +5,6 @@ import { useForm, useStore } from '@tanstack/react-form';
 import { expect, it } from 'vitest';
 import { SamplingModeSelect } from './SamplingModeSelect.js';
 import { ModelSizeSummary } from './ModelSizeSummary.js';
-import type { ModelSizeSettings } from '../lib/model-size.js';
 
 it('updates the visible card as the trainer form changes and restores values when toggled back', async () => {
   function Harness() {
