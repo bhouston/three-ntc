@@ -143,7 +143,7 @@ function SelectFormField({
   options,
   getLabel = String,
   disabled,
-  parse = (v: string) => v as unknown,
+  parse = (v: string) => v,
 }: {
   field: AnyFieldApi;
   label: string;
@@ -389,7 +389,7 @@ export function TrainerPage() {
         if (!material) throw new Error('MaterialXLoader did not produce any materials.');
         if (asset.texturesReady) await asset.texturesReady;
         setBuiltInKey('');
-        void navigate({ search: {} });
+        navigate({ search: {} });
         setSourceMaterial(material, file.name);
       } catch (err) {
         console.error(err);
@@ -574,7 +574,7 @@ export function TrainerPage() {
               <Select
                 value={builtInKey}
                 onValueChange={(key) => {
-                  void navigate({ search: { src: getMaterialXSampleUrl(key) } });
+                  navigate({ search: { src: getMaterialXSampleUrl(key) } });
                 }}
                 disabled={isTraining}
               >

@@ -1,8 +1,18 @@
 {
-  "extends": "@docusaurus/tsconfig",
   "compilerOptions": {
-    "ignoreDeprecations": "5.0",
-    "types": ["@docusaurus/module-type-aliases", "@docusaurus/theme-classic"]
+    "allowJs": true,
+    "esModuleInterop": true,
+    "jsx": "preserve",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "moduleResolution": "bundler",
+    "module": "esnext",
+    "noEmit": true,
+    "paths": {
+      "@site/*": ["./*"]
+    },
+    "types": ["node", "@docusaurus/module-type-aliases", "@docusaurus/theme-classic"],
+    "skipLibCheck": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*.tsx", "src/**/*.ts", "docusaurus.config.ts"]
 }

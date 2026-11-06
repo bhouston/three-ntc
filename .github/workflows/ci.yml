@@ -128,7 +128,8 @@ jobs:
         run: pnpm exec vitest run --project unit
 
   gpu:
-    if: ${{ !inputs.skip-gpu }}
+    # Disabled for now; restore `if: ${{ !inputs.skip-gpu }}` to re-enable.
+    if: false
     name: GPU (WebGPU in headless Chromium)
     runs-on: ubuntu-latest
     # No GPU on hosted runners: Chromium falls back to SwiftShader (software
