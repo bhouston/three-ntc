@@ -11,13 +11,14 @@ import { textureLevel, uv } from 'three/tsl';
 import { float16ToFloat32, float32ToFloat16 } from 'three-ntc';
 import { bakeColorNodeToTexture } from './NTCTextureSource.js';
 import { createLanczosMipChain } from './NTCMipFilter.js';
+import type { ThreeRenderer, ThreeTexture } from './ThreeTypes.js';
 
 /** Makes an owned Lanczos mip chain from a square GPU source. Source mip zero
  * is copied in linear/physical units; input textures remain owned by the caller.
  */
 export async function createLanczosSourceTexture(
-  renderer: any,
-  source: any,
+  renderer: ThreeRenderer,
+  source: ThreeTexture,
 ): Promise<InstanceType<typeof DataTexture>> {
   const width = source.image?.width,
     height = source.image?.height;

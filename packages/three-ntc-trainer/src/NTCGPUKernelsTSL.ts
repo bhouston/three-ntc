@@ -18,6 +18,7 @@ import {
   storage,
 } from 'three/tsl';
 import { FIXED_POINT_SCALE, GRADIENT_NORM_SCALE } from './NTCGPUTrainingConstants.js';
+import type { TSLNode, ThreeRenderer } from './ThreeTypes.js';
 
 // Small WebGPU compute-kernel TSL builders shared by every neural trainer
 // (texture, material, appearance): wrapping a grid index, clipping by a
@@ -26,11 +27,10 @@ import { FIXED_POINT_SCALE, GRADIENT_NORM_SCALE } from './NTCGPUTrainingConstant
 // math, and the Adam step itself. None of this depends on what the
 // gradients are gradients *of*, only on the fixed-point atomic layout every
 // trainer shares via `NeuralGPUTrainingConstants.js`.
-
-// TSL node graphs are dynamically typed at build time - `any` here (and
-// throughout this file) stands in for the TSL `Node` type rather than
-// over-specifying it.
-type TSLNode = any;
+//
+// TSL node graphs are dynamically typed at build time - `TSLNode` (see
+// ThreeTypes.js) stands in for the TSL `Node` type throughout this file
+// rather than over-specifying it.
 
 function wrapIndexTSL(val: TSLNode, size: number): TSLNode {
   return val.mod(size).add(size).mod(size);
@@ -142,7 +142,7 @@ function createAdamParameterBuffers(count: number): AdamParameterBuffers {
  * buffers (never attached to a BufferGeometry/render object) have nothing
  * wired up to listen for it.
  */
-function disposeAdamParameterBuffers(buffers: AdamParameterBuffers, renderer: any = null): void {
+function disposeAdamParameterBuffers(buffers: AdamParameterBuffers, renderer: ThreeRenderer = null): void {
   for (const attribute of [buffers.attribute, buffers.gradAttribute, buffers.mAttribute, buffers.vAttribute]) {
     if (renderer && renderer.backend && renderer.backend.has(attribute)) renderer.backend.destroyAttribute(attribute);
     attribute.dispose();

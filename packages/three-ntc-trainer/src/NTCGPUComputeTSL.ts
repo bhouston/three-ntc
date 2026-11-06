@@ -23,7 +23,7 @@ import {
   createAdamComputeNode,
   type TSLNode,
 } from './NTCGPUKernelsTSL.js';
-import { applyChannelActivation, channelActivationDerivativeFromOutput } from 'three-ntc';
+import { applyChannelActivation, channelActivationDerivativeFromOutput, type NTCActivation } from 'three-ntc';
 import { QUANTIZATION_SCHEMES } from './NTCQuantization.js';
 import { selectFeatureLevelTSL, computeTiledPositionalEncodingTSL, POSITIONAL_ENCODING_SIZE } from 'three-ntc';
 import type { NTCGPUModel } from './NTCGPUModel.js';
@@ -80,7 +80,7 @@ function createTextureTrainBatchComputeNode(
 ): TSLNode {
   const { layout, batchSize, activationsStorage, lossAtomic, stepUniform, quantization, quantizationRangeUniforms } =
     gpuModel;
-  const addGradient = (destination: any, value: any) => {
+  const addGradient = (destination: TSLNode, value: TSLNode) => {
     if (gpuModel.floatGradients) atomicAddFloat(destination, value);
     else atomicAdd(destination, int(value.mul(FIXED_POINT_SCALE)));
   };
@@ -351,10 +351,10 @@ function createTextureTrainBatchComputeNode(
     for (let c = 0; c < outputChannels; c++) {
       const activation = channelActivations ? channelActivations[c] : undefined;
       const z = activationsStorage.element(outZBase.add(c));
-      const pred = applyChannelActivation(z, activation as any);
+      const pred = applyChannelActivation(z, activation as NTCActivation);
       const diff = pred.sub(targetComponents[c]);
       sampleLoss.addAssign(diff.mul(diff).mul(0.5));
-      const delta = diff.mul(channelActivationDerivativeFromOutput(pred, activation as any));
+      const delta = diff.mul(channelActivationDerivativeFromOutput(pred, activation as NTCActivation));
       activationsStorage.element(outDeltaBase.add(c)).assign(delta);
     }
 
@@ -578,7 +578,7 @@ function createTextureAdamLatentsComputeNode(
     name: 'NTCAdamLatents',
     transform:
       gpuModel.quantization.mode !== 'none' && gpuModel.quantization.range !== 'auto'
-        ? (value: any) => value.clamp(gpuModel.quantization.range[0], gpuModel.quantization.range[1])
+        ? (value: TSLNode) => value.clamp(gpuModel.quantization.range[0], gpuModel.quantization.range[1])
         : undefined,
   });
 }

@@ -474,7 +474,12 @@ export function TrainerPage() {
           if (!isCurrent()) return;
           const isLast = progress.iteration >= progress.iterations - 1;
           addLossPoint({ iteration: progress.iteration, loss: progress.loss }, isLast);
-          rebuildPreviewMaterial(renderer, progress.cpuModel, channelClassification, Number(values.lodBias));
+          rebuildPreviewMaterial(
+            renderer,
+            progress.cpuModel as unknown as NTCCpuModel,
+            channelClassification,
+            Number(values.lodBias),
+          );
         },
       });
 
