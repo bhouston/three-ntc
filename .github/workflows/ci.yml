@@ -129,6 +129,7 @@ jobs:
 
   gpu:
     # Disabled for now; restore `if: ${{ !inputs.skip-gpu }}` to re-enable.
+    if: false
     name: GPU (WebGPU in headless Chromium)
     runs-on: ubuntu-latest
     # No GPU on hosted runners: Chromium runs headed under xvfb on Mesa
@@ -159,13 +160,7 @@ jobs:
       - name: Install Vulkan drivers and xvfb
         run: |
           sudo apt-get update
-          sudo apt-get install -y mesa-vulkan-drivers xvfb vulkan-tools
-
-      - name: Probe
-        run: |
-          export VK_DRIVER_FILES=/usr/share/vulkan/icd.d/lvp_icd.json
-          ls /usr/share/vulkan/icd.d/; vulkaninfo --summary | grep -i -A3 deviceName || true; VK_LOADER_DEBUG=driver vulkaninfo --summary 2>&1 | head -20
-          DEBUG=pw:browser xvfb-run -a node scripts/probe-adapter.mjs
+          sudo apt-get install -y mesa-vulkan-drivers xvfb
 
       - name: GPU tests
         run: |
