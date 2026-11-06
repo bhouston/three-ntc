@@ -1,8 +1,14 @@
 {
-  "extends": "../../tsconfig.node.json",
+  "extends": "./tsconfig.build.json",
   "compilerOptions": {
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "types": ["node", "@webgpu/types"],
-    "noUncheckedIndexedAccess": false
-  }
+    "noEmit": true,
+    "rootDir": "../..",
+    "types": ["node", "vite/client", "@webgpu/types"],
+    "paths": {
+      "three-ntc": ["../three-ntc/src/index.ts"],
+      "three-ntc-trainer": ["./src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "../../test/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

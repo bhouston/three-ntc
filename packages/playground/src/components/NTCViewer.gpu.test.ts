@@ -49,7 +49,7 @@ it.each(cases)(
     const { cpuModel, channelClassification } = new NTCLoader().parse(brick);
     const material = new NTCNodeMaterial(cpuModel, channelClassification, { samplingMode });
     const teacherMaterial = new MeshStandardMaterial({ color: 0x995533 });
-    DefaultLoadingManager.setURLModifier((url) => (url.startsWith('/textures/') ? hdrUrl : url));
+    DefaultLoadingManager.setURLModifier((url: string) => (url.startsWith('/textures/') ? hdrUrl : url));
     const prototype = WebGPURenderer.prototype,
       render = prototype.render;
     const frames: { intervalMs: number; completedMs: number }[] = [];
@@ -157,7 +157,7 @@ it.each(cases)(
       fixture.remove();
       material.dispose();
       teacherMaterial.dispose();
-      DefaultLoadingManager.setURLModifier((url) => url);
+      DefaultLoadingManager.setURLModifier((url: string) => url);
     }
   },
 );

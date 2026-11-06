@@ -35,8 +35,8 @@
     }
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc -w --preserveWatchOutput --noEmitOnError",
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json -w --preserveWatchOutput --noEmitOnError",
     "test": "vitest run --root ../.. --project unit packages/three-ntc-trainer"
   },
   "dependencies": {

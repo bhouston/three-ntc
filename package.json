@@ -11,7 +11,7 @@
     "test": "pnpm tsc && vitest run --project unit --coverage",
     "test:gpu": "vitest run --project gpu",
     "format": "oxfmt .",
-    "lint": "oxlint .",
+    "lint": "oxlint --type-aware --type-check .",
     "test:gpu:safari": "NTC_BROWSER=safari vitest run --project gpu --fileParallelism=false",
     "profile:browser": "node scripts/profile-browsers.mjs",
     "prepare": "husky",

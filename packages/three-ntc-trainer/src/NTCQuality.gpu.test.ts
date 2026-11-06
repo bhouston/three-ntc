@@ -3,7 +3,7 @@
 import { float, floor, sin, textureLevel, uv, vec4 } from 'three/tsl';
 import { expect, it } from 'vitest';
 import { commands } from 'vitest/browser';
-import { applyChannelActivation, NTCLoader } from 'three-ntc';
+import { applyChannelActivation, NTCLoader, type NTCLayoutChannel } from 'three-ntc';
 import { NTCTrainer } from './NTCTrainer.js';
 import { encodeNTC } from './NTCManifest.js';
 import { bakeColorNodeToTexture } from './NTCTextureSource.js';
@@ -53,7 +53,7 @@ for (const fixture of ['smooth', 'checker', 'waves']) {
       };
       const result = await new NTCTrainer(options).train({ renderer, sourceTexture: source.texture });
       const manifest = encodeNTC(result.cpuModel, {
-        activeChannels: [{ key: 'albedo' }, { key: 'roughness' }],
+        activeChannels: [{ key: 'albedo' }, { key: 'roughness' }] as NTCLayoutChannel[],
         constantValues: {},
       });
       const loaded = new NTCLoader().parse(manifest).cpuModel;

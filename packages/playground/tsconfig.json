@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.node.json",
   "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
-    "rootDir": ".",
+    "rootDir": "../..",
     "noEmit": true,
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
@@ -12,5 +12,6 @@
     "paths": {
       "@/*": ["./src/*"]
     }
-  }
+  },
+  "exclude": ["node_modules", "dist"]
 }

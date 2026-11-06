@@ -192,8 +192,8 @@ export interface MLPLayer {
   inputSize: number;
   outputSize: number;
   activation?: string;
-  weights: Float32Array;
-  biases: Float32Array;
+  weights: Float32Array | number[];
+  biases: Float32Array | number[];
 }
 
 /** One `{ rows, cols, kind }` entry describing a slice of the flat MLP blob. */

@@ -69,6 +69,7 @@ export interface MaterialXCompiledMaterial extends SurfaceMaterial {
   isMeshPhysicalNodeMaterial?: boolean;
   materialXSurfaceShaderNode?: MaterialXNode;
   materialXDocument?: MaterialXDocument;
+  dispose(): void;
 }
 
 const colorSpaceLib: Record<string, (node: TSLNode) => TSLNode> = {

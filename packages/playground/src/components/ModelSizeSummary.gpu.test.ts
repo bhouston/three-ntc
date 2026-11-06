@@ -5,21 +5,21 @@ import { useForm, useStore } from '@tanstack/react-form';
 import { expect, it } from 'vitest';
 import { SamplingModeSelect } from './SamplingModeSelect.js';
 import { ModelSizeSummary } from './ModelSizeSummary.js';
+import type { ModelSizeSettings } from '../lib/model-size.js';
 
 it('updates the visible card as the trainer form changes and restores values when toggled back', async () => {
   function Harness() {
-    const form = useForm({
-      defaultValues: {
-        baseResolution: 16,
-        levels: 2,
-        hiddenSize: 16,
-        hiddenLayers: 1,
-        positionalEncoding: true,
-        dualGrid: true,
-        quantization: 'uint8',
-        samplingMode: 'nearest',
-      },
-    });
+    const defaultValues: ModelSizeSettings = {
+      baseResolution: 16,
+      levels: 2,
+      hiddenSize: 16,
+      hiddenLayers: 1,
+      positionalEncoding: true,
+      dualGrid: true,
+      quantization: 'uint8',
+      samplingMode: 'nearest',
+    };
+    const form = useForm({ defaultValues });
     const settings = useStore(form.store, (state) => state.values);
     return createElement(
       'div',

@@ -5,7 +5,7 @@
 // Runs under the `gpu` vitest project (see /vitest.config.ts).
 import { MeshPhysicalNodeMaterial } from 'three/webgpu';
 import { float, sin, uv, vec3 } from 'three/tsl';
-import { NTCLoader, NTCNodeMaterial, type NTCChannelClassification } from 'three-ntc';
+import { NTCLoader, NTCNodeMaterial, type NTCChannelClassification, type NTCCpuModel } from 'three-ntc';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { fitNTCMaterial } from './NTCFit.js';
@@ -21,7 +21,6 @@ import {
   renderNodeToFloats,
 } from '../../../test/gpu-helpers.js';
 import type { ThreeRenderer, ThreeMaterial } from './ThreeTypes.js';
-import type { NTCGridPyramidModel } from './NTCGridPyramidModel.js';
 
 const SIZE = 64;
 
@@ -51,7 +50,7 @@ async function bakeAlbedo(material: ThreeMaterial): Promise<Float32Array> {
   return pixels;
 }
 
-function renderAlbedo(cpuModel: NTCGridPyramidModel, classification: NTCChannelClassification): Promise<Float32Array> {
+function renderAlbedo(cpuModel: NTCCpuModel, classification: NTCChannelClassification): Promise<Float32Array> {
   const material = new NTCNodeMaterial(cpuModel, classification, {
     debugView: 'albedo',
     lodNode: float(0),

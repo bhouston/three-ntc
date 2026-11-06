@@ -19,14 +19,13 @@ it('trains the default brick with identical results after an atomic compiler fai
   const targets = await bakeMaterialToTextures(renderer, material, 1024, classification.activeChannels);
   const device = renderer.backend.device;
   const createPipeline = device.createComputePipelineAsync.bind(device);
-  const compiler = vi
-    .spyOn(device, 'createComputePipelineAsync')
-    .mockImplementation((descriptor: GPUComputePipelineDescriptor) => {
-      if (descriptor.label === 'NTC float accumulation capability check') {
-        return Promise.reject(new Error('field may not be qualified with an address space'));
-      }
-      return createPipeline(descriptor);
-    });
+  const compiler = vi.spyOn(device, 'createComputePipelineAsync').mockImplementation((...args: unknown[]) => {
+    const [descriptor] = args as [GPUComputePipelineDescriptor];
+    if (descriptor.label === 'NTC float accumulation capability check') {
+      return Promise.reject(new Error('field may not be qualified with an address space'));
+    }
+    return createPipeline(descriptor);
+  });
   const metrics: Array<{
     gradientPrecision: 'fixed' | 'auto';
     iterations: number;

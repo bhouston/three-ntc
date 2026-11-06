@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+import type { NTCLayoutChannel } from 'three-ntc';
 import { createNTCGridPyramidModel, encodeNTC } from 'three-ntc-trainer';
 import { estimateModelSize, type ModelSizeSettings } from './model-size.js';
 
@@ -30,7 +31,10 @@ for (const positionalEncoding of [false, true]) {
           () => 0.5,
         );
         model.quantization = { mode: quantization };
-        const manifest = encodeNTC(model, { activeChannels: [{ key: 'albedo' }], constantValues: {} });
+        const manifest = encodeNTC(model, {
+          activeChannels: [{ key: 'albedo' } as NTCLayoutChannel],
+          constantValues: {},
+        });
         const blocks = [...manifest.latents.levels, ...(manifest.latents.lowResLevels ?? []), manifest.mlp];
         const bytes = blocks.reduce((sum, block) => sum + Buffer.from(block.dataBase64, 'base64').byteLength, 0);
         const parameters = model.decoder.layers.reduce(

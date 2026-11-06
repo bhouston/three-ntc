@@ -1,5 +1,12 @@
 {
   "extends": "./tsconfig.base.json",
   "files": [],
-  "include": []
+  "include": [],
+  "references": [
+    { "path": "./packages/three-ntc" },
+    { "path": "./packages/three-ntc-trainer" },
+    { "path": "./packages/playground" },
+    { "path": "./packages/cli" },
+    { "path": "./test" }
+  ]
 }

@@ -31,7 +31,7 @@ export interface NTCCpuModel {
   lowResGrids?: NTCGrid[];
   decoder: { layers: MLPLayer[] };
   outputChannels: number;
-  wrap: string;
+  wrap?: string;
   uvTransform: NTCMatrix3Like;
   // Optional (default false/absent) - see NTCGridPyramidModel.js (trainer)
   // `computeDecoderInputSize` doc comment and `evaluateNeuralTextureRaw`

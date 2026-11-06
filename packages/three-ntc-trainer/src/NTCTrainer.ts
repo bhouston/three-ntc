@@ -129,7 +129,7 @@ interface NTCTrainerOptions {
   quantization?: NTCQuantizationOptions;
   retrainAfterQuantize?: number;
   textureResolution?: number;
-  channelActivations?: string[];
+  channelActivations?: Array<string | undefined>;
   uvTransform?: ThreeMath;
   [key: string]: unknown;
 }

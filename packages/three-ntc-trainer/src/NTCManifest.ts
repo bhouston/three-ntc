@@ -10,7 +10,7 @@ import {
   isIdentityUvTransform,
   type NTCChannelClassification,
 } from 'three-ntc';
-import { LATENT_CODECS, encodeMLPLayersBase64, type LatentDtype } from 'three-ntc';
+import { LATENT_CODECS, encodeMLPLayersBase64, type LatentDtype, type NTCManifest } from 'three-ntc';
 import { computeLatentRanges, type GridLevelLayout } from './NTCQuantization.js';
 import type { LatentGrid } from './NTCGridModel.js';
 import type { ThreeMath } from './ThreeTypes.js';
@@ -162,7 +162,7 @@ function encodeNTC(
     // source material it was fit against. `undefined` on a
     // classification built without a source material (e.g. hand-assembled
     // constant-only classification) round-trips as a plain `null`.
-    renderFlags: channelClassification.renderFlags || null,
+    renderFlags: (channelClassification.renderFlags as NTCManifest['renderFlags']) || null,
     channels: {
       activeKeys: channelClassification.activeChannels.map((channel) => channel.key),
       // Persist output nonlinearities so changing training defaults never reinterprets old weights.
@@ -172,7 +172,7 @@ function encodeNTC(
           { activation: channel.activation ?? getChannel(channel.key).activation ?? 'linear' },
         ]),
       ),
-      constantValues: channelClassification.constantValues,
+      constantValues: channelClassification.constantValues as NonNullable<NTCManifest['channels']['constantValues']>,
     },
   };
 }

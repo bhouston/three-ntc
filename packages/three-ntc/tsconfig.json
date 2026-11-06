@@ -1,7 +1,15 @@
 {
-  "extends": "../../tsconfig.node.json",
+  "extends": "./tsconfig.build.json",
   "compilerOptions": {
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "noUncheckedIndexedAccess": false
-  }
+    "noEmit": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "rootDir": "../..",
+    "types": ["node", "vite/client"],
+    "paths": {
+      "three-ntc": ["./src/index.ts"],
+      "three-ntc-trainer": ["../three-ntc-trainer/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "../../test/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
