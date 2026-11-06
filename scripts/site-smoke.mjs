@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
 
-const base = process.env.SITE_TEST_URL ?? 'http://127.0.0.1:3300/three-ntc/';
+const base = process.env.SITE_TEST_URL ?? 'http://127.0.0.1:3300/';
 const artifacts = process.env.SWARM_ARTIFACTS;
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const report = { base, gpu: null, pages: [], training: null, errors: [] };
