@@ -146,3 +146,8 @@
     padding-bottom: 2.5rem;
   }
 }
+
+.footer__copyright a {
+  color: var(--ifm-footer-link-color);
+  text-decoration: underline;
+}

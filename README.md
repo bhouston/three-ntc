@@ -19,7 +19,7 @@ original material, so scenes can carry far richer materials without blowing up d
 
 Try it live at **[three-ntc.ben3d.ca](https://three-ntc.ben3d.ca)**.
 
-The new **[documentation website](https://bhouston.github.io/three-ntc/)** includes
+The new **[documentation website](https://three-ntc.ben3d.ca/)** includes
 generated runtime and trainer API references, integration guides, an interactive
 demo and trainer, and a theory explainer. The original demo remains available.
 

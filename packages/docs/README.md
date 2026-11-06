@@ -27,9 +27,8 @@ module, so they work under a project subpath. `pnpm docs:dev` stages the tools i
 ignored `static/tools/` directory before serving authored documentation. For
 interactive tool hot reload, use `pnpm --filter ntc-playground dev` separately.
 
-The default deployment is <https://bhouston.github.io/three-ntc/>. Set `SITE_URL`
-and `BASE_URL` when building for a different origin/path. No custom domain is
-claimed, so the old website continues serving its existing domain.
+The default deployment is <https://three-ntc.ben3d.ca/>. Set `SITE_URL`
+and `BASE_URL` when building for a different origin/path.
 
 `.github/workflows/pages.yml` builds and deploys on pushes to main and manual
 dispatches. The repository's Pages build source must be **GitHub Actions** when
