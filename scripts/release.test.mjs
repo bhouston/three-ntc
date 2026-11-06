@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { prepare, packages } from './prepare-release.mjs';
 import { analyzeCommits } from '@semantic-release/commit-analyzer';
 
-test('prepares release documents without touching version or workspace dependencies', () => {
+void test('prepares release documents without touching version or workspace dependencies', () => {
   const cwd = mkdtempSync(join(tmpdir(), 'ntc-release-'));
   try {
     writeFileSync(join(cwd, 'LICENSE'), 'MIT');
@@ -50,7 +50,7 @@ for (const [message, expected] of [
   ['docs: explain installation', null],
   ['chore: update CI', null],
 ]) {
-  test(`release level for ${message.split('\n')[0]}`, async () => {
+  void test(`release level for ${message.split('\n')[0]}`, async () => {
     assert.equal(
       await analyzeCommits(
         { preset: 'conventionalcommits' },
@@ -65,7 +65,7 @@ for (const [message, expected] of [
   });
 }
 
-test('the full pnpm prepare pipeline (files, per-package version bump, artifact pack) produces installable registry tarballs, with pnpm natively resolving workspace:^ to a real semver range', async () => {
+void test('the full pnpm prepare pipeline (files, per-package version bump, artifact pack) produces installable registry tarballs, with pnpm natively resolving workspace:^ to a real semver range', async () => {
   const { cpSync, existsSync } = await import('node:fs');
   const { execFileSync } = await import('node:child_process');
   const { prepare: pnpmPrepare } = await import('@anolilab/semantic-release-pnpm');
@@ -124,7 +124,7 @@ test('the full pnpm prepare pipeline (files, per-package version bump, artifact 
   }
 });
 
-test('renders release notes with the installed Conventional Commits preset', async () => {
+void test('renders release notes with the installed Conventional Commits preset', async () => {
   const { generateNotes } = await import('@semantic-release/release-notes-generator');
   const notes = await generateNotes(
     { preset: 'conventionalcommits' },

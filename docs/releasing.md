@@ -61,6 +61,11 @@ PR and push CI jobs have read-only access. The workflow never uses a
 long-lived npm token. GitHub release assets retain the generated changelog
 between releases. Ordinary PR merges and tag pushes never trigger publishing.
 
+After a release publishes, the `website` job calls `pages.yml` with the new tag, which
+builds and deploys the documentation site from that tag. Merges to `main` never deploy
+the site. Dry runs skip it. To redeploy, dispatch `pages.yml` (optional `ref`, default
+the latest `v*` tag); the tag must contain `packages/docs`.
+
 Two registry publications are sequential, not atomic. If publishing fails after
 one package succeeds, do not blindly rerun: inspect the npm versions, workflow
 logs and Git tag. Recover the missing package/release from the recorded build

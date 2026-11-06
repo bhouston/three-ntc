@@ -2,11 +2,17 @@ packages:
   - packages/*
 
 allowBuilds:
+  core-js: false
   edgedriver: false
   esbuild: true
   geckodriver: false
 
-link-workspace-packages: true
+linkWorkspacePackages: true
+
+overrides:
+  serialize-javascript: ^7.0.3
+  source-map-js: ^1.2.2
+  tinypool: ^2.1.2
 
 minimumReleaseAgeExclude:
   - three

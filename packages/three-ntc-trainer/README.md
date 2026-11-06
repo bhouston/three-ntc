@@ -1,22 +1,32 @@
+<p align="center">
+  <a href="https://three-ntc.ben3d.ca" target="_blank" rel="noopener noreferrer">
+    <img alt="three-ntc logo" src="https://raw.githubusercontent.com/bhouston/three-ntc/main/packages/docs/static/img/icon-512.png" height="96">
+  </a>
+</p>
+<br/>
+<p align="center">
+  <a href="https://npmjs.com/package/three-ntc-trainer"><img src="https://img.shields.io/npm/v/three-ntc-trainer.svg" alt="npm package"></a>
+  <a href="https://www.npmtrends.com/three-ntc-trainer"><img src="https://img.shields.io/npm/dw/three-ntc-trainer.svg" alt="npm downloads"></a>
+  <a href="https://codecov.io/gh/bhouston/three-ntc"><img src="https://codecov.io/gh/bhouston/three-ntc/branch/main/graph/badge.svg" alt="coverage"></a>
+  <a href="https://discord.gg/fwupDN493R"><img src="https://img.shields.io/badge/chat-discord-blue?style=flat&logo=discord" alt="discord chat"></a>
+  <a href="https://three-ntc.ben3d.ca/docs/getting-started/"><img src="https://img.shields.io/badge/docs-read-blue?style=flat" alt="documentation"></a>
+</p>
+<br/>
+
 # three-ntc-trainer
 
-[![npm version](https://img.shields.io/npm/v/three-ntc-trainer.svg)](https://www.npmjs.com/package/three-ntc-trainer)
-[![npm downloads](https://img.shields.io/npm/dm/three-ntc-trainer.svg)](https://www.npmjs.com/package/three-ntc-trainer)
-[![ci](https://github.com/bhouston/three-ntc/actions/workflows/ci.yml/badge.svg)](https://github.com/bhouston/three-ntc/actions/workflows/ci.yml)
-[![Live demo](https://img.shields.io/badge/demo-three--ntc.ben3d.ca-blue)](https://three-ntc.ben3d.ca)
+> Train Neural Texture Compression models for three.js on the GPU.
 
-GPU trainer that bakes a three.js material (MaterialX or plain baked textures) into a compact
-`.ntc` Neural Texture Compression model — a shared multiresolution latent grid plus MLP decoder,
-jointly fit against the material's PBR channels — and exports it for the
-[`three-ntc`](https://www.npmjs.com/package/three-ntc) runtime to load.
+- 🏋️ GPU Training in the Browser
+- 🧪 MaterialX or Baked Texture Input
+- 🗜️ Compact `.ntc` Export
+- 🔧 Configurable Grid and MLP
 
-![Eight NTC materials rendered live in the three-ntc grid viewer](../../docs/images/ntc-grid-viewer.png)
+Bakes a three.js material into a compact `.ntc` model, a shared multiresolution latent grid plus MLP decoder jointly fit against the material PBR channels, and exports it for the [`three-ntc`](https://www.npmjs.com/package/three-ntc) runtime to load.
 
-An implementation of NVIDIA's 2023 [Neural Texture Compression](https://research.nvidia.com/labs/rtr/neural_texture_compression/)
-paper: rather than baking separate albedo/normal/roughness/metalness textures, this trainer fits
-all of a material's channels jointly into one small grid + MLP model. Every material pictured
-above is about 93KB total — often smaller than a single texture from the original material — so
-scenes trained here ship far richer materials without the usual memory and download cost.
+[Read the Docs to Learn More](https://three-ntc.ben3d.ca/docs/getting-started/).
+
+![Eight NTC materials rendered live in the three-ntc grid viewer](https://raw.githubusercontent.com/bhouston/three-ntc/main/docs/images/ntc-grid-viewer.png)
 
 Try the trainer live at **[three-ntc.ben3d.ca](https://three-ntc.ben3d.ca)**.
 
@@ -45,3 +55,15 @@ The resulting manifest is the `.ntc` file `NTCLoader` (from `three-ntc`) reads b
 
 For finer control over training (grid resolution, MLP shape, step count, ...), construct
 `NTCTrainer` directly instead of using the `fitNTCMaterial` convenience wrapper.
+
+## Contribution
+
+See [Contributing Guide](https://github.com/bhouston/three-ntc/blob/main/CONTRIBUTING.md).
+
+## License
+
+MIT
+
+## Author
+
+[Ben Houston](https://ben3d.ca), Sponsored by [Land of Assets](https://landofassets.com).
