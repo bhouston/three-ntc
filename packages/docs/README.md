@@ -30,11 +30,13 @@ interactive tool hot reload, use `pnpm --filter ntc-playground dev` separately.
 The default deployment is <https://three-ntc.ben3d.ca/>. Set `SITE_URL`
 and `BASE_URL` when building for a different origin/path.
 
-`.github/workflows/pages.yml` builds and deploys on pushes to main and manual
-dispatches. The repository's Pages build source must be **GitHub Actions** when
-using this workflow. The initial deployment was published from a `gh-pages`
-snapshot; the repository is then configured for GitHub Actions so the workflow
-takes over after merge. No merge is required to view the initial deployment.
+`.github/workflows/pages.yml` deploys the site only as part of an official release:
+`release.yml` calls it with the new `v*` tag, and it builds from that tag. It never runs
+on merges to main. Dispatch it manually (optionally with a `ref` tag; default is the
+latest `v*` tag) to redeploy a release. Only tags that contain `packages/docs` can be
+built; `v0.2.0` predates the site. The repository's Pages build source must be
+**GitHub Actions**. The initial deployment was published from a `gh-pages` snapshot
+and stays live until the first release deploys through the workflow.
 
 The trainer requires WebGPU and a secure context. GPU visual checks must use a
 physical adapter; software renderers do not count as validation.
