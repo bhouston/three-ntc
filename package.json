@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r build",
-    "tsc": "tsc -b && pnpm --filter ntc-playground tsc && pnpm --filter ntc-docs tsc",
+    "tsc": "pnpm -r --workspace-concurrency=1 exec tsc",
     "dev": "pnpm --parallel --filter three-ntc --filter three-ntc-trainer --filter ntc-playground dev",
     "test": "pnpm tsc && vitest run --project unit --coverage",
     "test:gpu": "vitest run --project gpu",
