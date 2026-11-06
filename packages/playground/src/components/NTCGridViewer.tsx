@@ -80,7 +80,7 @@ export function NTCGridViewer({ slots }: { slots: NTCGridSlot[] }) {
     meshesRef.current = meshes;
 
     let disposed = false;
-    let envTexture: Texture | null = null;
+    let envTexture: Texture = null;
 
     new HDRLoader().load(HDR_ENVIRONMENT_URL, (texture: Texture) => {
       if (disposed) {

@@ -55,7 +55,7 @@ export function ViewerPage() {
   const loadFromFile = useCallback(
     async (file: File) => {
       await load(await file.text(), file.name);
-      void navigate({ search: {} });
+      navigate({ search: {} });
     },
     [load, navigate],
   );
@@ -90,7 +90,7 @@ export function ViewerPage() {
               value={src ?? EXAMPLE_FILES[0].value}
               onChange={(e) => {
                 if (!e.target.value) return;
-                void navigate({ search: { src: e.target.value } });
+                navigate({ search: { src: e.target.value } });
               }}
               className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >

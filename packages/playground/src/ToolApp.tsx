@@ -3,7 +3,7 @@ import { ViewerPage } from '@/pages/ViewerPage';
 import { TrainerPage } from '@/pages/TrainerPage';
 import { GalleryPage } from '@/pages/GalleryPage';
 const pages = { viewer: ViewerPage, trainer: TrainerPage, gallery: GalleryPage };
-type GPUAccess = { requestAdapter: () => Promise<unknown | null> };
+type GPUAccess = { requestAdapter: () => Promise<unknown> };
 
 export function SupportedTools({ view = 'viewer' }: { view?: string }) {
   const Page = pages[view as keyof typeof pages] ?? ViewerPage;

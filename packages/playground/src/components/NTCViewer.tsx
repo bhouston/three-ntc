@@ -102,17 +102,17 @@ export function NTCViewer({
   shape = 'sphere',
   cameraDistance = 3,
 }: {
-  material: Material | null;
-  teacherMaterial?: Material | null;
+  material: Material;
+  teacherMaterial?: Material;
   shape?: NTCViewerShape;
   cameraDistance?: number;
 }) {
   const [renderError, setRenderError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const meshRef = useRef<Mesh | null>(null);
-  const teacherMeshRef = useRef<Mesh | null>(null);
-  const labelRef = useRef<Mesh | null>(null);
-  const teacherLabelRef = useRef<Mesh | null>(null);
+  const meshRef = useRef<Mesh>(null);
+  const teacherMeshRef = useRef<Mesh>(null);
+  const labelRef = useRef<Mesh>(null);
+  const teacherLabelRef = useRef<Mesh>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -165,7 +165,7 @@ export function NTCViewer({
     teacherLabelRef.current = teacherLabel;
 
     let disposed = false;
-    let envTexture: Texture | null = null;
+    let envTexture: Texture = null;
 
     new HDRLoader().load(HDR_ENVIRONMENT_URL, (texture: Texture) => {
       if (disposed) {
