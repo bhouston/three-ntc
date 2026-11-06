@@ -19,7 +19,7 @@ it('updates the visible card as the trainer form changes and restores values whe
         dualGrid: true,
         quantization: 'uint8',
         samplingMode: 'nearest',
-      } as ModelSizeSettings,
+      },
     });
     const settings = useStore(form.store, (state) => state.values);
     return createElement(

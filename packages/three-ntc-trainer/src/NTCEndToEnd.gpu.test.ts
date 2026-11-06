@@ -12,7 +12,7 @@ import { fitNTCMaterial } from './NTCFit.js';
 import { NTCExporter } from './NTCExporter.js';
 import { bakeMaterialToTextures, classifyMaterialChannels } from './NTCSource.js';
 import { MaterialXLoader } from './materialx/MaterialXLoader.js';
-import checkerboardMtlx from '../../website/public/materialx/checkerboard.mtlx?raw';
+import checkerboardMtlx from '../../playground/public/materialx/checkerboard.mtlx?raw';
 import {
   getRenderer,
   maxAbsDiff,
@@ -113,7 +113,7 @@ describe('fit -> export -> load -> render', () => {
       uvSpace: 'top-left',
       throwOnErrors: true,
     });
-    const material = Object.values(materials)[0] as any;
+    const material = Object.values(materials)[0];
     expect(material).toBeDefined();
 
     const { losses, source, trained, roundTripped, fit } = await fitExportReload(material);

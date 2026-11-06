@@ -34,9 +34,9 @@ export default defineConfig({
   resolve: {
     // Tests (both projects) run against package sources, not dist builds.
     alias: {
-      '@tanstack/react-form': `${root}packages/website/node_modules/@tanstack/react-form`,
-      'react-dom': `${root}packages/website/node_modules/react-dom`,
-      react: `${root}packages/website/node_modules/react`,
+      '@tanstack/react-form': `${root}packages/playground/node_modules/@tanstack/react-form`,
+      'react-dom': `${root}packages/playground/node_modules/react-dom`,
+      react: `${root}packages/playground/node_modules/react`,
       'three-ntc-trainer': `${root}packages/three-ntc-trainer/src/index.ts`,
       'three-ntc': `${root}packages/three-ntc/src/index.ts`,
     },

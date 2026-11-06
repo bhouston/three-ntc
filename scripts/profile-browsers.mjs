@@ -10,7 +10,7 @@ if (!['chromium', 'webkit', 'safari'].includes(browser)) {
 const output = resolve(process.argv[3] || `docs/metrics/browser-profile-${browser}-${Date.now()}`);
 await mkdir(output, { recursive: true });
 const profiles = [
-  'packages/website/src/components/NTCViewer.gpu.test.ts',
+  'packages/playground/src/components/NTCViewer.gpu.test.ts',
   'packages/three-ntc-trainer/src/NTCPreviewProfile.gpu.test.ts',
   'packages/three-ntc/src/NTCBrickProfile.gpu.test.ts',
 ];

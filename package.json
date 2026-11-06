@@ -7,7 +7,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "tsc": "tsc -b && pnpm --filter ntc-playground tsc && pnpm --filter ntc-docs tsc",
-    "dev": "pnpm --parallel --filter three-ntc --filter three-ntc-trainer --filter website dev",
+    "dev": "pnpm --parallel --filter three-ntc --filter three-ntc-trainer --filter ntc-playground dev",
     "test": "pnpm tsc && vitest run --project unit --coverage",
     "test:gpu": "vitest run --project gpu",
     "format": "oxfmt .",
