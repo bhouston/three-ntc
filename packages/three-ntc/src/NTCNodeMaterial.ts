@@ -168,7 +168,8 @@ function buildTextureUvDebugColorNode(uvNode: TSLNode) {
  * vocabulary), so a caller-supplied custom channel array works exactly the
  * same way the built-in one does.
  *
- * @three_import import { NTCNodeMaterial } from 'three/addons/ntc/NTCNodeMaterial.js';
+ * @example
+ * import { NTCNodeMaterial } from 'three-ntc';
  */
 class NTCNodeMaterial extends MeshPhysicalNodeMaterial {
   cpuModel: NTCCpuModel;

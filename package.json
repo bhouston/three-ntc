@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r build",
-    "tsc": "tsc -b",
+    "tsc": "tsc -b && pnpm --filter ntc-playground tsc && pnpm --filter ntc-docs tsc",
     "dev": "pnpm --parallel --filter three-ntc --filter three-ntc-trainer --filter website dev",
     "test": "pnpm tsc && vitest run --project unit --coverage",
     "test:gpu": "vitest run --project gpu",
@@ -18,7 +18,10 @@
     "commitlint": "commitlint",
     "size": "node scripts/check-bundle-size.mjs",
     "release": "semantic-release",
-    "release:check": "node --test scripts/release.test.mjs"
+    "release:check": "node --test scripts/release.test.mjs",
+    "docs:build": "pnpm --filter ntc-docs... build",
+    "docs:dev": "pnpm --filter ntc-docs dev",
+    "docs:test": "node scripts/site-smoke.mjs"
   },
   "devDependencies": {
     "@anolilab/semantic-release-pnpm": "^8.1.25",

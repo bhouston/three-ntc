@@ -65,7 +65,8 @@ export interface NTCParsedAsset {
  * `NTCTrainer` run / `NTCFit.fitNTCMaterial()` call produces.
  *
  * @augments Loader
- * @three_import import { NTCLoader } from 'three/addons/loaders/NTCLoader.js';
+ * @example
+ * import { NTCLoader } from 'three-ntc';
  */
 class NTCLoader extends Loader {
   /**
