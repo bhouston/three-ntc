@@ -4,6 +4,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/three-ntc.svg)](https://www.npmjs.com/package/three-ntc)
 [![ci](https://github.com/bhouston/three-ntc/actions/workflows/ci.yml/badge.svg)](https://github.com/bhouston/three-ntc/actions/workflows/ci.yml)
 [![Live demo](https://img.shields.io/badge/demo-three--ntc.ben3d.ca-blue)](https://three-ntc.ben3d.ca)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/fwupDN493R)
 
 Neural Texture Compression runtime for three.js — load `.ntc` files and get back a standard
 `MeshPhysicalNodeMaterial` (via TSL) that decodes a compact grid + MLP model on the GPU.
