@@ -35,12 +35,43 @@ import {
   type MaterialXCompileContext,
 } from './compile/MaterialXCompileRegistry.js';
 import { parseMaterialXNodeTree, parseMaterialXText } from './parse/MaterialXParser.js';
-import { getSurfaceMapper } from './MaterialXSurfaceMappings.js';
+import { getSurfaceMapper, type SurfaceMaterial } from './MaterialXSurfaceMappings.js';
 import { MtlXLibrary } from './MaterialXNodeLibrary.js';
 import { mxHextileCoord, mxHextileComputeBlendWeights } from './MaterialXHextile.js';
-import { toBooleanNode } from './MaterialXUtils.js';
+import { asDynamic, toBooleanNode, type TSLNode } from './MaterialXUtils.js';
 
-const colorSpaceLib: Record<string, (node: any) => any> = {
+/**
+ * Minimal shape this module actually calls on a three.js `LoadingManager`.
+ * three ships no public TypeScript declarations (see three-shims.d.ts).
+ */
+export interface ThreeLoadingManager {
+  getHandler(uri: string): ThreeLoader | null;
+}
+
+/**
+ * Minimal shape this module actually calls on a three.js loader
+ * (`ImageLoader` / `ImageBitmapLoader` / a custom handler loader).
+ */
+interface ThreeLoader {
+  load(url: string, onLoad: (data: unknown) => void, onProgress: undefined, onError: () => void): void;
+  setPath(path: string): void;
+  setOptions(options: Record<string, unknown>): void;
+}
+
+/**
+ * The materials MaterialXDocument#parse() produces. Concrete rather than an
+ * opaque TSLNode so downstream consumers (e.g. the website's material
+ * picker) can narrow it without an upstream `any`/`unknown` leaking through
+ * `MaterialXParseResult.materials`.
+ */
+export interface MaterialXCompiledMaterial extends SurfaceMaterial {
+  name: string;
+  isMeshPhysicalNodeMaterial?: boolean;
+  materialXSurfaceShaderNode?: MaterialXNode;
+  materialXDocument?: MaterialXDocument;
+}
+
+const colorSpaceLib: Record<string, (node: TSLNode) => TSLNode> = {
   mx_srgb_texture_to_lin_rec709,
 };
 
@@ -55,7 +86,7 @@ const TEXTURE_ADDRESS_MODE_WRAPPING: Record<string, number> = {
   periodic: RepeatWrapping,
   mirror: MirroredRepeatWrapping,
 };
-const NODE_CLASS_BY_TYPE: Record<string, any> = {
+const NODE_CLASS_BY_TYPE: Record<string, ((...args: TSLNode[]) => TSLNode) | null> = {
   integer: int,
   float,
   vector2: vec2,
@@ -78,11 +109,11 @@ const OUTPUT_CHANNELS: Record<string, number> = {
   outa: 3,
 };
 
-function mxFlipUvY(uvNode: any) {
+function mxFlipUvY(uvNode: TSLNode) {
   return vec2(element(uvNode, 0), sub(1, element(uvNode, 1)));
 }
 
-function mxIdentityUv(uvNode: any) {
+function mxIdentityUv(uvNode: TSLNode) {
   return uvNode;
 }
 
@@ -105,8 +136,9 @@ function isSvgUri(uri: unknown): boolean {
   return /\.svg(?:$|[?#])/i.test(uri);
 }
 
-function normalizeTextureAddressMode(value: any): string | null {
+function normalizeTextureAddressMode(value: unknown): string | null {
   if (value === null || value === undefined || value === '') return 'periodic';
+  if (typeof value !== 'string') return null;
 
   const mode = value.trim().toLowerCase();
   return mode in TEXTURE_ADDRESS_MODE_WRAPPING ? mode : null;
@@ -138,8 +170,8 @@ function getOutputChannel(outputName: string): number {
   return OUTPUT_CHANNELS[outputName] || 0;
 }
 
-function isChannelOutput(outputName: any): boolean {
-  return outputName in OUTPUT_CHANNELS;
+function isChannelOutput(outputName: string | null): boolean {
+  return outputName !== null && outputName in OUTPUT_CHANNELS;
 }
 
 class MaterialXNode {
@@ -147,7 +179,7 @@ class MaterialXNode {
   nodeXML: Element;
   nodePath: string;
   parent: MaterialXNode | null;
-  node: any;
+  node: TSLNode;
   children: MaterialXNode[];
 
   constructor(materialX: MaterialXDocument, nodeXML: Element, nodePath = '') {
@@ -230,7 +262,7 @@ class MaterialXNode {
     return this.element === 'input' && this.value !== null && this.type !== 'filename';
   }
 
-  getColorSpaceNode(): ((node: any) => any) | null {
+  getColorSpaceNode(): ((node: TSLNode) => TSLNode) | null {
     const csSource = this.getAttribute('colorspace');
     const csTarget = this.getRoot().getAttribute('colorspace');
     if (!csSource || !csTarget) return null;
@@ -258,12 +290,12 @@ class MaterialXNode {
     };
   }
 
-  getTexture(): any {
+  getTexture(): TSLNode {
     const filePrefix = this.getRecursiveAttribute('fileprefix') || '';
     const sourceURI = filePrefix + this.value;
     const resolvedURI = this.materialX.resolveTextureURI(sourceURI);
     const svgTexture = isSvgUri(resolvedURI);
-    const textureSourceNode: any =
+    const textureSourceNode: MaterialXNode =
       this.parent && typeof this.parent.getTextureAddressModes === 'function' ? this.parent : this;
     const addressModes = textureSourceNode.getTextureAddressModes();
     const textureCacheKey = `${resolvedURI}|${addressModes.u}|${addressModes.v}`;
@@ -272,15 +304,15 @@ class MaterialXNode {
       return this.materialX.textureCache.get(textureCacheKey)!;
     }
 
-    let loader: any = svgTexture ? this.materialX.imageLoader : this.materialX.textureLoader;
+    let loader: ThreeLoader = svgTexture ? this.materialX.imageLoader : this.materialX.textureLoader;
     if (resolvedURI && !svgTexture) {
       const handler = this.materialX.manager.getHandler(resolvedURI);
       if (handler !== null) loader = handler;
     }
 
     const textureNode = new Texture();
-    textureNode.wrapS = TEXTURE_ADDRESS_MODE_WRAPPING[addressModes.u] as any;
-    textureNode.wrapT = TEXTURE_ADDRESS_MODE_WRAPPING[addressModes.v] as any;
+    textureNode.wrapS = TEXTURE_ADDRESS_MODE_WRAPPING[addressModes.u];
+    textureNode.wrapT = TEXTURE_ADDRESS_MODE_WRAPPING[addressModes.v];
     textureNode.flipY = false;
     this.materialX.textureCache.set(textureCacheKey, textureNode);
 
@@ -291,7 +323,7 @@ class MaterialXNode {
       new Promise<void>((resolveLoad) => {
         loader.load(
           resolvedURI,
-          (imageData: any) => {
+          (imageData: unknown) => {
             textureNode.image = imageData;
             textureNode.needsUpdate = true;
             resolveLoad();
@@ -312,18 +344,18 @@ class MaterialXNode {
     return textureNode;
   }
 
-  getClassFromType(type: string): any {
+  getClassFromType(type: string): ((...args: TSLNode[]) => TSLNode) | null {
     return NODE_CLASS_BY_TYPE[type] || null;
   }
 
-  toBooleanNode(node: any): any {
+  toBooleanNode(node: TSLNode): TSLNode {
     return toBooleanNode(node);
   }
 
-  getNode(out: string | null = null): any {
+  getNode(out: string | null = null): TSLNode {
     if (this.node !== null && out === null) return this.node;
 
-    let node: any;
+    let node: TSLNode;
 
     if ((this.element === 'separate2' || this.element === 'separate3' || this.element === 'separate4') && out) {
       const inNode = this.getNodeByName('in');
@@ -415,7 +447,7 @@ class MaterialXNode {
     }
 
     if (node && typeof node === 'object') {
-      node.name = this.name;
+      asDynamic(node).name = this.name;
     }
 
     this.node = node;
@@ -430,8 +462,8 @@ class MaterialXNode {
     return undefined;
   }
 
-  getNodes(): Record<string, any> {
-    const nodes: Record<string, any> = {};
+  getNodes(): Record<string, TSLNode> {
+    const nodes: Record<string, TSLNode> = {};
     for (const input of this.children) {
       const value = input.getNode(input.output);
       nodes[input.name] = value;
@@ -440,7 +472,7 @@ class MaterialXNode {
     return nodes;
   }
 
-  getNodeByName(name: string): any {
+  getNodeByName(name: string): TSLNode {
     const child = this.getChildByName(name);
     return child ? child.getNode(child.output) : undefined;
   }
@@ -450,7 +482,7 @@ class MaterialXNode {
     return child ? child.value : null;
   }
 
-  getNodesByNames(...names: string[]): any[] {
+  getNodesByNames(...names: string[]): TSLNode[] {
     const nodes = [];
     for (const name of names) {
       const nodeValue = this.getNodeByName(name);
@@ -473,7 +505,7 @@ class MaterialXNode {
     return vector;
   }
 
-  getMatrix(size: number): any {
+  getMatrix(size: number): TSLNode {
     const vector = this.getVector();
     const expectedLength = size * size;
     if (vector.length !== expectedLength) return null;
@@ -508,10 +540,10 @@ class MaterialXNode {
     return attribute;
   }
 
-  setMaterial(material: any): void {
+  setMaterial(material: TSLNode): void {
     const mapper = getSurfaceMapper(this.element);
     if (mapper) {
-      mapper.apply(material, this.getNodes(), this.materialX.log, this.name);
+      mapper.apply(asDynamic(material), this.getNodes(), this.materialX.log, this.name);
     } else {
       this.materialX.log.add(
         MaterialXLogCodes.UNSUPPORTED_NODE,
@@ -521,8 +553,8 @@ class MaterialXNode {
     }
   }
 
-  toBasicMaterial(): any {
-    const material = new MeshBasicNodeMaterial();
+  toBasicMaterial(): MaterialXCompiledMaterial {
+    const material = asDynamic(new MeshBasicNodeMaterial()) as MaterialXCompiledMaterial;
     material.name = this.name;
 
     for (const nodeX of this.children.toReversed()) {
@@ -547,8 +579,8 @@ class MaterialXNode {
     return null;
   }
 
-  toPhysicalMaterial(): any {
-    const material: any = new MeshPhysicalNodeMaterial();
+  toPhysicalMaterial(): MaterialXCompiledMaterial {
+    const material = asDynamic(new MeshPhysicalNodeMaterial()) as MaterialXCompiledMaterial;
     material.name = this.name;
 
     for (const nodeX of this.children) {
@@ -573,8 +605,8 @@ class MaterialXNode {
     return material;
   }
 
-  toMaterials(materialName: string | null = null): Record<string, any> {
-    const materials: Record<string, any> = {};
+  toMaterials(materialName: string | null = null): Record<string, MaterialXCompiledMaterial> {
+    const materials: Record<string, MaterialXCompiledMaterial> = {};
     const surfaceMaterials = this.children.filter((nodeX) => nodeX.element === 'surfacematerial');
 
     let selectedSurfaceMaterials = surfaceMaterials;
@@ -613,7 +645,7 @@ class MaterialXNode {
 }
 
 export interface MaterialXParseResult {
-  materials: Record<string, any>;
+  materials: Record<string, MaterialXCompiledMaterial>;
   log: import('./MaterialXLog.js').MaterialXLogEntry[];
   errors: import('./MaterialXLog.js').MaterialXLogEntry[];
   warnings: import('./MaterialXLog.js').MaterialXLogEntry[];
@@ -621,20 +653,20 @@ export interface MaterialXParseResult {
 }
 
 class MaterialXDocument {
-  manager: any;
+  manager: ThreeLoadingManager;
   path: string;
   log: MaterialXLog;
   archiveResolver: ((uri: string) => string | null) | null;
   uvSpace: 'bottom-left' | 'top-left';
   nodesXLib: Map<string, MaterialXNode>;
-  imageLoader: any;
-  textureLoader: any;
-  textureCache: Map<string, any>;
+  imageLoader: ThreeLoader;
+  textureLoader: ThreeLoader;
+  textureCache: Map<string, TSLNode>;
   textureLoadPromises: Promise<void>[];
   compileContext: MaterialXCompileContext;
 
   constructor(
-    manager: any,
+    manager: ThreeLoadingManager,
     path: string,
     log: MaterialXLog,
     archiveResolver: ((uri: string) => string | null) | null = null,
