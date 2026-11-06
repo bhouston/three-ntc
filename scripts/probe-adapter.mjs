@@ -1,36 +1,31 @@
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 const base = ['--enable-unsafe-webgpu','--enable-features=Vulkan','--ignore-gpu-blocklist','--disable-vulkan-surface','--disable-gpu-driver-bug-workarounds','--disable-gpu-watchdog','--no-sandbox'];
-const variants = {
-  A_current: { args: base, channel: 'chrome', ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] },
-  B_cft: { args: base, ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] },
-  C_cft_default: { args: base },
-  D_vulkan_native: { args: [...base, '--use-vulkan=native'], channel: 'chrome', ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] },
-  E_adapter_default: { args: [...base, '--use-webgpu-adapter=default'], channel: 'chrome', ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] },
-  F_angle_vk: { args: [...base, '--use-angle=vulkan', '--use-gl=angle'], channel: 'chrome', ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] },
-  G_disable_features: { args: [...base, '--disable-features=VulkanFromANGLE,DefaultANGLEVulkan'], channel: 'chrome', ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] },
+const V = {
+  H_raw: [],
+  J_native: ['--use-vulkan=native'],
+  K_angle_vk: ['--use-gl=angle','--use-angle=vulkan'],
+  L_nosw: ['--disable-software-rasterizer'],
+  M_nogpusandbox: ['--disable-gpu-sandbox'],
+  N_adapter_vulkan: ['--use-webgpu-adapter=vulkan'],
+  O_dawn_feat: ['--disable-dawn-features=disallow_unsafe_apis','--enable-dawn-features=use_vulkan_loader_icd'],
+  P_noenable_feat: ['--enable-features=Vulkan,VulkanFromANGLE,DefaultANGLEVulkan'],
 };
-
-const probe = async (name, b) => {
-  const p = await b.newPage();
-  await p.route('http://localhost:1/', r => r.fulfill({ body: '<html></html>', contentType: 'text/html' }));
-  await p.goto('http://localhost:1/');
-  const r = await p.evaluate(async () => { const o = {}; for (const f of [false, true]) { const a = await navigator.gpu?.requestAdapter({ forceFallbackAdapter: f }); o[f] = a ? [a.info.vendor, a.info.architecture, a.info.description, a.isFallbackAdapter] : null; } return JSON.stringify(o); });
-  console.log('PROBE', name, r);
-  return p;
-};
-// H: raw chrome via CDP, like puppeteer
-for (const [name, extra] of [['H_raw', []], ['I_raw_headless', ['--headless=new']]]) {
-  const c = spawn('google-chrome', [...base, ...extra, '--remote-debugging-port=9333', '--user-data-dir=/tmp/probe-' + name, 'about:blank'], { env: { ...process.env, VK_DRIVER_FILES: '/usr/share/vulkan/icd.d/lvp_icd.json' }, stdio: 'ignore' });
-  await new Promise(r => setTimeout(r, 3000));
-  try { const b = await chromium.connectOverCDP('http://localhost:9333'); const p = await probe(name, b); await p.goto('chrome://gpu'); await new Promise(r => setTimeout(r, 2000)); const t = await p.evaluate(() => document.body.innerText); console.log('GPUINFO', name, t.split('\n').filter(l => /vulkan|dawn|adapter|swiftshader|lavapipe|llvmpipe|webgpu|GL_RENDERER|Problems/i.test(l)).slice(0, 25).join(' | ')); await b.close(); } catch (e) { console.log('PROBE', name, 'ERR', String(e).slice(0, 200)); }
-  c.kill();
-}
-for (const [name, o] of Object.entries(variants)) {
+let port = 9400;
+for (const [name, extra] of Object.entries(V)) {
+  const pt = port++;
+  const c = spawn('google-chrome', [...base, ...extra, '--enable-logging=stderr', '--v=0', `--remote-debugging-port=${pt}`, '--user-data-dir=/tmp/probe-' + name, 'about:blank'], { env: { ...process.env, VK_DRIVER_FILES: '/usr/share/vulkan/icd.d/lvp_icd.json', VK_ICD_FILENAMES: '/usr/share/vulkan/icd.d/lvp_icd.json' }, stdio: ['ignore', 'ignore', 'pipe'] });
+  let err = ''; c.stderr.on('data', d => err += d);
+  await new Promise(r => setTimeout(r, 4000));
   try {
-    const b = await chromium.launch({ headless: false, ...o });
-    
-    await probe(name, b);
+    const b = await chromium.connectOverCDP(`http://127.0.0.1:${pt}`);
+    const p = await b.contexts()[0].newPage();
+    await p.route('http://localhost:1/', r => r.fulfill({ body: '<html></html>', contentType: 'text/html' }));
+    await p.goto('http://localhost:1/');
+    const r = await p.evaluate(async () => { const a = await navigator.gpu?.requestAdapter(); return a ? JSON.stringify([a.info.vendor, a.info.architecture, a.info.description]) : 'none'; });
+    console.log('PROBE', name, r);
     await b.close();
   } catch (e) { console.log('PROBE', name, 'ERR', String(e).slice(0, 200)); }
+  c.kill();
+  console.log('STDERR', name, err.split('\n').filter(l => /vulkan|swiftshader|dawn|lvp|llvmpipe|gpu/i.test(l)).slice(0, 8).join(' | ').slice(0, 1200));
 }
