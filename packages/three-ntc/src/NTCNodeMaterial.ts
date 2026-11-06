@@ -60,7 +60,7 @@ export interface NTCNodeMaterialOptions {
   samplingMode?: NTCSamplingMode;
   uvTransform?: NTCMatrix3Like;
   lodNode?: TSLNode;
-  lodBias?: number | TSLNode;
+  lodBias?: TSLNode;
   debugView?: string;
 }
 
@@ -113,7 +113,7 @@ function sliceChannels(
  * Uses the source resolution when available. Positive lodBias retains this
  * library's historical convention of choosing finer mips.
  */
-function computeAutoLodNode(coord: TSLNode, maxLod: number, lodBias: number | TSLNode = 0, resolution = 2 ** maxLod) {
+function computeAutoLodNode(coord: TSLNode, maxLod: number, lodBias: TSLNode = 0, resolution = 2 ** maxLod) {
   const texelCoord = coord.mul(resolution);
   const footprint = max(texelCoord.dFdx().length(), texelCoord.dFdy().length()).max(1e-6);
 
@@ -168,7 +168,8 @@ function buildTextureUvDebugColorNode(uvNode: TSLNode) {
  * vocabulary), so a caller-supplied custom channel array works exactly the
  * same way the built-in one does.
  *
- * @three_import import { NTCNodeMaterial } from 'three/addons/ntc/NTCNodeMaterial.js';
+ * @example
+ * import { NTCNodeMaterial } from 'three-ntc';
  */
 class NTCNodeMaterial extends MeshPhysicalNodeMaterial {
   cpuModel: NTCCpuModel;

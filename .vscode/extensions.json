@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "oxc.oxc-vscode",
+    "typescriptteam.native-preview",
+    "vitest.explorer",
+    "github.vscode-github-actions",
+    "bradlc.vscode-tailwindcss",
+    "benhouston3d.mtlx-vscode-extension",
+    "benhouston3d.hdrify-vscode-extension"
+  ],
+  "unwantedRecommendations": ["esbenp.prettier-vscode", "dbaeumer.vscode-eslint", "biomejs.biome"]
+}

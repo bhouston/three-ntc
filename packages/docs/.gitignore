@@ -1,0 +1,4 @@
+build/
+.docusaurus/
+docs/api/
+static/tools/
