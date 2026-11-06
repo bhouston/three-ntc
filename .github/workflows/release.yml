@@ -69,14 +69,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
-      - name: Summary
-        if: inputs.dry_run
-        run: echo "Dry run complete; nothing was published and no tag was created." >> "$GITHUB_STEP_SUMMARY"
       - name: Find the release tag
         id: tag
         if: ${{ !inputs.dry_run }}
         # semantic-release tags HEAD only when it publishes a release
         run: echo "tag=$(git tag --points-at HEAD --list 'v*' | head -n 1)" >> "$GITHUB_OUTPUT"
+      - name: Summary
+        if: inputs.dry_run
+        run: echo "Dry run complete; nothing was published and no tag was created." >> "$GITHUB_STEP_SUMMARY"
+
   website:
     needs: release
     if: ${{ needs.release.outputs.tag != '' }}

@@ -1,25 +1,46 @@
+import { execFileSync } from 'node:child_process';
+import { resolve } from 'node:path';
+
+// Packages published to npm, in dependency order (three-ntc first; the
+// trainer depends on it via workspace:^, which pnpm publish rewrites to a
+// resolved semver range natively).
+const packages = ['packages/three-ntc', 'packages/three-ntc-trainer'];
+
 export default {
   branches: ['main'],
+  repositoryUrl: 'https://github.com/bhouston/three-ntc.git',
   tagFormat: 'v${version}',
   plugins: [
     ['@semantic-release/commit-analyzer', { preset: 'conventionalcommits' }],
     ['@semantic-release/release-notes-generator', { preset: 'conventionalcommits' }],
-    ['@semantic-release/changelog', { changelogFile: 'CHANGELOG.md' }],
-    './scripts/prepare-release.mjs',
-    ['@anolilab/semantic-release-pnpm', { pkgRoot: 'packages/three-ntc' }],
-    ['@anolilab/semantic-release-pnpm', { pkgRoot: 'packages/three-ntc-trainer' }],
-    // Packs both (now version-bumped) packages into release-artifacts/ for
-    // the GitHub release below. See the comment in prepare-release.mjs for
-    // why this isn't done via @anolilab/semantic-release-pnpm's own
-    // `tarballDir` option.
-    ['./scripts/prepare-release.mjs', { artifacts: true }],
+    // pkgRoot only (no tarballDir): @anolilab/semantic-release-pnpm's
+    // tarballDir option shells out to `pnpm pack <pkgRoot>`, which pnpm
+    // silently ignores in favor of packing the cwd (verified with pnpm
+    // 11.27.0) -- it would attach the private monorepo root tarball to the
+    // GitHub Release instead of each package's own tarball. Pack explicitly
+    // below, once both packages have their final bumped version.
+    ...packages.map((path) => ['@anolilab/semantic-release-pnpm', { pkgRoot: path }]),
+    {
+      prepare: () => {
+        // Absolute destination: `pnpm --dir <path>` changes pnpm's cwd, so a
+        // relative destination would land inside each package instead of
+        // the repo-root `release-artifacts` that @semantic-release/github
+        // globs for its release assets.
+        const tarballDir = resolve('release-artifacts');
+        for (const path of packages) {
+          execFileSync('pnpm', ['--dir', path, 'pack', '--pack-destination', tarballDir], {
+            stdio: 'inherit',
+          });
+        }
+      },
+    },
     [
       '@semantic-release/github',
       {
+        assets: ['release-artifacts/*.tgz'],
         successComment: false,
         failComment: false,
         releasedLabels: false,
-        assets: ['release-artifacts/*.tgz', 'CHANGELOG.md'],
       },
     ],
   ],
