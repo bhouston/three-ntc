@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 const base = ['--enable-unsafe-webgpu','--enable-features=Vulkan','--ignore-gpu-blocklist','--disable-vulkan-surface','--disable-gpu-driver-bug-workarounds','--disable-gpu-watchdog','--no-sandbox'];
-const b = await chromium.launch({ headless: false, channel: 'chrome', ignoreDefaultArgs: ['--enable-unsafe-swiftshader'], args: base, env: { ...process.env, VK_DRIVER_FILES: '/usr/share/vulkan/icd.d/lvp_icd.json' } });
+const b = await chromium.launch({ headless: false, channel: 'chrome', ignoreDefaultArgs: ['--enable-unsafe-swiftshader'], args: [...base, '--enable-logging=stderr', '--v=0'], env: { ...process.env, VK_DRIVER_FILES: '/usr/share/vulkan/icd.d/lvp_icd.json', VK_LOADER_DEBUG: 'driver,error,warn' } });
 const p = await b.newPage();
 const a = await (async () => { await p.route('http://localhost:1/', r => r.fulfill({ body: '<html></html>', contentType: 'text/html' })); await p.goto('http://localhost:1/'); return p.evaluate(async () => { const a = await navigator.gpu.requestAdapter(); return JSON.stringify([a.info.vendor, a.info.architecture, [...a.features].length]); }); })();
 console.log('PROBE', a);
