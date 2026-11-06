@@ -1,7 +1,7 @@
 # three-ntc documentation site
 
 The Docusaurus site is a static sibling of the legacy TanStack Start demo. The
-legacy `packages/website` and its Cloud Run deployment remain available.
+legacy `packages/website` remains in the repository but is no longer deployed.
 
 From the repository root:
 
