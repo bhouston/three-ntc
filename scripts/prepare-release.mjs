@@ -16,7 +16,7 @@ export const packages = ['three-ntc', 'three-ntc-trainer'];
 //   2. artifacts (`{ artifacts: true }`, run last): once both packages have
 //      been version-bumped, pack each into release-artifacts/ for the GitHub
 //      release. This is NOT delegated to @anolilab/semantic-release-pnpm's
-//      own `tarballDir` option, because (verified against pnpm 11.1.3 and
+//      own `tarballDir` option, because (verified against pnpm 12.16.1 and
 //      11.26.0) `pnpm pack <dir>` ignores a directory argument and always
 //      packs the current working directory's package, unlike `pnpm publish
 //      <dir>` (which the plugin's actual registry-publish step uses and

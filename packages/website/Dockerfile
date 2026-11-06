@@ -7,7 +7,7 @@ ENV PNPM_HOME="/pnpm" \
     PORT=8080 \
     CI=true
 
-RUN npm install -g pnpm@11.1.3
+RUN npm install -g pnpm@12.16.1
 
 WORKDIR /app
 
