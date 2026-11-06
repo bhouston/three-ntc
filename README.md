@@ -79,9 +79,9 @@ pnpm dev
   release yet, so it stays advisory (`continue-on-error`) until one ships.
 - `pnpm release:check` tests release-version analysis and packaging without publishing.
 
-## Releases and security
+## Releases
 
-See the [release setup](docs/releasing.md) for npm trusted publishing and the two-package (runtime + trainer) release config, and [SECURITY.md](SECURITY.md) for private vulnerability reports.
+See [RELEASING.md](RELEASING.md) for how releases are published and [GitHub Releases](https://github.com/bhouston/three-ntc/releases) for changes. See [SECURITY.md](SECURITY.md) for private vulnerability reports.
 
 ## Contribution
 
