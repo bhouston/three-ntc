@@ -10,6 +10,7 @@ import {
   MAX_GRID_RESOLUTION,
   type LatentGrid,
 } from './NTCGridModel.js';
+import type { ThreeMath } from './ThreeTypes.js';
 
 interface NTCGridPyramidOptions {
   // Feature-vector width per grid cell - the paper's "grid channels"
@@ -26,11 +27,13 @@ interface NTCGridPyramidOptions {
   hiddenActivation?: string;
   outputChannels?: number;
   textureResolution?: number;
-  uvTransform?: any;
+  uvTransform?: ThreeMath;
   positionalEncoding?: boolean;
   /** Zero retains grid-cell phase; eight selects the paper-style texel tile. */
   positionalEncodingPeriod?: number;
   dualGrid?: boolean;
+  /** The exported latent grid's wrap mode - see `NTCManifest.encodeNTC`. Defaults to `'repeat'`. */
+  wrap?: string;
   [key: string]: unknown;
 }
 
@@ -44,9 +47,10 @@ interface ResolvedNTCGridPyramidOptions {
   hiddenActivation: string;
   outputChannels: number;
   textureResolution: number | undefined;
-  uvTransform: any;
+  uvTransform: ThreeMath;
   positionalEncoding: boolean;
   dualGrid: boolean;
+  wrap: string;
 }
 
 /** Four G0 taps (with positional encoding), a bilinear G1 vector, and LOD.
@@ -120,6 +124,12 @@ function resolveNTCGridPyramidOptions(options: NTCGridPyramidOptions = {}): Reso
     // Optional (default off) - see computeDecoderInputSize's doc comment.
     positionalEncoding: options.positionalEncoding === true,
     dualGrid: options.dualGrid === true,
+    // `three-ntc`'s `NTCCpuModel`/`.ntc` manifest carry a `wrap` mode
+    // (see `NTCManifest.encodeNTC`'s default); resolved here alongside
+    // everything else so `NTCGridPyramidModel` is a complete `NTCCpuModel`
+    // and callers (this package's own `NTCFit`/`NTCManifest`, and
+    // `NTCNodeMaterial` consumers elsewhere) never need to patch it in.
+    wrap: options.wrap || 'repeat',
   };
 }
 
@@ -139,11 +149,12 @@ interface NTCGridPyramidModel {
   maxLod: number;
   lodOffset: number;
   positionalEncodingPeriod: number;
-  uvTransform: any;
+  uvTransform: ThreeMath;
   quantizationRange?: Array<[number, number]> | null;
   quantization?: { mode: string };
   positionalEncoding: boolean;
   dualGrid: boolean;
+  wrap: string;
 }
 
 /**
@@ -175,6 +186,7 @@ function createNTCGridPyramidModel(options: NTCGridPyramidOptions, random: () =>
     uvTransform,
     positionalEncoding,
     dualGrid,
+    wrap,
   } = resolveNTCGridPyramidOptions(options);
 
   const resolutions = computeGridLevels(baseResolution, requestedLevels, mipsPerLevel);
@@ -213,6 +225,7 @@ function createNTCGridPyramidModel(options: NTCGridPyramidOptions, random: () =>
     uvTransform,
     positionalEncoding,
     dualGrid,
+    wrap,
   };
 }
 

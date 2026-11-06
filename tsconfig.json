@@ -1,12 +1,12 @@
 {
   "extends": "./tsconfig.base.json",
-  "compilerOptions": { "composite": true },
   "files": [],
   "include": [],
   "references": [
-    { "path": "./packages/three-ntc/tsconfig.build.json" },
-    { "path": "./packages/three-ntc-trainer/tsconfig.build.json" },
-    { "path": "./packages/website" },
-    { "path": "./packages/cli" }
+    { "path": "./packages/three-ntc" },
+    { "path": "./packages/three-ntc-trainer" },
+    { "path": "./packages/playground" },
+    { "path": "./packages/cli" },
+    { "path": "./test" }
   ]
 }

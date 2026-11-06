@@ -1,11 +1,9 @@
 {
   "extends": "./tsconfig.build.json",
   "compilerOptions": {
-    "composite": false,
     "noEmit": true,
-    "tsBuildInfoFile": null,
     "rootDir": "../..",
-    "types": ["node", "vite/client"],
+    "types": ["node", "vite/client", "@webgpu/types"],
     "paths": {
       "three-ntc": ["../three-ntc/src/index.ts"],
       "three-ntc-trainer": ["./src/index.ts"]

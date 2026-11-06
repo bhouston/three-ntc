@@ -1,6 +1,6 @@
 import { resolveGradientPrecision, validateGPUDispatch } from './NTCGPUCapabilities.js';
 import { createLanczosSourceTexture } from './NTCLanczosSource.js';
-import { createNTCGridPyramidModel, type NTCGridPyramidModel } from './NTCGridPyramidModel.js';
+import { createNTCGridPyramidModel, type NTCGridPyramidModel as NTCCpuGridModel } from './NTCGridPyramidModel.js';
 import { DEFAULT_MIPS_PER_LEVEL } from './NTCGridModel.js';
 import { NTCGPUModel } from './NTCGPUModel.js';
 import {
@@ -13,11 +13,12 @@ import { createResetGradientNormComputeNode } from './NTCGPUKernelsTSL.js';
 import { getLearningRate, createRandom, yieldToBrowser } from './NTCTrainingUtils.js';
 import {
   DEFAULT_QUANTIZATION_OPTIONS,
-  type NTCQuantizationOptions,
   QUANTIZATION_SCHEMES,
   resolveQuantizationConfig,
   refreshGPUQuantizationRange,
+  type NTCQuantizationOptions,
 } from './NTCQuantization.js';
+import type { ThreeRenderer, ThreeTexture, ThreeMath } from './ThreeTypes.js';
 
 // How often (in training iterations) `quantization.range === 'auto'` is
 // re-measured from the live GPU latent buffer (see
@@ -39,7 +40,7 @@ const QUANTIZATION_RANGE_REFRESH_INTERVAL = 64;
  * no source texture exposes a usable size, in which case the caller falls
  * back to `createNTCGridPyramidModel`'s own fallback instead.
  */
-function resolveSourceTextureResolution(textures: any[]): number | null {
+function resolveSourceTextureResolution(textures: ThreeTexture[]): number | null {
   for (const texture of textures) {
     const image = texture.image;
     if (image && image.width && image.height) return Math.max(image.width, image.height);
@@ -129,7 +130,7 @@ interface NTCTrainerOptions {
   retrainAfterQuantize?: number;
   textureResolution?: number;
   channelActivations?: Array<string | undefined>;
-  uvTransform?: any;
+  uvTransform?: ThreeMath;
   [key: string]: unknown;
 }
 
@@ -138,14 +139,14 @@ interface NTCTrainProgress {
   iterations: number;
   loss: number;
   learningRate: number;
-  cpuModel: NTCGridPyramidModel;
+  cpuModel: NTCCpuGridModel;
   gpuModel: NTCGPUModel;
 }
 
 interface NTCTrainArgs {
-  renderer: any;
-  sourceTexture?: any;
-  sourceTextures?: any[];
+  renderer: ThreeRenderer;
+  sourceTexture?: ThreeTexture;
+  sourceTextures?: ThreeTexture[];
   onProgress?: ((progress: NTCTrainProgress) => void) | null;
 }
 
@@ -193,7 +194,7 @@ class NTCTrainer {
    */
   private async _quantizeAndFreezeLatents(
     gpuModel: NTCGPUModel,
-    renderer: any,
+    renderer: ThreeRenderer,
     quantization: ReturnType<typeof resolveQuantizationConfig>,
   ): Promise<void> {
     if (quantization.range === 'auto') await refreshGPUQuantizationRange(gpuModel, renderer);
@@ -202,7 +203,7 @@ class NTCTrainer {
     const quantize = QUANTIZATION_SCHEMES[quantization.mode].quantizeForwardCPU;
     const latents = new Float32Array(await renderer.getArrayBufferAsync(gpuModel.latentsBuffers.attribute));
 
-    gpuModel.layout.gridLevels.forEach((level: any, g: number) => {
+    gpuModel.layout.gridLevels.forEach((level, g: number) => {
       const [lo, hi] = ranges[g];
       for (let i = level.offset; i < level.offset + level.floatCount; i++) latents[i] = quantize(latents[i], lo, hi);
     });
@@ -230,7 +231,7 @@ class NTCTrainer {
     // than deep inside GPUModel construction) - `gpuModel` below resolves
     // it again from the same `settings.quantization` input, which is
     // idempotent (see resolveQuantizationConfig's doc comment).
-    const quantization = resolveQuantizationConfig(settings as any);
+    const quantization = resolveQuantizationConfig(settings);
     this.quantizationRange = null;
 
     // Training needs the real source texture resolution to know the full
@@ -253,7 +254,7 @@ class NTCTrainer {
     const gpuModel = new NTCGPUModel({ ...modelSettings, gradientPrecision });
     gpuModel.initFromCPUModel(cpuModel);
 
-    const ownedTextures: any[] = [];
+    const ownedTextures: ThreeTexture[] = [];
     try {
       if (settings.mipFilter === 'lanczos') {
         for (const source of textures) ownedTextures.push(await createLanczosSourceTexture(renderer, source));
@@ -284,7 +285,10 @@ class NTCTrainer {
           latentsFrozen = true;
         }
 
-        const learningRate = getLearningRate(settings as any, iteration);
+        const learningRate = getLearningRate(
+          settings as { learningRate: number; iterations: number; cosineAnnealingScale: number },
+          iteration,
+        );
         gpuModel.resetLoss();
         gpuModel.learningRateUniform.value = learningRate;
         gpuModel.stepUniform.value = iteration + 1;

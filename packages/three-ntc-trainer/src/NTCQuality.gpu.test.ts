@@ -3,7 +3,7 @@
 import { float, floor, sin, textureLevel, uv, vec4 } from 'three/tsl';
 import { expect, it } from 'vitest';
 import { commands } from 'vitest/browser';
-import { applyChannelActivation, NTCLoader } from 'three-ntc';
+import { applyChannelActivation, NTCLoader, type NTCLayoutChannel } from 'three-ntc';
 import { NTCTrainer } from './NTCTrainer.js';
 import { encodeNTC } from './NTCManifest.js';
 import { bakeColorNodeToTexture } from './NTCTextureSource.js';
@@ -15,7 +15,7 @@ for (const fixture of ['smooth', 'checker', 'waves']) {
   for (const positionalEncoding of [false, true]) {
     it(`measures ${fixture}, positionalEncoding=${positionalEncoding}`, async () => {
       const renderer = await getRenderer();
-      const config = await (commands as any).benchmarkConfig();
+      const config = await commands.benchmarkConfig();
       const activations = Array(4).fill(config.physical ? 'sigmoid' : 'linear');
       const u = uv();
       const pattern =
@@ -53,7 +53,7 @@ for (const fixture of ['smooth', 'checker', 'waves']) {
       };
       const result = await new NTCTrainer(options).train({ renderer, sourceTexture: source.texture });
       const manifest = encodeNTC(result.cpuModel, {
-        activeChannels: [{ key: 'albedo' }, { key: 'roughness' }],
+        activeChannels: [{ key: 'albedo' }, { key: 'roughness' }] as NTCLayoutChannel[],
         constantValues: {},
       });
       const loaded = new NTCLoader().parse(manifest).cpuModel;
@@ -87,7 +87,7 @@ for (const fixture of ['smooth', 'checker', 'waves']) {
         mip?.dispose();
         levels.forEach((t) => t.dispose());
       }
-      await (commands as any).recordMetric({
+      await commands.recordMetric({
         fixture,
         positionalEncoding,
         seed: 7,

@@ -21,15 +21,17 @@ import {
   vec3,
 } from 'three/tsl';
 
+import type { TSLNode } from './MaterialXUtils.js';
+
 const HEXTILE_SQRT3_2 = Math.sqrt(3) * 2;
 const HEXTILE_EPSILON = 1e-6;
 const HEXTILE_PI_OVER_180 = Math.PI / 180;
 
-function toRadians(degrees: any) {
+function toRadians(degrees: TSLNode) {
   return mul(degrees, HEXTILE_PI_OVER_180);
 }
 
-function mxHextileHash(point: any) {
+function mxHextileHash(point: TSLNode) {
   const x = element(point, 0);
   const y = element(point, 1);
   const p3Base = vec3(x, y, x);
@@ -43,7 +45,7 @@ function mxHextileHash(point: any) {
   return fract(mul(lhs, rhs));
 }
 
-function mxSchlickGain(x: any, r: any) {
+function mxSchlickGain(x: TSLNode, r: TSLNode) {
   const rr = clamp(r, 0.001, 0.999);
   const a = mul(sub(div(1, rr), 2), sub(1, mul(2, x)));
   const low = div(x, add(a, 1));
@@ -51,7 +53,7 @@ function mxSchlickGain(x: any, r: any) {
   return mix(low, high, step(0.5, x));
 }
 
-function normalizeBlendWeights(weights: any) {
+function normalizeBlendWeights(weights: TSLNode) {
   const wx = element(weights, 0);
   const wy = element(weights, 1);
   const wz = element(weights, 2);
@@ -59,21 +61,21 @@ function normalizeBlendWeights(weights: any) {
   return div(weights, sum);
 }
 
-function mxRotate2d(point: any, sine: any, cosine: any) {
+function mxRotate2d(point: TSLNode, sine: TSLNode, cosine: TSLNode) {
   return vec2(
     sub(mul(cosine, element(point, 0)), mul(sine, element(point, 1))),
     add(mul(sine, element(point, 0)), mul(cosine, element(point, 1))),
   );
 }
 
-function toTileCenter(tileId: any) {
+function toTileCenter(tileId: TSLNode) {
   const scaled = div(tileId, HEXTILE_SQRT3_2);
   const sx = element(scaled, 0);
   const sy = element(scaled, 1);
   return vec2(add(sx, mul(0.5, sy)), mul(0.8660254, sy));
 }
 
-export function mxHextileComputeBlendWeights(luminanceWeights: any, tileWeights: any, falloff: any) {
+export function mxHextileComputeBlendWeights(luminanceWeights: TSLNode, tileWeights: TSLNode, falloff: TSLNode) {
   const weighted = mul(luminanceWeights, pow(tileWeights, vec3(7, 7, 7)));
   const normalized = normalizeBlendWeights(weighted);
   const gained = vec3(
@@ -87,13 +89,13 @@ export function mxHextileComputeBlendWeights(luminanceWeights: any, tileWeights:
 }
 
 export function mxHextileCoord(
-  coord: any,
-  rotation: any,
-  rotationRange: any,
-  scale: any,
-  scaleRange: any,
-  offset: any,
-  offsetRange: any,
+  coord: TSLNode,
+  rotation: TSLNode,
+  rotationRange: TSLNode,
+  scale: TSLNode,
+  scaleRange: TSLNode,
+  offset: TSLNode,
+  offsetRange: TSLNode,
 ) {
   const st = mul(coord, HEXTILE_SQRT3_2);
   const stSkewed = vec2(add(element(st, 0), mul(-0.57735027, element(st, 1))), mul(1.15470054, element(st, 1)));
@@ -137,14 +139,14 @@ export function mxHextileCoord(
   const offset2 = mix(vec2(offsetMin, offsetMin), vec2(offsetMax, offsetMax), mul(rand2, offset));
   const offset3 = mix(vec2(offsetMin, offsetMin), vec2(offsetMax, offsetMax), mul(rand3, offset));
 
-  const sampleCoord = (center: any, randomOffset: any, rotationValue: any, sampleScale: any) => {
+  const sampleCoord = (center: TSLNode, randomOffset: TSLNode, rotationValue: TSLNode, sampleScale: TSLNode) => {
     const delta = sub(coord, center);
     const rotated = mxRotate2d(delta, sin(rotationValue), cos(rotationValue));
     const safeScale = max(sampleScale, HEXTILE_EPSILON);
     return add(add(div(rotated, vec2(safeScale, safeScale)), center), randomOffset);
   };
 
-  const sampleDerivative = (derivative: any, rotationValue: any, sampleScale: any) => {
+  const sampleDerivative = (derivative: TSLNode, rotationValue: TSLNode, sampleScale: TSLNode) => {
     const rotated = mxRotate2d(derivative, sin(rotationValue), cos(rotationValue));
     const safeScale = max(sampleScale, HEXTILE_EPSILON);
     return div(rotated, vec2(safeScale, safeScale));

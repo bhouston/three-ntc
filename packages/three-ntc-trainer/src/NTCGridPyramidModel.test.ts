@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createNTCGridPyramidModel, computeDecoderInputSize } from './NTCGridPyramidModel.js';
 import { computeTextureModelLayout } from './NTCGPUModel.js';
 import { encodeNTC } from './NTCManifest.js';
-import { NTCLoader } from 'three-ntc';
+import { NTCLoader, type NTCLayoutChannel } from 'three-ntc';
 
 describe('NTCGridPyramidModel', () => {
   it('allocates independent half-resolution G1 grids and round-trips wide features', () => {
@@ -25,7 +25,7 @@ describe('NTCGridPyramidModel', () => {
     const layout = computeTextureModelLayout(options);
     expect(layout.inputSize).toBe(4 * 8 + 12 + 12 + 1);
     expect(layout.totalLatents).toBe([...model.grids, ...model.lowResGrids].reduce((s, g) => s + g.data.length, 0));
-    const manifest = encodeNTC(model, { activeChannels: [{ key: 'albedo' }], constantValues: {} });
+    const manifest = encodeNTC(model, { activeChannels: [{ key: 'albedo' } as NTCLayoutChannel], constantValues: {} });
     const loaded = new NTCLoader().parse(manifest).cpuModel;
     expect(loaded.lowResGrids?.map((g) => [g.width, g.channels])).toEqual([
       [8, 12],
@@ -88,7 +88,7 @@ it('physical mip limits match GPU textures for unit and non-power-of-two sources
     const cpu = createNTCGridPyramidModel(options, () => 0.5);
     expect(cpu.maxLod).toBe(lod);
     expect(computeTextureModelLayout(options).maxLod).toBe(lod);
-    const manifest = encodeNTC(cpu, { activeChannels: [{ key: 'albedo' }], constantValues: {} });
+    const manifest = encodeNTC(cpu, { activeChannels: [{ key: 'albedo' } as NTCLayoutChannel], constantValues: {} });
     expect(new NTCLoader().parse(manifest).cpuModel.maxLod).toBe(lod);
   }
 });

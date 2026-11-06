@@ -10,12 +10,7 @@ coverage
 .env.*
 .DS_Store
 .idea
-.vscode
 
 .pnpm-store/
 docs/metrics/*.log
 release-artifacts/
-packages/three-ntc/LICENSE
-packages/three-ntc/CHANGELOG.md
-packages/three-ntc-trainer/LICENSE
-packages/three-ntc-trainer/CHANGELOG.md
