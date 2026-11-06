@@ -13,7 +13,8 @@ for (const [name, o] of Object.entries(variants)) {
   try {
     const b = await chromium.launch({ headless: false, ...o });
     const p = await b.newPage();
-    await p.goto('about:blank');
+    await p.route('http://localhost:1/', r => r.fulfill({ body: '<html></html>', contentType: 'text/html' }));
+    await p.goto('http://localhost:1/');
     const r = await p.evaluate(async () => { const a = await navigator.gpu?.requestAdapter(); return a ? JSON.stringify(a.info && { v: a.info.vendor, a: a.info.architecture, d: a.info.description }) : 'none'; });
     console.log('PROBE', name, r, b.version());
     await b.close();
