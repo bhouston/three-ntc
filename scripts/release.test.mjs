@@ -1,47 +1,23 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { prepare, packages } from './prepare-release.mjs';
+import { join, resolve } from 'node:path';
 import { analyzeCommits } from '@semantic-release/commit-analyzer';
 
-void test('prepares release documents without touching version or workspace dependencies', () => {
-  const cwd = mkdtempSync(join(tmpdir(), 'ntc-release-'));
-  try {
-    writeFileSync(join(cwd, 'LICENSE'), 'MIT');
-    writeFileSync(join(cwd, 'CHANGELOG.md'), '# Release notes');
-    for (const name of packages) {
-      mkdirSync(join(cwd, 'packages', name), { recursive: true });
-      writeFileSync(
-        join(cwd, 'packages', name, 'package.json'),
-        JSON.stringify({
-          name,
-          version: '0.1.0',
-          files: ['dist'],
-          ...(name.endsWith('trainer') ? { dependencies: { 'three-ntc': 'workspace:^', fflate: '^0.8.2' } } : {}),
-        }),
-      );
-    }
-    // Version bumping and the workspace:^ -> real semver rewrite are left to
-    // @anolilab/semantic-release-pnpm / `pnpm pack`, not this script.
-    prepare({}, { cwd, nextRelease: { version: '0.2.0' } });
-    for (const name of packages) {
-      const dir = join(cwd, 'packages', name);
-      const pkg = JSON.parse(readFileSync(join(dir, 'package.json')));
-      assert.equal(pkg.version, '0.1.0');
-      assert.ok(pkg.files.includes('CHANGELOG.md'));
-      assert.equal(readFileSync(join(dir, 'LICENSE'), 'utf8'), 'MIT');
-      assert.equal(readFileSync(join(dir, 'CHANGELOG.md'), 'utf8'), '# Release notes');
-      if (name.endsWith('trainer')) {
-        assert.equal(pkg.dependencies['three-ntc'], 'workspace:^');
-        assert.equal(pkg.dependencies.fflate, '^0.8.2');
-      }
-    }
-  } finally {
-    rmSync(cwd, { recursive: true, force: true });
-  }
-});
+// Published via pnpm publish directly (see release.config.js): pnpm rewrites
+// workspace:^ deps and packs the `files` field natively, so these packages
+// just need a real LICENSE and a `files` field that ships `dist`.
+const packages = ['three-ntc', 'three-ntc-trainer'].map((name) => `packages/${name}`);
+
+for (const path of packages) {
+  void test(`${path} is ready for pnpm publish`, () => {
+    assert.ok(existsSync(resolve(path, 'LICENSE')), `${path}/LICENSE is missing`);
+    const pkg = JSON.parse(readFileSync(resolve(path, 'package.json'), 'utf8'));
+    assert.ok(pkg.files?.includes('dist'), `${path}/package.json files must include "dist"`);
+  });
+}
+
 for (const [message, expected] of [
   ['fix: handle empty textures', 'patch'],
   ['feat: add exporter', 'minor'],
@@ -65,14 +41,14 @@ for (const [message, expected] of [
   });
 }
 
-void test('the full pnpm prepare pipeline (files, per-package version bump, artifact pack) produces installable registry tarballs, with pnpm natively resolving workspace:^ to a real semver range', async () => {
-  const { cpSync, existsSync } = await import('node:fs');
+void test('the real release pipeline (per-package version bump, inline artifact pack) produces installable registry tarballs, with pnpm natively resolving workspace:^ to a real semver range', async () => {
+  const { cpSync } = await import('node:fs');
   const { execFileSync } = await import('node:child_process');
   const { prepare: pnpmPrepare } = await import('@anolilab/semantic-release-pnpm');
+  const { default: config } = await import('../release.config.js');
+  const repo = process.cwd();
   const cwd = mkdtempSync(join(tmpdir(), 'ntc-pack-'));
   try {
-    writeFileSync(join(cwd, 'LICENSE'), readFileSync('LICENSE'));
-    writeFileSync(join(cwd, 'CHANGELOG.md'), '# Test release');
     // A real (if minimal) pnpm workspace, so `pnpm pack` can resolve the
     // trainer's `workspace:^` dependency on three-ntc the same way it does
     // in CI, instead of mocking that resolution.
@@ -81,12 +57,11 @@ void test('the full pnpm prepare pipeline (files, per-package version bump, arti
       join(cwd, 'package.json'),
       JSON.stringify({ name: 'ntc-pack-test-root', version: '0.0.0', private: true }),
     );
-    for (const name of packages) {
-      const dir = join(cwd, 'packages', name);
+    for (const path of packages) {
+      const dir = join(cwd, path);
       mkdirSync(dir, { recursive: true });
-      cpSync(`packages/${name}/dist`, join(dir, 'dist'), { recursive: true });
-      cpSync(`packages/${name}/package.json`, join(dir, 'package.json'));
-      cpSync(`packages/${name}/README.md`, join(dir, 'README.md'));
+      cpSync(join(repo, path, 'dist'), join(dir, 'dist'), { recursive: true });
+      for (const file of ['package.json', 'README.md', 'LICENSE']) cpSync(join(repo, path, file), join(dir, file));
     }
     const context = {
       cwd,
@@ -96,30 +71,33 @@ void test('the full pnpm prepare pipeline (files, per-package version bump, arti
       stderr: process.stderr,
       logger: { log() {} },
     };
-    // Mirrors release.config.js's plugin order: files prep, then each
-    // package's pnpm version bump, then our artifact pack step.
-    prepare({}, context);
-    execFileSync('pnpm', ['install', '--no-frozen-lockfile', '--ignore-scripts'], {
-      cwd,
-      stdio: 'pipe',
-    });
-    for (const name of packages) {
-      await pnpmPrepare({ pkgRoot: `packages/${name}`, npmPublish: false }, context);
+    execFileSync('pnpm', ['install', '--no-frozen-lockfile', '--ignore-scripts'], { cwd, stdio: 'pipe' });
+    // Mirrors release.config.js's plugin order: each package's pnpm version
+    // bump, then the config's own inline prepare (artifact pack, relative to cwd).
+    for (const path of packages) await pnpmPrepare({ pkgRoot: path, npmPublish: false }, context);
+    const inline = config.plugins.find((plugin) => typeof plugin === 'object' && !Array.isArray(plugin));
+    process.chdir(cwd);
+    try {
+      inline.prepare();
+    } finally {
+      process.chdir(repo);
     }
-    prepare({ artifacts: true }, context);
-    for (const name of packages) {
+    for (const path of packages) {
+      const name = path.replace('packages/', '');
       const tarball = join(cwd, 'release-artifacts', `${name}-0.2.0.tgz`);
       assert.ok(existsSync(tarball), `${name}: tarball not found at ${tarball}`);
       const entries = execFileSync('tar', ['-tf', tarball], { encoding: 'utf8' });
-      for (const file of ['dist/index.js', 'dist/index.d.ts', 'LICENSE', 'README.md', 'CHANGELOG.md']) {
+      for (const file of ['dist/index.js', 'dist/index.d.ts', 'LICENSE', 'README.md']) {
         assert.ok(entries.includes(`package/${file}`), `${name}: missing ${file}`);
       }
+      assert.ok(!entries.includes('CHANGELOG.md'), `${name}: CHANGELOG.md must not be shipped`);
       const pkg = JSON.parse(execFileSync('tar', ['-xOf', tarball, 'package/package.json'], { encoding: 'utf8' }));
       assert.equal(pkg.version, '0.2.0');
       assert.ok(!JSON.stringify(pkg).includes('workspace:'));
       if (name.endsWith('trainer')) assert.equal(pkg.dependencies['three-ntc'], '^0.2.0');
     }
   } finally {
+    process.chdir(repo);
     rmSync(cwd, { recursive: true, force: true });
   }
 });
