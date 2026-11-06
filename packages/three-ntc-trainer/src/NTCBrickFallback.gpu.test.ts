@@ -4,7 +4,7 @@ import { buildChannelActivations } from 'three-ntc';
 import { getRenderer } from '../../../test/gpu-helpers.js';
 import { MaterialXLoader, classifyMaterialChannels, bakeMaterialToTextures, NTCTrainer } from './index.js';
 import type { MaterialXParseResult } from './materialx/MaterialXDocument.js';
-import brick from '../../website/public/materialx/brick.mtlx?raw';
+import brick from '../../playground/public/materialx/brick.mtlx?raw';
 
 it('trains the default brick with identical results after an atomic compiler failure', async () => {
   const renderer = await getRenderer();

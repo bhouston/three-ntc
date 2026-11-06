@@ -57,8 +57,8 @@ viewer cases detect sustained regressions but are not long-duration soak tests.
 For a quick targeted run:
 
 ```sh
-NTC_BROWSER=webkit NTC_DEVICE_SCALE_FACTOR=2 pnpm test:gpu --fileParallelism=false packages/website/src/components/NTCViewer.gpu.test.ts
-pnpm test:gpu:safari packages/website/src/components/NTCViewer.gpu.test.ts
+NTC_BROWSER=webkit NTC_DEVICE_SCALE_FACTOR=2 pnpm test:gpu --fileParallelism=false packages/playground/src/components/NTCViewer.gpu.test.ts
+pnpm test:gpu:safari packages/playground/src/components/NTCViewer.gpu.test.ts
 ```
 
 See [the cause summary](viewer_performance_summary.md) and

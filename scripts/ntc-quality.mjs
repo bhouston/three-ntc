@@ -19,7 +19,7 @@ if (!cwd) {
     await mkdir(dirname(join(cwd, file)), { recursive: true });
     await copyFile(join(root, file), join(cwd, file));
   }
-  for (const sub of ['', 'packages/three-ntc', 'packages/three-ntc-trainer', 'packages/website']) {
+  for (const sub of ['', 'packages/three-ntc', 'packages/three-ntc-trainer', 'packages/playground']) {
     await mkdir(join(cwd, sub), { recursive: true });
     await symlink(join(root, sub, 'node_modules'), join(cwd, sub, 'node_modules'), 'dir');
   }
