@@ -6,7 +6,6 @@
   "references": [
     { "path": "./packages/three-ntc" },
     { "path": "./packages/three-ntc-trainer" },
-    { "path": "./packages/website" },
     { "path": "./packages/cli" }
   ]
 }

@@ -69,9 +69,9 @@ Reproduce the actual component workload with:
 
 ```sh
 pnpm exec playwright install webkit
-NTC_BROWSER=webkit NTC_DEVICE_SCALE_FACTOR=2 pnpm test:gpu packages/website/src/components/NTCViewer.gpu.test.ts
-NTC_GPU_BACKEND=metal NTC_DEVICE_SCALE_FACTOR=2 pnpm test:gpu packages/website/src/components/NTCViewer.gpu.test.ts
-pnpm test:gpu:safari packages/website/src/components/NTCViewer.gpu.test.ts
+NTC_BROWSER=webkit NTC_DEVICE_SCALE_FACTOR=2 pnpm test:gpu packages/playground/src/components/NTCViewer.gpu.test.ts
+NTC_GPU_BACKEND=metal NTC_DEVICE_SCALE_FACTOR=2 pnpm test:gpu packages/playground/src/components/NTCViewer.gpu.test.ts
+pnpm test:gpu:safari packages/playground/src/components/NTCViewer.gpu.test.ts
 ```
 
 Installed Safari 27 is distinct from this Playwright WebKit build. After the user
