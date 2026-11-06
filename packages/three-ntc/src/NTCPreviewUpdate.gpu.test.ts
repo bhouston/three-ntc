@@ -37,7 +37,7 @@ it('uploads preview weights and latents without rebuilding its shader or texture
   const device = renderer.backend.device,
     create = device.createShaderModule.bind(device);
   let compilations = 0;
-  device.createShaderModule = (d: any) => {
+  device.createShaderModule = (d: { code: string }) => {
     compilations++;
     return create(d);
   };

@@ -5,7 +5,8 @@
 import { float, uv, vec4 } from 'three/tsl';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { evaluateNeuralTextureRaw } from './NTCDecoderTSL.js';
+import { evaluateNeuralTextureRaw, type NTCCpuModel } from './NTCDecoderTSL.js';
+import type { TSLNode } from './NTCTSLTypes.js';
 import { buildLevelTextures, buildMipChainTexture } from './NTCHalfFloatTexture.js';
 import { NTCLoader } from './NTCLoader.js';
 import { NTCNodeMaterial } from './NTCNodeMaterial.js';
@@ -13,20 +14,20 @@ import { evaluateNTCCpu, getRenderer, makeModel, pixelUv, renderNodeToFloats } f
 
 const SIZE = 32;
 
-let renderer: any;
+let renderer;
 beforeAll(async () => {
   renderer = await getRenderer();
 });
 
 /** Renders the raw decoder outputs (first 4 channels) at a fixed LOD. */
-async function renderDecoder(cpuModel: any, lod: number): Promise<Float32Array> {
+async function renderDecoder(cpuModel: NTCCpuModel, lod: number): Promise<Float32Array> {
   const mipChain = cpuModel.positionalEncoding ? null : buildMipChainTexture(cpuModel);
   const levelTextures = buildLevelTextures(cpuModel);
   const outputs = evaluateNeuralTextureRaw(uv(), cpuModel, mipChain, null, float(lod), levelTextures);
   const node = vec4(outputs[0], outputs[1], outputs[2], outputs[3] ?? float(0));
   const pixels = await renderNodeToFloats(renderer, node, SIZE);
   mipChain?.dispose();
-  levelTextures?.forEach((t: any) => t.dispose());
+  levelTextures?.forEach((t: TSLNode) => t.dispose());
   return pixels;
 }
 
@@ -147,7 +148,7 @@ describe('shipped .ntc assets', () => {
         debugView: 'albedo',
         lodNode: float(0),
       });
-      const albedo = await renderNodeToFloats(renderer, (material as any).colorNode, SIZE);
+      const albedo = await renderNodeToFloats(renderer, material.colorNode, SIZE);
       material.dispose();
       for (let i = 0; i < albedo.length; i += 4) {
         for (let c = 0; c < 3; c++) {

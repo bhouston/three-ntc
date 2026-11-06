@@ -2,7 +2,7 @@ import { HalfFloatType, Mesh, OrthographicCamera, PlaneGeometry, RenderTarget, S
 import { float, floor, uv, vec2, vec3, vec4 } from 'three/tsl';
 import { expect, it } from 'vitest';
 import { commands } from 'vitest/browser';
-import { evaluateNeuralTextureSampled } from './NTCDecoderTSL.js';
+import { evaluateNeuralTextureSampled, type NTCSamplingMode } from './NTCDecoderTSL.js';
 import { NTCNodeMaterial } from './NTCNodeMaterial.js';
 import { buildLevelTextures } from './NTCHalfFloatTexture.js';
 import { CHANNELS, getChannel, layoutChannels } from './NTCFormat.js';
@@ -110,7 +110,7 @@ it('stochastic samples individual decoded texels and its stratified mean matches
     expect(new Set(values).size).toBeGreaterThan(1);
     const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
     expect(Math.abs(mean - expected)).toBeLessThan(0.001);
-    await (commands as any).recordMetric({
+    await commands.recordMetric({
       kind: 'stochastic-filter-oracle',
       mean,
       expected,
@@ -142,7 +142,7 @@ it('rebuilds a shader containing only the selected sampling path and preserves m
   const device = renderer.backend.device,
     create = device.createShaderModule.bind(device);
   const shaders: string[] = [];
-  device.createShaderModule = (descriptor: any) => {
+  device.createShaderModule = (descriptor: { code: string }) => {
     shaders.push(descriptor.code);
     return create(descriptor);
   };
@@ -198,7 +198,7 @@ it('rebuilds a shader containing only the selected sampling path and preserves m
     const updated = await readRenderTargetFloats(renderer, target, 32);
     expect(updated.some((value, i) => Math.abs(value - restored[i]) > 0.001)).toBe(true);
     expect(shaders).toHaveLength(modulesBeforeUpdate);
-    expect(() => material.setSamplingMode('invalid' as any)).toThrow();
+    expect(() => material.setSamplingMode('invalid' as unknown as NTCSamplingMode)).toThrow();
   } finally {
     device.createShaderModule = create;
     renderer.setRenderTarget(previous);

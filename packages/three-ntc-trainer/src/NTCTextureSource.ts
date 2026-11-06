@@ -24,7 +24,7 @@ async function bakeColorNodeToTexture(
   renderer: ThreeRenderer,
   colorNode: TSLNode,
   resolution = 512,
-  { generateMipmaps = false, uvTransform = null as ThreeMath | null } = {},
+  { generateMipmaps = false, uvTransform = null as ThreeMath } = {},
 ): Promise<ThreeRenderTarget> {
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 4);
@@ -144,7 +144,7 @@ async function bakeColorNodeToTexture(
  * doesn't try to walk the graph looking for an `<image>` node - it simply
  * hands the whole color expression to `bakeColorNodeToTexture`.
  */
-function extractBaseColorNode(materialXMaterial: ThreeMaterial): TSLNode | null {
+function extractBaseColorNode(materialXMaterial: ThreeMaterial): TSLNode {
   if (!materialXMaterial) return null;
   if (materialXMaterial.colorNode) return materialXMaterial.colorNode;
 
@@ -180,9 +180,9 @@ function loadImageTexture(url: string): Promise<ThreeTexture> {
  */
 class NTCTextureSource {
   texture: ThreeTexture;
-  renderTarget: ThreeRenderTarget | null;
+  renderTarget: ThreeRenderTarget;
 
-  constructor(texture: ThreeTexture, renderTarget: ThreeRenderTarget | null = null) {
+  constructor(texture: ThreeTexture, renderTarget: ThreeRenderTarget = null) {
     this.texture = texture;
     this.renderTarget = renderTarget;
   }
@@ -191,7 +191,7 @@ class NTCTextureSource {
     renderer: ThreeRenderer,
     colorNode: TSLNode,
     resolution = 512,
-    uvTransform: ThreeMath | null = null,
+    uvTransform: ThreeMath = null,
   ): Promise<NTCTextureSource> {
     // `generateMipmaps: true` - this is the actual training-source bake
     // path (see bakeColorNodeToTexture's doc comment on its default).

@@ -1,6 +1,7 @@
 import type { NTCActivation } from './NTCOutputActivations.js';
 import { FileLoader, Loader } from 'three';
 import { FORMAT, VERSION, getChannel, layoutChannels, decodeUvTransform } from './NTCFormat.js';
+import type { NTCConstantValue } from './NTCTSLTypes.js';
 import { LATENT_CODECS, decodeMLPLayersBase64, MLPBlock, LatentDtype } from './NTCBinaryCodec.js';
 import { NTCCpuModel } from './NTCDecoderTSL.js';
 import { NTCChannelClassification } from './NTCNodeMaterial.js';
@@ -40,7 +41,7 @@ export interface NTCManifest {
   channels: {
     activeKeys: string[];
     encodings?: Record<string, { activation: NTCActivation }>;
-    constantValues?: Record<string, any>;
+    constantValues?: Record<string, NTCConstantValue>;
   };
   renderFlags?: { side?: number; transparent?: boolean } | null;
 }
@@ -64,7 +65,8 @@ export interface NTCParsedAsset {
  * `NTCTrainer` run / `NTCFit.fitNTCMaterial()` call produces.
  *
  * @augments Loader
- * @three_import import { NTCLoader } from 'three/addons/loaders/NTCLoader.js';
+ * @example
+ * import { NTCLoader } from 'three-ntc';
  */
 class NTCLoader extends Loader {
   /**
@@ -72,7 +74,7 @@ class NTCLoader extends Loader {
    *
    * @param {LoadingManager} [manager] - The loading manager.
    */
-  constructor(manager?: any) {
+  constructor(manager?: unknown) {
     super(manager);
   }
 

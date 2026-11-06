@@ -80,7 +80,7 @@ async function fitNTCMaterial(renderer: ThreeRenderer, material: ThreeMaterial, 
     ...trainerOptions,
   });
 
-  let current: ThreeMaterial | null = null;
+  let current: ThreeMaterial = null;
 
   const rebuild = (cpuModel: NTCGridPyramidModel) => {
     const previous = current;

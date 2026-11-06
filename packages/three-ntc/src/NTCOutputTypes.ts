@@ -9,6 +9,7 @@ import {
   vec2,
   vec3,
 } from 'three/tsl';
+import type { TSLNode } from './NTCTSLTypes.js';
 
 /**
  * Turns a trained tangent-space (dx, dy) offset into the mesh's final
@@ -47,7 +48,7 @@ import {
  * re-exported from NTCNodeMaterial.js for backward compatibility
  * with existing imports/tests.
  */
-function reconstructFinalNormal(offsetNode: any): any {
+function reconstructFinalNormal(offsetNode: TSLNode) {
   const dx = offsetNode.x;
   const dy = offsetNode.y;
   const dz = sqrt(max(float(1).sub(dx.mul(dx)).sub(dy.mul(dy)), float(0)));
@@ -70,7 +71,7 @@ function reconstructFinalNormal(offsetNode: any): any {
  * to preview a constant channel through the exact same node-based color
  * pipeline as a trained one.
  */
-function constantToNode(value: number | number[]): any {
+function constantToNode(value: number | number[]): TSLNode {
   if (!Array.isArray(value)) return float(value);
 
   return value.length === 2 ? vec2(...value) : vec3(...value);
@@ -78,7 +79,7 @@ function constantToNode(value: number | number[]): any {
 
 /** One entry of `OUTPUT_TYPES` - see the registry's doc comment below. */
 export interface NTCOutputType {
-  reconstruct: (offsetNode: any) => any;
+  reconstruct: (offsetNode: TSLNode) => TSLNode;
   previewSize: number;
 }
 

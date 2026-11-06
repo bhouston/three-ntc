@@ -42,6 +42,7 @@ export default defineConfig({
     },
   },
   test: {
+    fsModuleCache: true,
     coverage: {
       provider: 'v8',
       reportOnFailure: true,

@@ -57,7 +57,7 @@ function renderAlbedo(cpuModel: NTCGridPyramidModel, classification: NTCChannelC
     lodNode: float(0),
   });
   const pixels = renderNodeToFloats(renderer, material.colorNode, SIZE);
-  pixels.finally(() => material.dispose());
+  void pixels.finally(() => material.dispose());
   return pixels;
 }
 

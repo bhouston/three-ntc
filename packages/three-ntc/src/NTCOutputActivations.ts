@@ -1,4 +1,5 @@
 import { exp, float, log, max, tanh } from 'three/tsl';
+import type { TSLNode } from './NTCTSLTypes.js';
 
 /**
  * Per-channel output nonlinearities for a decoder whose MLP itself always
@@ -29,14 +30,14 @@ export type NTCActivation = 'sigmoid' | 'tanh' | 'softplus' | 'linear' | undefin
  * here, neural-appearance's roughness/opacity/scaledSigmoid outputs in
  * ../neural-appearance/NeuralAppearanceTSL.js) is this same formula.
  */
-function sigmoidTSL(xNode: any): any {
+function sigmoidTSL(xNode: TSLNode) {
   return float(1).div(float(1).add(exp(xNode.negate())));
 }
 
 /**
  * z -> a, the forward nonlinearity.
  */
-function applyChannelActivation(zNode: any, activation: NTCActivation): any {
+function applyChannelActivation(zNode: TSLNode, activation: NTCActivation) {
   if (activation === 'sigmoid') return sigmoidTSL(zNode);
   if (activation === 'tanh') return tanh(zNode);
 
@@ -54,7 +55,7 @@ function applyChannelActivation(zNode: any, activation: NTCActivation): any {
  * (`a - target`) into the pre-activation delta (`dL/dz`) the rest of the
  * backward pass expects.
  */
-function channelActivationDerivativeFromOutput(aNode: any, activation: NTCActivation): any {
+function channelActivationDerivativeFromOutput(aNode: TSLNode, activation: NTCActivation) {
   if (activation === 'sigmoid') return aNode.mul(float(1).sub(aNode));
   if (activation === 'tanh') return float(1).sub(aNode.mul(aNode));
 

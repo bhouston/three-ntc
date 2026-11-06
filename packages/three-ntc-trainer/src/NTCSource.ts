@@ -19,7 +19,10 @@ type MaterialLike = ThreeMaterial;
  * vocabulary, so they aren't part of the shared `NTCChannel` type - they're
  * an extension this trainer's classification step alone understands.
  */
-type ChannelDescriptor = NTCChannel & { alwaysConstant?: boolean; constantValue?: unknown };
+type ChannelDescriptor = NTCChannel & {
+  alwaysConstant?: boolean;
+  constantValue?: unknown;
+};
 
 /**
  * Resolves every channel in a channel array (see NTCFormat.
@@ -48,7 +51,11 @@ function resolveMaterialChannelNodes(
   for (const channel of channels) {
     nodes[channel.key] = channel.resolveNode
       ? channel.resolveNode(material)
-      : constantToNode(channel.alwaysConstant ? channel.constantValue : channel.resolveConstant(material));
+      : constantToNode(
+          channel.alwaysConstant
+            ? (channel.constantValue as Parameters<typeof constantToNode>[0])
+            : channel.resolveConstant(material),
+        );
   }
 
   return nodes;
@@ -211,7 +218,7 @@ async function bakeMaterialToTextures(
   material: MaterialLike,
   resolution: number,
   activeChannels: ChannelDescriptor[],
-  uvTransform: ThreeMath | null = null,
+  uvTransform: ThreeMath = null,
 ) {
   const colorNodes = buildPackedColorNodes(activeChannels, material);
   const renderTargets = [];
