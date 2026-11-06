@@ -1,26 +1,16 @@
 import { chromium } from 'playwright';
-import { spawn } from 'node:child_process';
 const base = ['--enable-unsafe-webgpu','--enable-features=Vulkan','--ignore-gpu-blocklist','--disable-vulkan-surface','--disable-gpu-driver-bug-workarounds','--disable-gpu-watchdog','--no-sandbox'];
-const V = {
-  H_raw: [],
-  Q_swangle: ['--use-angle=vulkan','--use-gl=angle','--use-vulkan=native','--disable-gpu-sandbox','--in-process-gpu'],
-  R_inproc: ['--in-process-gpu'],
-  J_native: ['--use-vulkan=native'],
-  K_angle_vk: ['--use-gl=angle','--use-angle=vulkan'],
-  L_nosw: ['--disable-software-rasterizer'],
-  M_nogpusandbox: ['--disable-gpu-sandbox'],
-  N_adapter_vulkan: ['--use-webgpu-adapter=vulkan'],
-  O_dawn_feat: ['--disable-dawn-features=disallow_unsafe_apis','--enable-dawn-features=use_vulkan_loader_icd'],
-  P_noenable_feat: ['--enable-features=Vulkan,VulkanFromANGLE,DefaultANGLEVulkan'],
-};
-for (const [name, extra] of Object.entries(V)) {
-  try {
-    const b = await chromium.launch({ headless: false, channel: 'chrome', ignoreDefaultArgs: ['--enable-unsafe-swiftshader'], args: [...base, ...extra], env: { ...process.env, VK_DRIVER_FILES: '/usr/share/vulkan/icd.d/lvp_icd.json', VK_ICD_FILENAMES: '/usr/share/vulkan/icd.d/lvp_icd.json' } });
-    const p = await b.newPage();
-    await p.route('http://localhost:1/', r => r.fulfill({ body: '<html></html>', contentType: 'text/html' }));
-    await p.goto('http://localhost:1/');
-    const r = await p.evaluate(async () => { const a = await navigator.gpu?.requestAdapter(); return a ? JSON.stringify([a.info.vendor, a.info.architecture, a.info.description]) : 'none'; });
-    console.log('PROBE', name, r);
-    await b.close();
-  } catch (e) { console.log('PROBE', name, 'ERR', String(e).slice(0, 200)); }
-}
+const b = await chromium.launch({ headless: false, channel: 'chrome', ignoreDefaultArgs: ['--enable-unsafe-swiftshader'], args: base, env: { ...process.env, VK_DRIVER_FILES: '/usr/share/vulkan/icd.d/lvp_icd.json' } });
+const p = await b.newPage();
+const a = await (async () => { await p.route('http://localhost:1/', r => r.fulfill({ body: '<html></html>', contentType: 'text/html' })); await p.goto('http://localhost:1/'); return p.evaluate(async () => { const a = await navigator.gpu.requestAdapter(); return JSON.stringify([a.info.vendor, a.info.architecture, [...a.features].length]); }); })();
+console.log('PROBE', a);
+const cdp = await b.newBrowserCDPSession();
+const info = await cdp.send('SystemInfo.getInfo');
+console.log('PROBE sysinfo', JSON.stringify(info.gpu.devices), JSON.stringify(info.gpu.featureStatus), JSON.stringify(info.gpu.driverBugWorkarounds).slice(0, 300));
+await p.goto('chrome://gpu'); await new Promise(r => setTimeout(r, 3000));
+const txt = await p.evaluate(() => { const out = []; const walk = n => { if (n.shadowRoot) walk(n.shadowRoot); if (n.nodeType === 3) out.push(n.textContent.trim()); n.childNodes?.forEach(walk); }; walk(document); return out.filter(Boolean).join('\n'); });
+const lines = txt.split('\n');
+const i = lines.findIndex(l => /Dawn Info/i.test(l));
+console.log('PROBE gpu', lines.filter(l => /Vulkan|GL_RENDERER|Software|Problems|Disabled|ANGLE|Dawn|adapter|swiftshader|lavapipe|llvmpipe|Backend|Hardware/i.test(l)).join(' | ').slice(0, 3500));
+console.log('PROBE dawn', lines.slice(i, i + 60).join(' | ').slice(0, 3000));
+await b.close();
