@@ -10,7 +10,5 @@ console.log('PROBE sysinfo', JSON.stringify(info.gpu.devices), JSON.stringify(in
 await p.goto('chrome://gpu'); await new Promise(r => setTimeout(r, 3000));
 const txt = await p.evaluate(() => { const out = []; const walk = n => { if (n.shadowRoot) walk(n.shadowRoot); if (n.nodeType === 3) out.push(n.textContent.trim()); n.childNodes?.forEach(walk); }; walk(document); return out.filter(Boolean).join('\n'); });
 const lines = txt.split('\n');
-const i = lines.findIndex(l => /Dawn Info/i.test(l));
-console.log('PROBE gpu', lines.filter(l => /Vulkan|GL_RENDERER|Software|Problems|Disabled|ANGLE|Dawn|adapter|swiftshader|lavapipe|llvmpipe|Backend|Hardware/i.test(l)).join(' | ').slice(0, 3500));
-console.log('PROBE dawn', lines.slice(i, i + 60).join(' | ').slice(0, 3000));
+console.log('PROBE adapters', lines.filter(l => /backend|\(Compatibility|Vulkan/i.test(l) && !/^\*/.test(l) && l.length < 400).join(' | ').slice(0, 3500));
 await b.close();
