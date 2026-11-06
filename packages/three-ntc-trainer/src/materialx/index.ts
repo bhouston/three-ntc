@@ -13,9 +13,9 @@ export { isZipBuffer, readMtlxArchive, createArchiveResolver } from './MaterialX
 export type { MaterialXArchiveResult } from './MaterialXArchive.js';
 
 export {
-	getSurfaceMapper,
-	getSupportedSurfaceCategories,
-	MaterialXSurfaceMappings,
+  getSurfaceMapper,
+  getSupportedSurfaceCategories,
+  MaterialXSurfaceMappings,
 } from './MaterialXSurfaceMappings.js';
 
 export { MtlXLibrary } from './MaterialXNodeLibrary.js';

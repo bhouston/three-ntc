@@ -28,70 +28,77 @@ import { bakeMaterialToTextures, classifyMaterialChannels } from './NTCSource.js
  * network to fit; construct directly from a classification's
  * `constantValues` in that case instead.
  */
-async function fitNTCMaterial( renderer: any, material: any, options: any = {} ) {
+async function fitNTCMaterial(renderer: any, material: any, options: any = {}) {
+  const {
+    onProgress,
+    resolution = 512,
+    debugView = 'shaded',
+    channels = CHANNELS,
+    uvTransform = null,
+    ...trainerOptions
+  } = options;
 
-	const { onProgress, resolution = 512, debugView = 'shaded', channels = CHANNELS, uvTransform = null, ...trainerOptions } = options;
+  const channelClassification = classifyMaterialChannels(material, channels);
 
-	const channelClassification = classifyMaterialChannels( material, channels );
+  if (channelClassification.activeChannels.length === 0) {
+    throw new Error(
+      'THREE.NTCFit.fitNTCMaterial: every channel on this material is constant - there is nothing for a network to fit. Use NTCSource.classifyMaterialChannels() directly instead.',
+    );
+  }
 
-	if ( channelClassification.activeChannels.length === 0 ) {
+  // `uvTransform` (see NTCTextureSource.bakeColorNodeToTexture's doc
+  // comment) bakes every channel in its local, untransformed space, and is
+  // carried onto the trained cpuModel (below, via NTCTrainer's own
+  // `uvTransform` option -> NTCGridPyramidModel.js) so `NTCNodeMaterial`
+  // maps query UV back into that same space at render time.
+  const renderTargets = await bakeMaterialToTextures(
+    renderer,
+    material,
+    resolution,
+    channelClassification.activeChannels,
+    uvTransform,
+  );
 
-		throw new Error( 'THREE.NTCFit.fitNTCMaterial: every channel on this material is constant - there is nothing for a network to fit. Use NTCSource.classifyMaterialChannels() directly instead.' );
+  const trainer = new NTCTrainer({
+    outputChannels: channelClassification.totalChannels,
+    channelActivations: buildChannelActivations(channelClassification.activeChannels),
+    uvTransform,
+    ...trainerOptions,
+  });
 
-	}
+  let current: any = null;
 
-	// `uvTransform` (see NTCTextureSource.bakeColorNodeToTexture's doc
-	// comment) bakes every channel in its local, untransformed space, and is
-	// carried onto the trained cpuModel (below, via NTCTrainer's own
-	// `uvTransform` option -> NTCGridPyramidModel.js) so `NTCNodeMaterial`
-	// maps query UV back into that same space at render time.
-	const renderTargets = await bakeMaterialToTextures( renderer, material, resolution, channelClassification.activeChannels, uvTransform );
+  const rebuild = (cpuModel: any) => {
+    const previous = current;
+    current = new NTCNodeMaterial(cpuModel, channelClassification, { debugView, channels });
+    if (previous) previous.dispose();
 
-	const trainer = new NTCTrainer( {
-		outputChannels: channelClassification.totalChannels,
-		channelActivations: buildChannelActivations( channelClassification.activeChannels ),
-		uvTransform,
-		...trainerOptions
-	} );
+    return current;
+  };
 
-	let current: any = null;
+  try {
+    const result = await trainer.train({
+      renderer,
+      sourceTextures: renderTargets.map((renderTarget: any) => renderTarget.texture),
+      onProgress: onProgress
+        ? (progress: any) => onProgress({ ...progress, material: rebuild(progress.cpuModel) })
+        : null,
+    });
 
-	const rebuild = ( cpuModel: any ) => {
+    rebuild(result.cpuModel);
 
-		const previous = current;
-		current = new NTCNodeMaterial( cpuModel, channelClassification, { debugView, channels } );
-		if ( previous ) previous.dispose();
-
-		return current;
-
-	};
-
-	try {
-
-		const result = await trainer.train( {
-			renderer,
-			sourceTextures: renderTargets.map( ( renderTarget: any ) => renderTarget.texture ),
-			onProgress: onProgress ? ( progress: any ) => onProgress( { ...progress, material: rebuild( progress.cpuModel ) } ) : null
-		} );
-
-		rebuild( result.cpuModel );
-
-		return {
-			material: current,
-			channelClassification,
-			cpuModel: result.cpuModel,
-			loss: result.loss,
-			iteration: result.iteration,
-			iterations: result.iterations,
-			stoppedEarly: result.stoppedEarly
-		};
-
-	} finally {
-
-		for ( const renderTarget of renderTargets ) renderTarget.dispose();
-
-	}
-
+    return {
+      material: current,
+      channelClassification,
+      cpuModel: result.cpuModel,
+      loss: result.loss,
+      iteration: result.iteration,
+      iterations: result.iterations,
+      stoppedEarly: result.stoppedEarly,
+    };
+  } finally {
+    for (const renderTarget of renderTargets) renderTarget.dispose();
+  }
 }
 
 export { fitNTCMaterial };

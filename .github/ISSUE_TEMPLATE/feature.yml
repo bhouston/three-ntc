@@ -1,6 +1,6 @@
 name: Feature request
 description: Propose a change with verifiable acceptance criteria.
-title: "feat: "
+title: 'feat: '
 body:
   - type: textarea
     id: description

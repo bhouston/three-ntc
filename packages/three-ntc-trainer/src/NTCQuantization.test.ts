@@ -33,12 +33,14 @@ describe('NTCQuantization', () => {
 });
 
 it('default noise ranges contain zero exactly at every supported bit depth', () => {
-  for(const mode of ['uint2','uint4','uint8']) {
-    const config=resolveQuantizationConfig({quantization:{mode}});
-    const [lo,hi]=config.range as [number,number];
+  for (const mode of ['uint2', 'uint4', 'uint8']) {
+    const config = resolveQuantizationConfig({ quantization: { mode } });
+    const [lo, hi] = config.range as [number, number];
     expect(config.method).toBe('noise');
-    expect(QUANTIZATION_SCHEMES[mode].quantizeForwardCPU(0,lo,hi)).toBe(0);
-    expect(hi-lo).toBe(1-1/(2 ** Number(mode.slice(4))));
+    expect(QUANTIZATION_SCHEMES[mode].quantizeForwardCPU(0, lo, hi)).toBe(0);
+    expect(hi - lo).toBe(1 - 1 / 2 ** Number(mode.slice(4)));
   }
-  expect(()=>resolveQuantizationConfig({quantization:{mode:'uint4',method:'noise',range:'auto'}})).toThrow();
+  expect(() =>
+    resolveQuantizationConfig({ quantization: { mode: 'uint4', method: 'noise', range: 'auto' } }),
+  ).toThrow();
 });

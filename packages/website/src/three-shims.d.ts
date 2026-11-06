@@ -7,6 +7,6 @@ declare module 'three/tsl';
 declare module 'three/addons/*';
 
 declare module '*.css?url' {
-	const url: string;
-	export default url;
+  const url: string;
+  export default url;
 }

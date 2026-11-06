@@ -41,31 +41,21 @@
               "completedMs": 14.299999997019768
             }
           ],
-          "steadyFrameMs": [
-            6.399999998509884,
-            5.399999998509884,
-            5.300000004470348
-          ],
+          "steadyFrameMs": [6.399999998509884, 5.399999998509884, 5.300000004470348],
           "shaderModules": 2,
           "errors": []
         },
         {
           "kind": "react-brick-viewer",
           "viewer": "single",
-          "cssSize": [
-            512,
-            384
-          ],
+          "cssSize": [512, 384],
           "warmupFrames": 20,
           "firstFrameMs": 111.79999999701977,
           "adapter": "",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
           "samples": 0,
           "pixelRatio": 1,
-          "canvas": [
-            512,
-            384
-          ],
+          "canvas": [512, 384],
           "summary": {
             "interval": {
               "count": 100,
@@ -97,20 +87,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "single",
-          "cssSize": [
-            1024,
-            768
-          ],
+          "cssSize": [1024, 768],
           "warmupFrames": 20,
           "firstFrameMs": 100.20000000298023,
           "adapter": "",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
           "samples": 0,
           "pixelRatio": 1,
-          "canvas": [
-            1024,
-            768
-          ],
+          "canvas": [1024, 768],
           "summary": {
             "interval": {
               "count": 100,
@@ -142,20 +126,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "trainer",
-          "cssSize": [
-            512,
-            384
-          ],
+          "cssSize": [512, 384],
           "warmupFrames": 20,
           "firstFrameMs": 107,
           "adapter": "",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
           "samples": 0,
           "pixelRatio": 1,
-          "canvas": [
-            512,
-            384
-          ],
+          "canvas": [512, 384],
           "summary": {
             "interval": {
               "count": 100,
@@ -187,20 +165,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "trainer",
-          "cssSize": [
-            1024,
-            768
-          ],
+          "cssSize": [1024, 768],
           "warmupFrames": 20,
           "firstFrameMs": 104.39999999850988,
           "adapter": "",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
           "samples": 0,
           "pixelRatio": 1,
-          "canvas": [
-            1024,
-            768
-          ],
+          "canvas": [1024, 768],
           "summary": {
             "interval": {
               "count": 100,
@@ -232,20 +204,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "grid",
-          "cssSize": [
-            512,
-            384
-          ],
+          "cssSize": [512, 384],
           "warmupFrames": 20,
           "firstFrameMs": 112.09999999403954,
           "adapter": "",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
           "samples": 0,
           "pixelRatio": 1,
-          "canvas": [
-            512,
-            384
-          ],
+          "canvas": [512, 384],
           "summary": {
             "interval": {
               "count": 100,
@@ -277,20 +243,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "grid",
-          "cssSize": [
-            1024,
-            768
-          ],
+          "cssSize": [1024, 768],
           "warmupFrames": 20,
           "firstFrameMs": 97.70000000298023,
           "adapter": "",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
           "samples": 0,
           "pixelRatio": 1,
-          "canvas": [
-            1024,
-            768
-          ],
+          "canvas": [1024, 768],
           "summary": {
             "interval": {
               "count": 100,
@@ -327,28 +287,14 @@
             "device": "",
             "description": ""
           },
-          "rawCpuMse": 7.680080261625955e-06,
+          "rawCpuMse": 7.680080261625955e-6,
           "model": [
-            [
-              5,
-              8
-            ],
-            [
-              8,
-              8
-            ],
-            [
-              8,
-              10
-            ]
+            [5, 8],
+            [8, 8],
+            [8, 10]
           ],
           "firstFrameMs": 59.79999999701977,
-          "steadyFrameMs": [
-            4.200000002980232,
-            3.2999999970197678,
-            3.5,
-            3.3000000044703484
-          ],
+          "steadyFrameMs": [4.200000002980232, 3.2999999970197678, 3.5, 3.3000000044703484],
           "errors": []
         }
       ]
@@ -362,20 +308,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "single",
-          "cssSize": [
-            512,
-            384
-          ],
+          "cssSize": [512, 384],
           "warmupFrames": 20,
           "firstFrameMs": 108.19999999552965,
           "adapter": "",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
           "samples": 0,
           "pixelRatio": 2,
-          "canvas": [
-            1024,
-            768
-          ],
+          "canvas": [1024, 768],
           "summary": {
             "interval": {
               "count": 100,
@@ -407,20 +347,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "single",
-          "cssSize": [
-            1024,
-            768
-          ],
+          "cssSize": [1024, 768],
           "warmupFrames": 20,
           "firstFrameMs": 109.29999999701977,
           "adapter": "",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
           "samples": 0,
           "pixelRatio": 2,
-          "canvas": [
-            2048,
-            1536
-          ],
+          "canvas": [2048, 1536],
           "summary": {
             "interval": {
               "count": 100,
@@ -452,20 +386,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "trainer",
-          "cssSize": [
-            512,
-            384
-          ],
+          "cssSize": [512, 384],
           "warmupFrames": 20,
           "firstFrameMs": 105.30000000447035,
           "adapter": "",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
           "samples": 0,
           "pixelRatio": 2,
-          "canvas": [
-            1024,
-            768
-          ],
+          "canvas": [1024, 768],
           "summary": {
             "interval": {
               "count": 100,
@@ -497,20 +425,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "trainer",
-          "cssSize": [
-            1024,
-            768
-          ],
+          "cssSize": [1024, 768],
           "warmupFrames": 20,
           "firstFrameMs": 86.19999999552965,
           "adapter": "",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
           "samples": 0,
           "pixelRatio": 2,
-          "canvas": [
-            2048,
-            1536
-          ],
+          "canvas": [2048, 1536],
           "summary": {
             "interval": {
               "count": 100,
@@ -542,20 +464,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "grid",
-          "cssSize": [
-            512,
-            384
-          ],
+          "cssSize": [512, 384],
           "warmupFrames": 20,
           "firstFrameMs": 102.10000000149012,
           "adapter": "",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
           "samples": 0,
           "pixelRatio": 2,
-          "canvas": [
-            1024,
-            768
-          ],
+          "canvas": [1024, 768],
           "summary": {
             "interval": {
               "count": 100,
@@ -587,20 +503,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "grid",
-          "cssSize": [
-            1024,
-            768
-          ],
+          "cssSize": [1024, 768],
           "warmupFrames": 20,
           "firstFrameMs": 107.30000000447035,
           "adapter": "",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
           "samples": 0,
           "pixelRatio": 2,
-          "canvas": [
-            2048,
-            1536
-          ],
+          "canvas": [2048, 1536],
           "summary": {
             "interval": {
               "count": 100,
@@ -663,11 +573,7 @@
               "completedMs": 10.600000001490116
             }
           ],
-          "steadyFrameMs": [
-            6.100000001490116,
-            6.899999998509884,
-            5.5
-          ],
+          "steadyFrameMs": [6.100000001490116, 6.899999998509884, 5.5],
           "shaderModules": 2,
           "errors": []
         },
@@ -679,28 +585,14 @@
             "device": "",
             "description": ""
           },
-          "rawCpuMse": 7.680080261625955e-06,
+          "rawCpuMse": 7.680080261625955e-6,
           "model": [
-            [
-              5,
-              8
-            ],
-            [
-              8,
-              8
-            ],
-            [
-              8,
-              10
-            ]
+            [5, 8],
+            [8, 8],
+            [8, 10]
           ],
           "firstFrameMs": 51.100000001490116,
-          "steadyFrameMs": [
-            5.899999998509884,
-            4.5,
-            4.5,
-            5.5
-          ],
+          "steadyFrameMs": [5.899999998509884, 4.5, 4.5, 5.5],
           "errors": []
         }
       ]
@@ -745,31 +637,21 @@
               "completedMs": 144
             }
           ],
-          "steadyFrameMs": [
-            8,
-            7,
-            6
-          ],
+          "steadyFrameMs": [8, 7, 6],
           "shaderModules": 2,
           "errors": []
         },
         {
           "kind": "react-brick-viewer",
           "viewer": "single",
-          "cssSize": [
-            512,
-            384
-          ],
+          "cssSize": [512, 384],
           "warmupFrames": 20,
           "firstFrameMs": 121,
           "adapter": "apple",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
           "samples": 0,
           "pixelRatio": 1,
-          "canvas": [
-            512,
-            384
-          ],
+          "canvas": [512, 384],
           "summary": {
             "interval": {
               "count": 100,
@@ -801,20 +683,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "single",
-          "cssSize": [
-            1024,
-            768
-          ],
+          "cssSize": [1024, 768],
           "warmupFrames": 20,
           "firstFrameMs": 93,
           "adapter": "apple",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
           "samples": 0,
           "pixelRatio": 1,
-          "canvas": [
-            1024,
-            768
-          ],
+          "canvas": [1024, 768],
           "summary": {
             "interval": {
               "count": 100,
@@ -846,20 +722,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "trainer",
-          "cssSize": [
-            512,
-            384
-          ],
+          "cssSize": [512, 384],
           "warmupFrames": 20,
           "firstFrameMs": 126,
           "adapter": "apple",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
           "samples": 0,
           "pixelRatio": 1,
-          "canvas": [
-            512,
-            384
-          ],
+          "canvas": [512, 384],
           "summary": {
             "interval": {
               "count": 100,
@@ -891,20 +761,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "trainer",
-          "cssSize": [
-            1024,
-            768
-          ],
+          "cssSize": [1024, 768],
           "warmupFrames": 20,
           "firstFrameMs": 156,
           "adapter": "apple",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
           "samples": 0,
           "pixelRatio": 1,
-          "canvas": [
-            1024,
-            768
-          ],
+          "canvas": [1024, 768],
           "summary": {
             "interval": {
               "count": 100,
@@ -936,20 +800,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "grid",
-          "cssSize": [
-            512,
-            384
-          ],
+          "cssSize": [512, 384],
           "warmupFrames": 20,
           "firstFrameMs": 96,
           "adapter": "apple",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
           "samples": 0,
           "pixelRatio": 1,
-          "canvas": [
-            512,
-            384
-          ],
+          "canvas": [512, 384],
           "summary": {
             "interval": {
               "count": 100,
@@ -981,20 +839,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "grid",
-          "cssSize": [
-            1024,
-            768
-          ],
+          "cssSize": [1024, 768],
           "warmupFrames": 20,
           "firstFrameMs": 91,
           "adapter": "apple",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
           "samples": 0,
           "pixelRatio": 1,
-          "canvas": [
-            1024,
-            768
-          ],
+          "canvas": [1024, 768],
           "summary": {
             "interval": {
               "count": 100,
@@ -1031,28 +883,14 @@
             "device": "apple",
             "description": "apple"
           },
-          "rawCpuMse": 7.680080261608108e-06,
+          "rawCpuMse": 7.680080261608108e-6,
           "model": [
-            [
-              5,
-              8
-            ],
-            [
-              8,
-              8
-            ],
-            [
-              8,
-              10
-            ]
+            [5, 8],
+            [8, 8],
+            [8, 10]
           ],
           "firstFrameMs": 82,
-          "steadyFrameMs": [
-            4,
-            4,
-            3,
-            4
-          ],
+          "steadyFrameMs": [4, 4, 3, 4],
           "errors": []
         }
       ]
@@ -1066,20 +904,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "single",
-          "cssSize": [
-            512,
-            384
-          ],
+          "cssSize": [512, 384],
           "warmupFrames": 20,
           "firstFrameMs": 121,
           "adapter": "apple",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
           "samples": 0,
           "pixelRatio": 2,
-          "canvas": [
-            1024,
-            768
-          ],
+          "canvas": [1024, 768],
           "summary": {
             "interval": {
               "count": 100,
@@ -1111,20 +943,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "single",
-          "cssSize": [
-            1024,
-            768
-          ],
+          "cssSize": [1024, 768],
           "warmupFrames": 20,
           "firstFrameMs": 110,
           "adapter": "apple",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
           "samples": 0,
           "pixelRatio": 2,
-          "canvas": [
-            2048,
-            1536
-          ],
+          "canvas": [2048, 1536],
           "summary": {
             "interval": {
               "count": 100,
@@ -1156,20 +982,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "trainer",
-          "cssSize": [
-            512,
-            384
-          ],
+          "cssSize": [512, 384],
           "warmupFrames": 20,
           "firstFrameMs": 95,
           "adapter": "apple",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
           "samples": 0,
           "pixelRatio": 2,
-          "canvas": [
-            1024,
-            768
-          ],
+          "canvas": [1024, 768],
           "summary": {
             "interval": {
               "count": 100,
@@ -1201,20 +1021,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "trainer",
-          "cssSize": [
-            1024,
-            768
-          ],
+          "cssSize": [1024, 768],
           "warmupFrames": 20,
           "firstFrameMs": 106,
           "adapter": "apple",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
           "samples": 0,
           "pixelRatio": 2,
-          "canvas": [
-            2048,
-            1536
-          ],
+          "canvas": [2048, 1536],
           "summary": {
             "interval": {
               "count": 100,
@@ -1246,20 +1060,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "grid",
-          "cssSize": [
-            512,
-            384
-          ],
+          "cssSize": [512, 384],
           "warmupFrames": 20,
           "firstFrameMs": 96,
           "adapter": "apple",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
           "samples": 0,
           "pixelRatio": 2,
-          "canvas": [
-            1024,
-            768
-          ],
+          "canvas": [1024, 768],
           "summary": {
             "interval": {
               "count": 100,
@@ -1291,20 +1099,14 @@
         {
           "kind": "react-brick-viewer",
           "viewer": "grid",
-          "cssSize": [
-            1024,
-            768
-          ],
+          "cssSize": [1024, 768],
           "warmupFrames": 20,
           "firstFrameMs": 94,
           "adapter": "apple",
           "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
           "samples": 0,
           "pixelRatio": 2,
-          "canvas": [
-            2048,
-            1536
-          ],
+          "canvas": [2048, 1536],
           "summary": {
             "interval": {
               "count": 100,
@@ -1367,11 +1169,7 @@
               "completedMs": 14
             }
           ],
-          "steadyFrameMs": [
-            7,
-            6,
-            7
-          ],
+          "steadyFrameMs": [7, 6, 7],
           "shaderModules": 2,
           "errors": []
         },
@@ -1383,28 +1181,14 @@
             "device": "apple",
             "description": "apple"
           },
-          "rawCpuMse": 7.680080261608108e-06,
+          "rawCpuMse": 7.680080261608108e-6,
           "model": [
-            [
-              5,
-              8
-            ],
-            [
-              8,
-              8
-            ],
-            [
-              8,
-              10
-            ]
+            [5, 8],
+            [8, 8],
+            [8, 10]
           ],
           "firstFrameMs": 77,
-          "steadyFrameMs": [
-            5,
-            4,
-            4,
-            5
-          ],
+          "steadyFrameMs": [5, 4, 4, 5],
           "errors": []
         }
       ]

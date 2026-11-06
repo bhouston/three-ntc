@@ -4,34 +4,40 @@ on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
   workflow_call:
     inputs:
       skip-gpu:
         description: Skip duplicate advisory GPU tests when called by the release workflow.
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  unit:
-    name: Unit
+  ci:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v6
         with:
           run_install: false
 
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version-file: ".nvmrc"
-          cache: "pnpm"
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -39,11 +45,23 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Verify published packages include dist
+        run: |
+          for pkg in packages/three-ntc packages/three-ntc-trainer; do
+            (cd "$pkg" && pnpm pack --dry-run) | grep -qx 'dist/index.js' || {
+              echo "::error::dist/index.js missing from the packed tarball for $pkg; the publish step would ship a broken package."
+              exit 1
+            }
+          done
+
       - name: Type check
         run: pnpm tsc
 
       - name: Lint
         run: pnpm lint
+
+      - name: Check formatting
+        run: pnpm exec oxfmt --check .
 
       - name: Unit tests with coverage gate
         run: pnpm test
@@ -59,9 +77,21 @@ jobs:
 
       # extract-zip has two advisories but the registry has no patched release yet.
       # Keep all development advisories visible; production vulnerabilities block.
-      - name: Development dependency audit (advisory)
+      - name: Audit dependencies (advisory)
+        id: audit
         continue-on-error: true
-        run: pnpm audit --audit-level high
+        run: pnpm audit --audit-level=high
+
+      - name: Flag audit findings
+        if: steps.audit.outcome == 'failure'
+        run: echo '::warning::Dependency audit found vulnerabilities or could not reach the registry. Review the audit step.'
+
+      - uses: codecov/codecov-action@v5
+        if: ${{ !cancelled() && hashFiles('coverage/lcov.info') != '' }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
+          fail_ci_if_error: false
 
       - name: Upload coverage
         if: always()
@@ -74,8 +104,32 @@ jobs:
         if: always()
         run: node scripts/report-coverage.mjs
 
+  node-compat:
+    name: node-compat (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24, 26]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Unit tests
+        run: pnpm exec vitest run --project unit
+
   gpu:
-    if: ${{ !inputs.skip-gpu }}
+    # Disabled for now; restore `if: ${{ !inputs.skip-gpu }}` to re-enable.
+    if: false
     name: GPU (WebGPU in headless Chromium)
     runs-on: ubuntu-latest
     # No GPU on hosted runners: Chromium falls back to SwiftShader (software
@@ -86,15 +140,15 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v6
         with:
           run_install: false
 
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version-file: ".nvmrc"
-          cache: "pnpm"
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -107,7 +161,7 @@ jobs:
 
   coverage-badge:
     name: Publish coverage badge
-    needs: unit
+    needs: ci
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

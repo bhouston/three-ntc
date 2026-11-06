@@ -61,6 +61,7 @@ function Field({
 
 function FieldLabel({ className, ...props }: React.ComponentProps<'label'>) {
   return (
+    // eslint-disable-next-line jsx-a11y/label-has-associated-control -- generic primitive; htmlFor arrives via ...props at call sites
     <label
       data-slot="field-label"
       className={cn('text-sm leading-none font-medium group-data-[disabled=true]:opacity-50', className)}

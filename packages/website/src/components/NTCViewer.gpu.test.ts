@@ -1,30 +1,43 @@
-import { createElement } from "react";
-import { createRoot } from "react-dom/client";
-import { DefaultLoadingManager, MeshStandardMaterial } from "three";
-import { WebGPURenderer } from "three/webgpu";
-import { NTCLoader, NTCNodeMaterial, type NTCSamplingMode } from "three-ntc";
-import { expect, it } from "vitest";
-import { commands } from "vitest/browser";
-import { summarizeTimings } from "../../../../test/performance-metrics.js";
-import { NTCViewer } from "./NTCViewer.js";
-import { NTCGridViewer } from "./NTCGridViewer.js";
-import brick from "../../public/ntc/brick.ntc?raw";
-import hdrUrl from "../../public/textures/equirectangular/san_giuseppe_bridge_2k.hdr?url";
+import { createElement } from 'react';
+import { createRoot } from 'react-dom/client';
+import { DefaultLoadingManager, MeshStandardMaterial, Scene, Camera } from 'three';
+import { WebGPURenderer } from 'three/webgpu';
+import { NTCLoader, NTCNodeMaterial, type NTCSamplingMode } from 'three-ntc';
+import { expect, it } from 'vitest';
+import { commands } from 'vitest/browser';
+import { summarizeTimings } from '../../../../test/performance-metrics.js';
+import { NTCViewer } from './NTCViewer.js';
+import { NTCGridViewer } from './NTCGridViewer.js';
+import brick from '../../public/ntc/brick.ntc?raw';
+import hdrUrl from '../../public/textures/equirectangular/san_giuseppe_bridge_2k.hdr?url';
+
+// This `three` version ships no type declarations (see three-shims.d.ts), so
+// every import from it is `any`; deriving instance types from the
+// classes/namespace themselves keeps these annotations honest instead of
+// writing `any` outright.
+type Renderer = InstanceType<typeof WebGPURenderer>;
+type ThreeScene = InstanceType<typeof Scene>;
+type ThreeCamera = InstanceType<typeof Camera>;
+
+/** The subset of a WebGPU `GPUDevice`'s lost-context info this harness reads. */
+interface DeviceLostInfo {
+  message: string;
+}
 
 // Long enough to expose queue buildup after the initial pipeline compilation.
 const frameCount = 120;
 const warmupFrames = 20;
-const cases = (["single", "trainer", "grid"] as const).flatMap((viewer) =>
-  [512, 1024].map((width) => ({ viewer, width, samplingMode: "nearest" as NTCSamplingMode })),
+const cases = (['single', 'trainer', 'grid'] as const).flatMap((viewer) =>
+  [512, 1024].map((width) => ({ viewer, width, samplingMode: 'nearest' as NTCSamplingMode })),
 );
 cases.push(
-  {viewer: 'single', width: 1024, samplingMode: 'stochastic'},
-  {viewer: 'single', width: 1024, samplingMode: 'trilinear'},
+  { viewer: 'single', width: 1024, samplingMode: 'stochastic' },
+  { viewer: 'single', width: 1024, samplingMode: 'trilinear' },
 );
 it.each(cases)(
-  "profiles the $viewer brick viewer ($samplingMode) at $width CSS pixels after HDR loading",
+  'profiles the $viewer brick viewer ($samplingMode) at $width CSS pixels after HDR loading',
   async ({ viewer, width, samplingMode }) => {
-    const fixture = document.createElement("div");
+    const fixture = document.createElement('div');
     fixture.style.cssText = `width:${width}px;height:${width * 0.75}px;position:relative`;
     document.body.append(fixture);
     const root = createRoot(fixture, {
@@ -34,14 +47,14 @@ it.each(cases)(
       },
     });
     const { cpuModel, channelClassification } = new NTCLoader().parse(brick);
-    const material = new NTCNodeMaterial(cpuModel, channelClassification, {samplingMode});
+    const material = new NTCNodeMaterial(cpuModel, channelClassification, { samplingMode });
     const teacherMaterial = new MeshStandardMaterial({ color: 0x995533 });
-    DefaultLoadingManager.setURLModifier((url) => (url.startsWith("/textures/") ? hdrUrl : url));
-    const prototype = WebGPURenderer.prototype as any,
+    DefaultLoadingManager.setURLModifier((url) => (url.startsWith('/textures/') ? hdrUrl : url));
+    const prototype = WebGPURenderer.prototype,
       render = prototype.render;
     const frames: { intervalMs: number; completedMs: number }[] = [];
     const errors: string[] = [];
-    let renderer: any,
+    let renderer: Renderer,
       lastFrame = 0,
       active = true;
     let finish!: () => void;
@@ -57,24 +70,20 @@ it.each(cases)(
       heartbeatGaps.push(now - lastHeartbeat);
       lastHeartbeat = now;
     }, 16);
-    const onError = (event: any) => {
+    const onError = (event: { error: { message: string } }) => {
       errors.push(event.error.message);
       finish();
     };
-    prototype.render = function (scene: any, camera: any, ...rest: any[]) {
+    prototype.render = function (scene: ThreeScene, camera: ThreeCamera, ...rest: unknown[]) {
       const start = performance.now();
       const result = render.call(this, scene, camera, ...rest);
-      if (
-        active &&
-        fixture.contains(this.domElement) &&
-        scene.environment &&
-        frames.length < frameCount
-      ) {
+      if (active && fixture.contains(this.domElement) && scene.environment && frames.length < frameCount) {
         if (!renderer) {
           firstFrameMs = start - mountedAt;
+          // eslint-disable-next-line typescript/no-this-alias -- captures the dynamic `this` from the monkey-patched render call for reuse across later frames
           renderer = this;
-          renderer.backend.device.addEventListener("uncapturederror", onError);
-          renderer.backend.device.lost.then((info: any) => {
+          renderer.backend.device.addEventListener('uncapturederror', onError);
+          renderer.backend.device.lost.then((info: DeviceLostInfo) => {
             if (active) {
               errors.push(`Device lost: ${info.message}`);
               finish();
@@ -99,13 +108,13 @@ it.each(cases)(
     };
     try {
       root.render(
-        viewer === "grid"
+        viewer === 'grid'
           ? createElement(NTCGridViewer, {
               slots: Array.from({ length: 6 }, (_, i) => ({ label: `Brick ${i}`, material })),
             })
           : createElement(NTCViewer, {
               material,
-              ...(viewer === "trainer" ? { teacherMaterial, cameraDistance: 2.2 } : {}),
+              ...(viewer === 'trainer' ? { teacherMaterial, cameraDistance: 2.2 } : {}),
             }),
       );
       await done;
@@ -114,14 +123,18 @@ it.each(cases)(
       expect(renderer.samples).toBe(0);
       expect(heartbeatGaps.length).toBeGreaterThan(0);
       const steadyFrames = frames.slice(warmupFrames);
+      // `recordMetric` is a custom vitest browser command registered at
+      // runtime (see vitest.config.ts) - it has no static type in vitest's
+      // own `BrowserCommands` interface.
+      // oxlint-disable-next-line typescript/no-explicit-any -- untyped custom vitest browser command, see comment above
       await (commands as any).recordMetric({
-        kind: "react-brick-viewer",
+        kind: 'react-brick-viewer',
         viewer,
         samplingMode,
         cssSize: [width, width * 0.75],
         warmupFrames,
         firstFrameMs, // Includes HDR loading and initial pipeline work.
-        adapter: renderer.backend.device.adapterInfo?.description ?? "unavailable",
+        adapter: renderer.backend.device.adapterInfo?.description ?? 'unavailable',
         userAgent: navigator.userAgent,
         samples: renderer.samples,
         pixelRatio: window.devicePixelRatio,
@@ -139,7 +152,7 @@ it.each(cases)(
       active = false;
       clearInterval(heartbeat);
       prototype.render = render;
-      renderer?.backend.device.removeEventListener("uncapturederror", onError);
+      renderer?.backend.device.removeEventListener('uncapturederror', onError);
       root.unmount();
       fixture.remove();
       material.dispose();

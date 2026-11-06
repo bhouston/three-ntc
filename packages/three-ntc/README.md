@@ -1,20 +1,32 @@
+<p align="center">
+  <a href="https://three-ntc.ben3d.ca" target="_blank" rel="noopener noreferrer">
+    <img alt="three-ntc logo" src="https://raw.githubusercontent.com/bhouston/three-ntc/main/packages/docs/static/img/icon-512.png" height="96">
+  </a>
+</p>
+<br/>
+<p align="center">
+  <a href="https://npmjs.com/package/three-ntc"><img src="https://img.shields.io/npm/v/three-ntc.svg" alt="npm package"></a>
+  <a href="https://www.npmtrends.com/three-ntc"><img src="https://img.shields.io/npm/dw/three-ntc.svg" alt="npm downloads"></a>
+  <a href="https://codecov.io/gh/bhouston/three-ntc"><img src="https://codecov.io/gh/bhouston/three-ntc/branch/main/graph/badge.svg" alt="coverage"></a>
+  <a href="https://discord.gg/fwupDN493R"><img src="https://img.shields.io/badge/chat-discord-blue?style=flat&logo=discord" alt="discord chat"></a>
+  <a href="https://three-ntc.ben3d.ca/docs/getting-started/"><img src="https://img.shields.io/badge/docs-read-blue?style=flat" alt="documentation"></a>
+</p>
+<br/>
+
 # three-ntc
 
-[![npm version](https://img.shields.io/npm/v/three-ntc.svg)](https://www.npmjs.com/package/three-ntc)
-[![npm downloads](https://img.shields.io/npm/dm/three-ntc.svg)](https://www.npmjs.com/package/three-ntc)
-[![ci](https://github.com/bhouston/three-ntc/actions/workflows/ci.yml/badge.svg)](https://github.com/bhouston/three-ntc/actions/workflows/ci.yml)
-[![Live demo](https://img.shields.io/badge/demo-three--ntc.ben3d.ca-blue)](https://three-ntc.ben3d.ca)
+> Load Neural Texture Compression materials in three.js.
 
-Neural Texture Compression runtime for three.js — load `.ntc` files and get back a standard
-`MeshPhysicalNodeMaterial` (via TSL) that decodes a compact grid + MLP model on the GPU.
+- 🗜️ Compact `.ntc` Material Files
+- 🎮 GPU Decoding via TSL
+- 🧱 Extends `MeshPhysicalNodeMaterial`
+- 🎚️ Selectable Sampling Modes
 
-![Eight NTC materials rendered live in the three-ntc grid viewer](../../docs/images/ntc-grid-viewer.png)
+Load `.ntc` files and get back a standard node material that decodes a compact grid + MLP model on the GPU. `.ntc` models are trained with the companion [`three-ntc-trainer`](https://www.npmjs.com/package/three-ntc-trainer) package.
 
-An implementation of NVIDIA's 2023 [Neural Texture Compression](https://research.nvidia.com/labs/rtr/neural_texture_compression/)
-paper: NTC jointly fits a material's whole texture stack — albedo, normal, roughness, metalness,
-and more — into a single grid + MLP model instead of one texture per channel. Every material
-pictured above is about 93KB total, often smaller than a single texture from the original
-material, for a fraction of the memory and download cost of standard PBR textures.
+[Read the Docs to Learn More](https://three-ntc.ben3d.ca/docs/getting-started/).
+
+![Eight NTC materials rendered live in the three-ntc grid viewer](https://raw.githubusercontent.com/bhouston/three-ntc/main/docs/images/ntc-grid-viewer.png)
 
 Try it live at **[three-ntc.ben3d.ca](https://three-ntc.ben3d.ca)**.
 
@@ -51,15 +63,15 @@ const material = new NTCNodeMaterial(cpuModel, channelClassification, {
 
 // Sampling changes rebuild the TSL graph and compile a specialized shader on next use.
 material.setSamplingMode('stochastic'); // or 'nearest' / 'trilinear'
-material.samplingMode = 'nearest';     // equivalent property setter
-material.setLodBias(1);                // live uniform; positive bias selects finer mips
+material.samplingMode = 'nearest'; // equivalent property setter
+material.setLodBias(1); // live uniform; positive bias selects finer mips
 ```
 
-| Mode | MLP evaluations per material sample | Behavior |
-| --- | --- | --- |
-| `nearest` | 1 | Reconstruct the nearest physical texel at the nearest mip. |
-| `stochastic` | 1 | Randomly select a texel and mip with trilinear sampling probabilities. Noise varies by screen pixel and frame. |
-| `trilinear` | 8 | Reconstruct and blend four texels at each of two mip levels. |
+| Mode         | MLP evaluations per material sample | Behavior                                                                                                       |
+| ------------ | ----------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `nearest`    | 1                                   | Reconstruct the nearest physical texel at the nearest mip.                                                     |
+| `stochastic` | 1                                   | Randomly select a texel and mip with trilinear sampling probabilities. Noise varies by screen pixel and frame. |
+| `trilinear`  | 8                                   | Reconstruct and blend four texels at each of two mip levels.                                                   |
 
 Sampling mode is a JavaScript build-time choice, not a shader uniform. Each shader
 contains only its selected sampling path. Changing the property or calling the setter
@@ -79,3 +91,15 @@ not the training model or its learned G0/G1 feature interpolation. Settings are 
 stored in `.ntc` exports. `setLodBias()` affects automatic LOD only; an explicit
 constructor `lodNode` takes precedence. The website viewer and trainer preview both
 expose sampling and LOD bias controls and start with nearest sampling.
+
+## Contribution
+
+See [Contributing Guide](https://github.com/bhouston/three-ntc/blob/main/CONTRIBUTING.md).
+
+## License
+
+MIT
+
+## Author
+
+[Ben Houston](https://ben3d.ca), Sponsored by [Land of Assets](https://landofassets.com).

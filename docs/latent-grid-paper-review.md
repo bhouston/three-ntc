@@ -5,7 +5,7 @@ Reviewed commit: `402a532`, with a clean working tree before this review. Source
 
 Concurrent workspace changes appeared at the end of the review in `NTCProfiles.ts`, its test, and the website trainer. The comparison table below records the initial commit's defaults. The new website defaults select `mobile-fast` with G0 widths 128/32, G1 widths 64/16, two 16-neuron hidden layers, and uint2 quantization. At a 1024 source resolution, those two pairs cover mips 0–4 and 5–10. Both grid/encoding flags remain enabled and the eight-texel period remains unspecified. These edits do not resolve the quantization or encoding findings below. They were inspected but were not made by this review.
 
-**Assessment.** The repository implements the paper's central *pyramid of independently learned G0/G1 pairs* when configured appropriately. Its current level selection correctly reproduces Table 1. However, its defaults and bundled examples are materially different, the website uses a different positional-encoding coordinate system, and the four-tap G0 training path has a confirmed quantization-method discrepancy. Calling the entire repository a faithful reproduction without specifying the configuration would be misleading.
+**Assessment.** The repository implements the paper's central _pyramid of independently learned G0/G1 pairs_ when configured appropriately. Its current level selection correctly reproduces Table 1. However, its defaults and bundled examples are materially different, the website uses a different positional-encoding coordinate system, and the four-tap G0 training path has a confirmed quantization-method discrepancy. Calling the entire repository a faithful reproduction without specifying the configuration would be misleading.
 
 **What the paper does.** There are two distinct notions of resolution:
 
@@ -15,11 +15,11 @@ Concurrent workspace changes appeared at the end of the review in `NTCProfiles.t
 For the paper's 1024 × 1024 example:
 
 | Feature level | G0 dimensions | G1 dimensions | Reconstructed texture mips |
-| --- | --- | --- | --- |
-| F0 | 256 × 256 | 128 × 128 | 0, 1, 2, 3 |
-| F1 | 64 × 64 | 32 × 32 | 4, 5 |
-| F2 | 16 × 16 | 8 × 8 | 6, 7 |
-| F3 | 4 × 4 | 2 × 2 | 8, 9, 10 |
+| ------------- | ------------- | ------------- | -------------------------- |
+| F0            | 256 × 256     | 128 × 128     | 0, 1, 2, 3                 |
+| F1            | 64 × 64       | 32 × 32       | 4, 5                       |
+| F2            | 16 × 16       | 8 × 8         | 6, 7                       |
+| F3            | 4 × 4         | 2 × 2         | 8, 9, 10                   |
 
 For each output texel, the method selects **one feature level** by target LOD, concatenates four neighboring G0 vectors without bilinear averaging, bilinearly interpolates four G1 vectors into one vector, and adds 12 positional-encoding scalars plus normalized LOD. A shared MLP decodes that input. Its input width is `4*C0 + C1 + 12 + 1`, independent of the number of feature levels. Section 4.4 uses two hidden layers of 64 neurons with hardGELU and a linear output.
 
@@ -29,16 +29,16 @@ This is not an encoding that concatenates every spatial resolution into every de
 
 **What the current code implements correctly.**
 
-| Mechanism | Implementation | Assessment |
-| --- | --- | --- |
-| Separate learned G0/G1 at every level | `createNTCGridPyramidModel()` allocates `grids` and independent `lowResGrids`; G1 dimensions are `floor(G0/2)` | Matches when `dualGrid:true` |
-| Sparse feature pyramid | `computeGridLevels()` divides dimensions by `2**mipsPerLevel`; default step is 2 | Matches the paper's factor-of-four spacing |
-| One selected pair per query | CPU/TSL level selectors use `floor((lod-lodOffset)/mipsPerLevel)`, clamped to available levels | Matches Table 1 with appropriate source/base resolutions |
-| Wider first mip band | `lodOffset=floor(log2(textureResolution/baseResolution))` | For 1024/256, offset 2 gives exactly Table 1 |
-| Four raw G0 taps and bilinear G1 | Training and runtime have both paths | Matches when both `positionalEncoding` and `dualGrid` are true |
-| Independent gradients | G0 gradients scatter to individual taps; G1 gradients scatter with bilinear weights into the corresponding separate grid | Matches the representation |
-| Shared decoder and explicit LOD | Fixed-width feature input and normalized target LOD | Matches |
-| Export/import of paired grids | Manifest stores `levels` and `lowResLevels`, plus LOD and encoding metadata | Preserves the current paired representation |
+| Mechanism                             | Implementation                                                                                                           | Assessment                                                     |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| Separate learned G0/G1 at every level | `createNTCGridPyramidModel()` allocates `grids` and independent `lowResGrids`; G1 dimensions are `floor(G0/2)`           | Matches when `dualGrid:true`                                   |
+| Sparse feature pyramid                | `computeGridLevels()` divides dimensions by `2**mipsPerLevel`; default step is 2                                         | Matches the paper's factor-of-four spacing                     |
+| One selected pair per query           | CPU/TSL level selectors use `floor((lod-lodOffset)/mipsPerLevel)`, clamped to available levels                           | Matches Table 1 with appropriate source/base resolutions       |
+| Wider first mip band                  | `lodOffset=floor(log2(textureResolution/baseResolution))`                                                                | For 1024/256, offset 2 gives exactly Table 1                   |
+| Four raw G0 taps and bilinear G1      | Training and runtime have both paths                                                                                     | Matches when both `positionalEncoding` and `dualGrid` are true |
+| Independent gradients                 | G0 gradients scatter to individual taps; G1 gradients scatter with bilinear weights into the corresponding separate grid | Matches the representation                                     |
+| Shared decoder and explicit LOD       | Fixed-width feature input and normalized target LOD                                                                      | Matches                                                        |
+| Export/import of paired grids         | Manifest stores `levels` and `lowResLevels`, plus LOD and encoding metadata                                              | Preserves the current paired representation                    |
 
 Code anchors: [grid allocation](../packages/three-ntc-trainer/src/NTCGridPyramidModel.ts), [grid resolutions](../packages/three-ntc-trainer/src/NTCGridModel.ts), [LOD selector](../packages/three-ntc/src/NTCMipBands.ts), [training forward/backward paths](../packages/three-ntc-trainer/src/NTCGPUComputeTSL.ts), [runtime sampler](../packages/three-ntc/src/NTCDecoderTSL.ts), [manifest export](../packages/three-ntc-trainer/src/NTCManifest.ts).
 
@@ -46,16 +46,16 @@ The runtime's active path builds native per-grid textures with no generated mipm
 
 **The configuration makes a substantial difference.**
 
-| Property | Library trainer defaults | Website trainer defaults | `getNTCPaperProfile(1024)` |
-| --- | --- | --- | --- |
-| G0 widths | 128, 32, 8, 2 | 256, 64, 16, 4 | 256, 64, 16, 4 |
-| G1 widths | Absent | 128, 32, 8, 2 | 128, 32, 8, 2 |
-| G0/G1 channels | 4 / absent | 4 / 4 | 8 / 12 |
-| G0 sampling | Bilinear | Four raw taps | Four raw taps |
-| Positional encoding | Disabled | Grid-cell phase | Eight-texel tile |
-| Decoder input width | 5 | 33 | 57 |
-| Hidden layers | 32, 32; ReLU | 32, 32; ReLU | 64, 64; hardGELU |
-| Latent quantization requested | None during training; uint8 export | uint8 | uint4 for both grids |
+| Property                      | Library trainer defaults           | Website trainer defaults | `getNTCPaperProfile(1024)` |
+| ----------------------------- | ---------------------------------- | ------------------------ | -------------------------- |
+| G0 widths                     | 128, 32, 8, 2                      | 256, 64, 16, 4           | 256, 64, 16, 4             |
+| G1 widths                     | Absent                             | 128, 32, 8, 2            | 128, 32, 8, 2              |
+| G0/G1 channels                | 4 / absent                         | 4 / 4                    | 8 / 12                     |
+| G0 sampling                   | Bilinear                           | Four raw taps            | Four raw taps              |
+| Positional encoding           | Disabled                           | Grid-cell phase          | Eight-texel tile           |
+| Decoder input width           | 5                                  | 33                       | 57                         |
+| Hidden layers                 | 32, 32; ReLU                       | 32, 32; ReLU             | 64, 64; hardGELU           |
+| Latent quantization requested | None during training; uint8 export | uint8                    | uint4 for both grids       |
 
 At the reviewed commit, the website defaults to a 1024 bake and `mobile-balanced` (see concurrent-change note above). The direct model factory has a different base-resolution fallback from `NTCTrainer`: the factory uses source resolution, capped at 4096, when a base is omitted, while the trainer pre-populates base resolution 128. Neither fallback automatically chooses the paper's quarter-resolution grid. Table 2 also includes half-resolution G0 profiles, so a quarter-resolution base is not universal to every paper configuration.
 

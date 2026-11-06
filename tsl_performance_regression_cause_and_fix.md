@@ -30,11 +30,11 @@ on Playwright WebKit 26.6, using the shipped brick, its HDR environment, a
 strongly on **4× MSAA**. The original offscreen test omitted MSAA and missed this
 path. This is separate from the shader-expansion startup issue below.
 
-| Viewer configuration | Last five frame intervals | Last five submit-to-GPU-completion delays |
-| --- | --- | --- |
-| WebKit, 4× MSAA | 50–60 ms | 650–657 ms |
-| Chromium/Metal, 4× MSAA | 16.4–16.9 ms | 10.8–12.3 ms |
-| WebKit, MSAA disabled | 16–17 ms | 10–11 ms |
+| Viewer configuration    | Last five frame intervals | Last five submit-to-GPU-completion delays |
+| ----------------------- | ------------------------- | ----------------------------------------- |
+| WebKit, 4× MSAA         | 50–60 ms                  | 650–657 ms                                |
+| Chromium/Metal, 4× MSAA | 16.4–16.9 ms              | 10.8–12.3 ms                              |
+| WebKit, MSAA disabled   | 16–17 ms                  | 10–11 ms                                  |
 
 Completion delays include queued GPU work; 650 ms is **not** the execution time
 of one isolated frame. The growing queue explains why the viewer can feel worse
@@ -52,16 +52,14 @@ component, not concurrent training work. Shader interpolation annotations did no
 experiment. We have not established the underlying WebKit/Metal compiler cause;
 this change avoids the demonstrated expensive path.
 
-
-
 WebKit verification after applying this across the website (medians of 20 frames
 after five warmup frames):
 
 | Component case | Frame interval | Submit-to-completion delay |
-| --- | --- | --- |
-| single | 17 ms | 11 ms |
-| trainer | 17 ms | 8 ms |
-| grid | 16.5 ms | 5.5 ms |
+| -------------- | -------------- | -------------------------- |
+| single         | 17 ms          | 11 ms                      |
+| trainer        | 17 ms          | 8 ms                       |
+| grid           | 16.5 ms        | 5.5 ms                     |
 
 All three cases passed in both WebKit and Chromium/Metal at DPR 2. TypeScript,
 all 32 unit tests, and the website production build passed.
@@ -147,11 +145,11 @@ values against an independent CPU decode-then-filter oracle at fractional LOD.
 The render target is only 16 × 16: passing this test is not a claim of interactive
 performance at viewer resolution or on Safari.
 
-| Arrangement | Test duration | Conservative private bytes | CPU-reference MSE |
-| --- | ---: | ---: | ---: |
-| Eight-tap shader loop, original matrix sums | 31.61 s | 3,940 | 3.4234e-11 |
-| Same, mutable addition accumulators | 30.53 s | 4,228 | 3.4234e-11 |
-| Same, real function around MLP | 31.26 s | 3,716 | 3.4234e-11 |
+| Arrangement                                 | Test duration | Conservative private bytes | CPU-reference MSE |
+| ------------------------------------------- | ------------: | -------------------------: | ----------------: |
+| Eight-tap shader loop, original matrix sums |       31.61 s |                      3,940 |        3.4234e-11 |
+| Same, mutable addition accumulators         |       30.53 s |                      4,228 |        3.4234e-11 |
+| Same, real function around MLP              |       31.26 s |                      3,716 |        3.4234e-11 |
 
 These are individual runs, not a statistically controlled benchmark. None shows
 a useful speed improvement. A separately instrumented scoped-function run spent
@@ -190,8 +188,7 @@ const inputs = array(packedInputs).toVar();
 Loop({ end: outputCountUniform, name: 'ntcOutput' }, ({ ntcOutput }) => {
   const sum = biases.element(ntcOutput).toVar();
   Loop({ end: inputCountUniform, name: 'ntcInput' }, ({ ntcInput }) => {
-    sum.addAssign(weights.element(ntcOutput.mul(inputCount).add(ntcInput))
-      .mul(inputs.element(ntcInput)));
+    sum.addAssign(weights.element(ntcOutput.mul(inputCount).add(ntcInput)).mul(inputs.element(ntcInput)));
   });
   outputs.element(ntcOutput).assign(activation(sum));
 });
@@ -203,10 +200,10 @@ the WGSL variable. The CPU oracle caught the resulting incorrect indexing during
 development. An inline `Fn` must also enclose the assignments so raw decoder callers
 outside an existing TSL function register them correctly.
 
-| Matrix arrangement | 32-wide first render/readback | 64-wide first render/readback |
-| --- | ---: | ---: |
-| Input-block shader loop only | 1,943 ms | 3,764 ms |
-| Both dimensions as shader loops | 663 ms | 736 ms |
+| Matrix arrangement              | 32-wide first render/readback | 64-wide first render/readback |
+| ------------------------------- | ----------------------------: | ----------------------------: |
+| Input-block shader loop only    |                      1,943 ms |                      3,764 ms |
+| Both dimensions as shader loops |                        663 ms |                        736 ms |
 
 The latter's CPU-reference MSE remained **3.4234e-11** (32-wide) and **5.1345e-11**
 (64-wide). Private-storage upper bounds were 4,388 and 4,900 bytes. A subsequent
@@ -266,7 +263,6 @@ These are completed offscreen frames with a 1024 × 1024 target, no MSAA, a sphe
 and the viewer's two directional lights plus ambient light. They are not complete
 React-page frame timings at the user's viewport size or device pixel ratio.
 Safari's reported approximately 6 fps remains unresolved.
-
 
 ## Small-network specialization
 

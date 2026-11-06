@@ -71,17 +71,24 @@ async function readGrad(attribute: any): Promise<Float32Array> {
 describe('train-batch kernel', () => {
   it('interpolates quantized stored taps without re-quantizing the result', async () => {
     const texture = await constantTexture();
-    const {gpuModel} = setup({gridChannels:1, levels:1, baseResolution:4,
-      hiddenSizes:[4], outputChannels:4, dualGrid:true, batchSize:1,
-      quantization:{mode:'uint2', range:[0,1]}});
-    gpuModel.latentsBuffers.attribute.array.set([...Array.from({length:16},(_,i)=>i%2),0,1,0,1]);
+    const { gpuModel } = setup({
+      gridChannels: 1,
+      levels: 1,
+      baseResolution: 4,
+      hiddenSizes: [4],
+      outputChannels: 4,
+      dualGrid: true,
+      batchSize: 1,
+      quantization: { mode: 'uint2', range: [0, 1] },
+    });
+    gpuModel.latentsBuffers.attribute.array.set([...Array.from({ length: 16 }, (_, i) => i % 2), 0, 1, 0, 1]);
     gpuModel.latentsBuffers.attribute.needsUpdate = true;
-    renderer.compute(createTextureTrainBatchComputeNode(gpuModel,[texture],
-      {uv:vec2(0.225,0.5), lod:float(0)}));
+    renderer.compute(createTextureTrainBatchComputeNode(gpuModel, [texture], { uv: vec2(0.225, 0.5), lod: float(0) }));
     const act = await readF32(gpuModel.activationsAttribute);
-    expect(act[0]).toBeCloseTo(0.4,5);
-    expect(act[1]).toBeCloseTo(0.05,5); // G1's half-resolution grid also stays continuous.
-    texture.dispose(); gpuModel.dispose();
+    expect(act[0]).toBeCloseTo(0.4, 5);
+    expect(act[1]).toBeCloseTo(0.05, 5); // G1's half-resolution grid also stays continuous.
+    texture.dispose();
+    gpuModel.dispose();
   });
   const options = {
     gridChannels: 4,
@@ -117,17 +124,11 @@ describe('train-batch kernel', () => {
 
     for (let s = 0; s < batchSize; s++) {
       const base = s * layout.activationStride;
-      const a0 = Array.from(
-        act.slice(base + layout.a0Offset, base + layout.a0Offset + layout.inputSize),
-      );
+      const a0 = Array.from(act.slice(base + layout.a0Offset, base + layout.a0Offset + layout.inputSize));
       const lodScalar = a0[layout.inputSize - 1];
       expect(lodScalar).toBeGreaterThanOrEqual(0);
       expect(lodScalar).toBeLessThanOrEqual(1);
-      expect(
-        Number.isInteger(
-          lodScalar * layout.maxLod + 1e-6 - ((lodScalar * layout.maxLod + 1e-6) % 1),
-        ),
-      ).toBe(true);
+      expect(Number.isInteger(lodScalar * layout.maxLod + 1e-6 - ((lodScalar * layout.maxLod + 1e-6) % 1))).toBe(true);
 
       const { z, a } = forwardCpu(cpuModel.decoder, a0);
       for (let l = 0; l < layers.length; l++) {
@@ -157,10 +158,7 @@ describe('train-batch kernel', () => {
       // Backward through the layers, accumulating weight/bias gradients.
       for (let l = last; l >= 0; l--) {
         const layer = layers[l];
-        const dGpu = act.slice(
-          base + layout.deltaOffsets[l],
-          base + layout.deltaOffsets[l] + layer.outputSize,
-        );
+        const dGpu = act.slice(base + layout.deltaOffsets[l], base + layout.deltaOffsets[l] + layer.outputSize);
         maxDeltaErr = Math.max(maxDeltaErr, maxAbsDiff(dGpu, delta));
         const input = a[l];
         const { weightsOffset, biasesOffset } = layout.mlpLayers[l];
@@ -171,15 +169,11 @@ describe('train-batch kernel', () => {
         }
         const prev: number[] = Array.from({ length: layer.inputSize }, () => 0);
         for (let i = 0; i < layer.inputSize; i++) {
-          for (let j = 0; j < layer.outputSize; j++)
-            prev[i] += delta[j] * layer.weights[j * layer.inputSize + i];
+          for (let j = 0; j < layer.outputSize; j++) prev[i] += delta[j] * layer.weights[j * layer.inputSize + i];
           if (l > 0) prev[i] *= activateDerivative(z[l - 1][i], layers[l - 1].activation);
         }
         if (l === 0) {
-          const gradA0Gpu = act.slice(
-            base + layout.gradA0Offset,
-            base + layout.gradA0Offset + layer.inputSize,
-          );
+          const gradA0Gpu = act.slice(base + layout.gradA0Offset, base + layout.gradA0Offset + layer.inputSize);
           maxDeltaErr = Math.max(maxDeltaErr, maxAbsDiff(gradA0Gpu, prev));
         }
         delta = prev;
@@ -190,9 +184,7 @@ describe('train-batch kernel', () => {
     expect(maxDeltaErr).toBeLessThan(2e-5);
     // Fixed-point accumulation truncates each per-sample contribution to 1/FIXED_POINT_SCALE.
     const fixedPointBudget = batchSize / FIXED_POINT_SCALE;
-    expect(Math.abs(gpuLoss - cpuLoss / batchSize)).toBeLessThan(
-      fixedPointBudget / batchSize + 1e-5,
-    );
+    expect(Math.abs(gpuLoss - cpuLoss / batchSize)).toBeLessThan(fixedPointBudget / batchSize + 1e-5);
     expect(maxAbsDiff(gpuGradW, cpuGradW)).toBeLessThan(fixedPointBudget + 1e-3);
 
     texture.dispose();
@@ -254,11 +246,7 @@ describe('train-batch kernel', () => {
           .slice(0, n);
       // Every latent (both levels) should receive gradient somewhere.
       expect(largest(gradLatents, 1).map((i) => Math.abs(gradLatents[i]))[0]).toBeGreaterThan(0.1);
-      await check(gpuModel.latentsBuffers, gradLatents, [
-        ...largest(gradLatents, 3),
-        0,
-        gradLatents.length - 1,
-      ]);
+      await check(gpuModel.latentsBuffers, gradLatents, [...largest(gradLatents, 3), 0, gradLatents.length - 1]);
       await check(gpuModel.weightsBuffers, gradWeights, largest(gradWeights, 2));
 
       texture.dispose();
@@ -296,11 +284,8 @@ describe('train-batch kernel', () => {
     for (const g of gW) normSq += g * g;
     for (const g of gL) normSq += g * g;
     const gpuNormSq =
-      new Int32Array(await renderer.getArrayBufferAsync(gpuModel.gradNormAttribute))[0] /
-      GRADIENT_NORM_SCALE;
-    expect(Math.abs(gpuNormSq - normSq)).toBeLessThan(
-      1e-3 * normSq + (gW.length + gL.length) / GRADIENT_NORM_SCALE,
-    );
+      new Int32Array(await renderer.getArrayBufferAsync(gpuModel.gradNormAttribute))[0] / GRADIENT_NORM_SCALE;
+    expect(Math.abs(gpuNormSq - normSq)).toBeLessThan(1e-3 * normSq + (gW.length + gL.length) / GRADIENT_NORM_SCALE);
     // Make sure the clip actually engages in this test.
     expect(Math.sqrt(normSq)).toBeGreaterThan(maxNorm);
     const clip = Math.min(1, maxNorm / Math.sqrt(normSq));
@@ -359,7 +344,7 @@ describe('NTCTrainer', () => {
     const texture = await gradientTexture();
     const run = async () => {
       const losses: number[] = [];
-      const result = await new NTCTrainer({...smallOptions, gradientPrecision: 'fixed'}).train({
+      const result = await new NTCTrainer({ ...smallOptions, gradientPrecision: 'fixed' }).train({
         renderer,
         sourceTexture: texture,
         onProgress: ({ loss }) => losses.push(loss),
@@ -375,9 +360,7 @@ describe('NTCTrainer', () => {
       expect(a.result.cpuModel.grids[g].data).toEqual(b.result.cpuModel.grids[g].data);
     }
     for (let l = 0; l < a.result.cpuModel.decoder.layers.length; l++) {
-      expect(a.result.cpuModel.decoder.layers[l].weights).toEqual(
-        b.result.cpuModel.decoder.layers[l].weights,
-      );
+      expect(a.result.cpuModel.decoder.layers[l].weights).toEqual(b.result.cpuModel.decoder.layers[l].weights);
     }
     texture.dispose();
   });
@@ -396,49 +379,74 @@ describe('NTCTrainer', () => {
 
   it('quantization-aware training leaves the exported latents exactly on uint4 levels', async () => {
     const texture = await gradientTexture();
-    const result = await new NTCTrainer({ ...smallOptions, quantization: { mode: 'uint4' } }).train(
-      { renderer, sourceTexture: texture },
-    );
+    const result = await new NTCTrainer({ ...smallOptions, quantization: { mode: 'uint4' } }).train({
+      renderer,
+      sourceTexture: texture,
+    });
     expect(result.quantization.mode).toBe('uint4');
     expect(result.iterations).toBe(40); // Includes the final 5% frozen adaptation.
     const quantize = QUANTIZATION_SCHEMES.uint4.quantizeForwardCPU;
     result.cpuModel.grids.forEach((grid: any, g: number) => {
       const [lo, hi] = result.quantizationRange![g];
       expect(hi).toBeGreaterThan(lo);
-      for (const value of grid.data)
-        expect(Math.abs(value - quantize(value, lo, hi))).toBeLessThan(1e-6);
+      for (const value of grid.data) expect(Math.abs(value - quantize(value, lo, hi))).toBeLessThan(1e-6);
     });
     texture.dispose();
   });
 });
 
 it('separate MLP learning rate scales Adam updates without scaling latent updates', async () => {
-  const options={gridChannels:1,levels:1,baseResolution:2,hiddenSizes:[],outputChannels:4,
-    batchSize:1,learningRate:0.01,weightsLearningRate:0.005};
-  const {gpuModel}=setup(options);
-  gpuModel.stepUniform.value=1;
-  const before=gpuModel.weightsBuffers.attribute.array[0];
+  const options = {
+    gridChannels: 1,
+    levels: 1,
+    baseResolution: 2,
+    hiddenSizes: [],
+    outputChannels: 4,
+    batchSize: 1,
+    learningRate: 0.01,
+    weightsLearningRate: 0.005,
+  };
+  const { gpuModel } = setup(options);
+  gpuModel.stepUniform.value = 1;
+  const before = gpuModel.weightsBuffers.attribute.array[0];
   gpuModel.weightsBuffers.gradAttribute.array.fill(FIXED_POINT_SCALE);
-  gpuModel.weightsBuffers.gradAttribute.needsUpdate=true;
+  gpuModel.weightsBuffers.gradAttribute.needsUpdate = true;
   renderer.compute(createTextureAdamWeightsComputeNode(gpuModel));
-  const values=await readF32(gpuModel.weightsBuffers.attribute);
-  expect(before-values[0]).toBeCloseTo(0.005,6);
+  const values = await readF32(gpuModel.weightsBuffers.attribute);
+  expect(before - values[0]).toBeCloseTo(0.005, 6);
   gpuModel.dispose();
 });
 
 it('returns finite loss without a callback and freezes both grids while the MLP adapts', async () => {
-  const texture=await constantTexture(16);
-  const options={gridChannels:1,levels:1,baseResolution:4,hiddenSizes:[4],outputChannels:4,
-    dualGrid:true,iterations:40,batchSize:128,quantization:{mode:'uint4'},retrainAfterQuantize:0.25};
-  const plain=await new NTCTrainer(options).train({renderer,sourceTexture:texture});
+  const texture = await constantTexture(16);
+  const options = {
+    gridChannels: 1,
+    levels: 1,
+    baseResolution: 4,
+    hiddenSizes: [4],
+    outputChannels: 4,
+    dualGrid: true,
+    iterations: 40,
+    batchSize: 128,
+    quantization: { mode: 'uint4' },
+    retrainAfterQuantize: 0.25,
+  };
+  const plain = await new NTCTrainer(options).train({ renderer, sourceTexture: texture });
   expect(Number.isFinite(plain.loss)).toBe(true);
-  const snapshots:{latents:number[];weights:number[]}[]=[];
-  await new NTCTrainer(options).train({renderer,sourceTexture:texture,onProgress:({iteration,cpuModel})=>{
-    if(iteration>30) snapshots.push({latents:[...cpuModel.grids,...cpuModel.lowResGrids].flatMap(g=>[...g.data]),
-      weights:cpuModel.decoder.layers.flatMap(l=>[...l.weights,...l.biases])});
-  }});
+  const snapshots: { latents: number[]; weights: number[] }[] = [];
+  await new NTCTrainer(options).train({
+    renderer,
+    sourceTexture: texture,
+    onProgress: ({ iteration, cpuModel }) => {
+      if (iteration > 30)
+        snapshots.push({
+          latents: [...cpuModel.grids, ...cpuModel.lowResGrids].flatMap((g) => [...g.data]),
+          weights: cpuModel.decoder.layers.flatMap((l) => [...l.weights, ...l.biases]),
+        });
+    },
+  });
   expect(snapshots.length).toBeGreaterThan(1);
-  for(const snapshot of snapshots) expect(snapshot.latents).toEqual(snapshots[0].latents);
+  for (const snapshot of snapshots) expect(snapshot.latents).toEqual(snapshots[0].latents);
   expect(snapshots.at(-1)!.weights).not.toEqual(snapshots[0].weights);
   texture.dispose();
 });

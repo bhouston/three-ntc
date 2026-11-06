@@ -6,11 +6,11 @@ import {
   RepeatWrapping,
   LinearFilter,
   LinearMipmapLinearFilter,
-} from "three";
-import { textureLevel, uv } from "three/tsl";
-import { float16ToFloat32, float32ToFloat16 } from "three-ntc";
-import { bakeColorNodeToTexture } from "./NTCTextureSource.js";
-import { createLanczosMipChain } from "./NTCMipFilter.js";
+} from 'three';
+import { textureLevel, uv } from 'three/tsl';
+import { float16ToFloat32, float32ToFloat16 } from 'three-ntc';
+import { bakeColorNodeToTexture } from './NTCTextureSource.js';
+import { createLanczosMipChain } from './NTCMipFilter.js';
 
 /** Makes an owned Lanczos mip chain from a square GPU source. Source mip zero
  * is copied in linear/physical units; input textures remain owned by the caller.
@@ -21,7 +21,7 @@ export async function createLanczosSourceTexture(
 ): Promise<InstanceType<typeof DataTexture>> {
   const width = source.image?.width,
     height = source.image?.height;
-  if (!width || width !== height) throw new Error("Lanczos GPU source requires a square texture");
+  if (!width || width !== height) throw new Error('Lanczos GPU source requires a square texture');
   const target = await bakeColorNodeToTexture(renderer, textureLevel(source, uv(), 0), width);
   try {
     const raw = await renderer.readRenderTargetPixelsAsync(target, 0, 0, width, height);
@@ -31,8 +31,7 @@ export async function createLanczosSourceTexture(
     const stride = half.length === width * height * 4 ? width * 4 : padded;
     const data = new Float32Array(width * height * 4);
     for (let y = 0; y < height; y++)
-      for (let x = 0; x < width * 4; x++)
-        data[y * width * 4 + x] = float16ToFloat32(half[y * stride + x]);
+      for (let x = 0; x < width * 4; x++) data[y * width * 4 + x] = float16ToFloat32(half[y * stride + x]);
     const mips = createLanczosMipChain(data, width, height).map((m) => ({
       width: m.width,
       height: m.height,

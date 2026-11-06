@@ -41,7 +41,9 @@ function RootLayout() {
     <div className="flex min-h-svh flex-col">
       <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-3">
         <div className="flex items-center gap-4">
-          <Link to="/" className="font-semibold">three-ntc</Link>
+          <Link to="/" className="font-semibold">
+            three-ntc
+          </Link>
           <nav className="flex gap-4 text-sm">
             <Link
               to="/viewer"
@@ -79,8 +81,7 @@ function RootLayout() {
           <a href="https://ben3d.ca" className="text-primary underline underline-offset-4">
             Ben Houston
           </a>
-          <span className="sr-only">love</span>
-          — sponsored by
+          <span className="sr-only">love</span>— sponsored by
           <a href="https://landofassets.com" className="text-primary underline underline-offset-4">
             Land of Assets
           </a>

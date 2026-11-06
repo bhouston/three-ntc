@@ -9,69 +9,70 @@ import { float, min, max, round } from 'three/tsl';
  * decode back) - the exact "simulated quantization" a Straight-Through
  * Estimator forward pass needs.
  */
-function createUniformScheme( bits: number ) {
+function createUniformScheme(bits: number) {
+  const maxLevel = (1 << bits) - 1;
 
-	const maxLevel = ( 1 << bits ) - 1;
+  return {
+    quantizeForwardCPU: (x: number, lo = 0, hi = 1) => {
+      const range = hi - lo;
+      const t = range !== 0 ? Math.min(1, Math.max(0, (x - lo) / range)) : 0;
 
-	return {
-		quantizeForwardCPU: ( x: number, lo = 0, hi = 1 ) => {
+      return lo + (Math.round(t * maxLevel) / maxLevel) * range;
+    },
+    quantizeForwardTSL: (xNode: any, minNode: any, maxNode: any) => {
+      const range = maxNode.sub(minNode);
+      const t = min(float(1.0), max(float(0.0), xNode.sub(minNode).div(range.max(1e-20))));
 
-			const range = hi - lo;
-			const t = range !== 0 ? Math.min( 1, Math.max( 0, ( x - lo ) / range ) ) : 0;
-
-			return lo + ( Math.round( t * maxLevel ) / maxLevel ) * range;
-
-		},
-		quantizeForwardTSL: ( xNode: any, minNode: any, maxNode: any ) => {
-
-			const range = maxNode.sub( minNode );
-			const t = min( float( 1.0 ), max( float( 0.0 ), xNode.sub( minNode ).div( range.max(1e-20) ) ) );
-
-			return minNode.add( round( t.mul( float( maxLevel ) ) ).div( float( maxLevel ) ).mul( range ) );
-
-		}
-	};
-
+      return minNode.add(
+        round(t.mul(float(maxLevel)))
+          .div(float(maxLevel))
+          .mul(range),
+      );
+    },
+  };
 }
 
-const QUANTIZATION_SCHEMES: Record<string, {
-	quantizeForwardCPU: ( x: number, lo?: number, hi?: number ) => number;
-	quantizeForwardTSL: ( xNode: any, minNode?: any, maxNode?: any ) => any;
-}> = {
-	none: {
-		quantizeForwardCPU: ( x ) => x,
-		quantizeForwardTSL: ( xNode ) => xNode
-	},
-	uint8: createUniformScheme( 8 ),
-	uint4: createUniformScheme( 4 ),
-	uint2: createUniformScheme( 2 )
+const QUANTIZATION_SCHEMES: Record<
+  string,
+  {
+    quantizeForwardCPU: (x: number, lo?: number, hi?: number) => number;
+    quantizeForwardTSL: (xNode: any, minNode?: any, maxNode?: any) => any;
+  }
+> = {
+  none: {
+    quantizeForwardCPU: (x) => x,
+    quantizeForwardTSL: (xNode) => xNode,
+  },
+  uint8: createUniformScheme(8),
+  uint4: createUniformScheme(4),
+  uint2: createUniformScheme(2),
 };
 
-const VALID_MODES = Object.keys( QUANTIZATION_SCHEMES );
-const VALID_TARGETS = [ 'latents', 'weights', 'both' ];
+const VALID_MODES = Object.keys(QUANTIZATION_SCHEMES);
+const VALID_TARGETS = ['latents', 'weights', 'both'];
 
 interface NTCQuantizationOptions {
-	mode?: string;
-	method?: 'noise' | 'ste';
-	target?: string;
-	range?: 'auto' | [ number, number ];
-	perLevel?: boolean;
+  mode?: string;
+  method?: 'noise' | 'ste';
+  target?: string;
+  range?: 'auto' | [number, number];
+  perLevel?: boolean;
 }
 
 interface ResolvedNTCQuantizationConfig {
-	mode: string;
-	method: 'noise' | 'ste';
-	target: string;
-	range: 'auto' | [ number, number ];
-	perLevel: boolean;
+  mode: string;
+  method: 'noise' | 'ste';
+  target: string;
+  range: 'auto' | [number, number];
+  perLevel: boolean;
 }
 
 const DEFAULT_QUANTIZATION_OPTIONS: ResolvedNTCQuantizationConfig = {
-	mode: 'none',
-	method: 'noise',
-	target: 'latents',
-	range: 'auto',
-	perLevel: true
+  mode: 'none',
+  method: 'noise',
+  target: 'latents',
+  range: 'auto',
+  perLevel: true,
 };
 
 /**
@@ -83,62 +84,63 @@ const DEFAULT_QUANTIZATION_OPTIONS: ResolvedNTCQuantizationConfig = {
  * clear "not yet implemented" if actually selected, rather than silently
  * doing nothing.
  */
-function resolveQuantizationConfig( options: { quantization?: NTCQuantizationOptions } = {} ): ResolvedNTCQuantizationConfig {
+function resolveQuantizationConfig(
+  options: { quantization?: NTCQuantizationOptions } = {},
+): ResolvedNTCQuantizationConfig {
+  const input = options.quantization || {};
+  const mode = input.mode !== undefined ? input.mode : DEFAULT_QUANTIZATION_OPTIONS.mode;
+  const target = input.target !== undefined ? input.target : DEFAULT_QUANTIZATION_OPTIONS.target;
+  const method = input.method ?? (input.range !== undefined ? 'ste' : 'noise');
+  const range = input.range ?? (mode !== 'none' && method === 'noise' ? zeroAlignedRange(mode) : 'auto');
+  if (method !== 'noise' && method !== 'ste') throw new Error('Invalid quantization.method');
+  if (method === 'noise' && mode !== 'none' && range === 'auto')
+    throw new Error('Noise QAT requires a fixed quantization.range');
+  const perLevel = input.perLevel !== undefined ? input.perLevel : DEFAULT_QUANTIZATION_OPTIONS.perLevel;
 
-	const input = options.quantization || {};
-	const mode = input.mode !== undefined ? input.mode : DEFAULT_QUANTIZATION_OPTIONS.mode;
-	const target = input.target !== undefined ? input.target : DEFAULT_QUANTIZATION_OPTIONS.target;
-	const method = input.method ?? (input.range !== undefined ? 'ste' : 'noise');
-	const range = input.range ?? (mode !== 'none' && method === 'noise' ? zeroAlignedRange(mode) : 'auto');
-	if (method !== 'noise' && method !== 'ste') throw new Error('Invalid quantization.method');
-	if (method === 'noise' && mode !== 'none' && range === 'auto') throw new Error('Noise QAT requires a fixed quantization.range');
-	const perLevel = input.perLevel !== undefined ? input.perLevel : DEFAULT_QUANTIZATION_OPTIONS.perLevel;
+  if (QUANTIZATION_SCHEMES[mode] === undefined) {
+    throw new Error(
+      `THREE.NTCQuantization: quantization.mode must be one of [${VALID_MODES.join(', ')}], got "${mode}".`,
+    );
+  }
 
-	if ( QUANTIZATION_SCHEMES[ mode ] === undefined ) {
+  if (VALID_TARGETS.includes(target) === false) {
+    throw new Error(
+      `THREE.NTCQuantization: quantization.target must be one of [${VALID_TARGETS.join(', ')}], got "${target}".`,
+    );
+  }
 
-		throw new Error( `THREE.NTCQuantization: quantization.mode must be one of [${ VALID_MODES.join( ', ' ) }], got "${ mode }".` );
+  if (target !== 'latents' && mode !== 'none') {
+    throw new Error(
+      `THREE.NTCQuantization: quantization.target "${target}" is not yet implemented - only "latents" is currently supported.`,
+    );
+  }
 
-	}
+  if (range !== 'auto') {
+    const isRangeTuple =
+      Array.isArray(range) &&
+      range.length === 2 &&
+      Number.isFinite(range[0]) &&
+      Number.isFinite(range[1]) &&
+      range[0] <= range[1];
 
-	if ( VALID_TARGETS.includes( target ) === false ) {
+    if (isRangeTuple === false) {
+      throw new Error(
+        'THREE.NTCQuantization: quantization.range must be "auto" or a [min, max] tuple with min <= max.',
+      );
+    }
+  }
 
-		throw new Error( `THREE.NTCQuantization: quantization.target must be one of [${ VALID_TARGETS.join( ', ' ) }], got "${ target }".` );
+  if (typeof perLevel !== 'boolean') {
+    throw new Error('THREE.NTCQuantization: quantization.perLevel must be a boolean.');
+  }
 
-	}
-
-	if ( target !== 'latents' && mode !== 'none' ) {
-
-		throw new Error( `THREE.NTCQuantization: quantization.target "${ target }" is not yet implemented - only "latents" is currently supported.` );
-
-	}
-
-	if ( range !== 'auto' ) {
-
-		const isRangeTuple = Array.isArray( range ) && range.length === 2 &&
-			Number.isFinite( range[ 0 ] ) && Number.isFinite( range[ 1 ] ) && range[ 0 ] <= range[ 1 ];
-
-		if ( isRangeTuple === false ) {
-
-			throw new Error( 'THREE.NTCQuantization: quantization.range must be "auto" or a [min, max] tuple with min <= max.' );
-
-		}
-
-	}
-
-	if ( typeof perLevel !== 'boolean' ) {
-
-		throw new Error( 'THREE.NTCQuantization: quantization.perLevel must be a boolean.' );
-
-	}
-
-	return { mode, method, target, range, perLevel };
-
+  return { mode, method, target, range, perLevel };
 }
 
 interface GridLevelLayout {
-	offset: number;
-	floatCount: number;
-	[key: string]: unknown;
+  offset: number;
+  floatCount: number;
+  [key: string]: unknown;
 }
 
 /**
@@ -162,43 +164,39 @@ interface GridLevelLayout {
  * `[Infinity, -Infinity]`/`[x, x]`, mirroring `encodeUint8Base64`'s
  * `min === max` no-NaN guard.
  */
-function computeLatentRanges( data: Float32Array, gridLevels: GridLevelLayout[], perLevel = true ): Array<[ number, number ]> {
+function computeLatentRanges(
+  data: Float32Array,
+  gridLevels: GridLevelLayout[],
+  perLevel = true,
+): Array<[number, number]> {
+  const levelRanges: Array<[number, number]> = gridLevels.map((level) => {
+    let lo = Infinity;
+    let hi = -Infinity;
 
-	const levelRanges: Array<[ number, number ]> = gridLevels.map( ( level ) => {
+    for (let i = level.offset; i < level.offset + level.floatCount; i++) {
+      const value = data[i];
+      if (value < lo) lo = value;
+      if (value > hi) hi = value;
+    }
 
-		let lo = Infinity;
-		let hi = - Infinity;
+    if (lo > hi) return [-1, 1];
 
-		for ( let i = level.offset; i < level.offset + level.floatCount; i ++ ) {
+    return [lo, hi];
+  });
 
-			const value = data[ i ];
-			if ( value < lo ) lo = value;
-			if ( value > hi ) hi = value;
+  if (perLevel) return levelRanges;
 
-		}
+  let lo = Infinity;
+  let hi = -Infinity;
 
-		if ( lo > hi ) return [ - 1, 1 ];
+  for (const [levelLo, levelHi] of levelRanges) {
+    if (levelLo < lo) lo = levelLo;
+    if (levelHi > hi) hi = levelHi;
+  }
 
-		return [ lo, hi ];
+  const globalRange: [number, number] = lo > hi ? [-1, 1] : [lo, hi];
 
-	} );
-
-	if ( perLevel ) return levelRanges;
-
-	let lo = Infinity;
-	let hi = - Infinity;
-
-	for ( const [ levelLo, levelHi ] of levelRanges ) {
-
-		if ( levelLo < lo ) lo = levelLo;
-		if ( levelHi > hi ) hi = levelHi;
-
-	}
-
-	const globalRange: [ number, number ] = lo > hi ? [ - 1, 1 ] : [ lo, hi ];
-
-	return gridLevels.map( () => globalRange );
-
+  return gridLevels.map(() => globalRange);
 }
 
 /**
@@ -212,30 +210,28 @@ function computeLatentRanges( data: Float32Array, gridLevels: GridLevelLayout[],
  * quantization is disabled or the range is a fixed tuple - only `'auto'`
  * ever needs re-measuring.
  */
-async function refreshGPUQuantizationRange( gpuModel: any, renderer: any ): Promise<void> {
+async function refreshGPUQuantizationRange(gpuModel: any, renderer: any): Promise<void> {
+  if (gpuModel.quantization.mode === 'none' || gpuModel.quantization.range !== 'auto') return;
 
-	if ( gpuModel.quantization.mode === 'none' || gpuModel.quantization.range !== 'auto' ) return;
+  const buffer = await renderer.getArrayBufferAsync(gpuModel.latentsBuffers.attribute);
+  const latents = new Float32Array(buffer);
+  const ranges = computeLatentRanges(latents, gpuModel.layout.gridLevels, gpuModel.quantization.perLevel);
 
-	const buffer = await renderer.getArrayBufferAsync( gpuModel.latentsBuffers.attribute );
-	const latents = new Float32Array( buffer );
-	const ranges = computeLatentRanges( latents, gpuModel.layout.gridLevels, gpuModel.quantization.perLevel );
-
-	gpuModel.setQuantizationRange( ranges );
-
+  gpuModel.setQuantizationRange(ranges);
 }
 
 export {
-	QUANTIZATION_SCHEMES,
-	DEFAULT_QUANTIZATION_OPTIONS,
-	resolveQuantizationConfig,
-	computeLatentRanges,
-	refreshGPUQuantizationRange
+  QUANTIZATION_SCHEMES,
+  DEFAULT_QUANTIZATION_OPTIONS,
+  resolveQuantizationConfig,
+  computeLatentRanges,
+  refreshGPUQuantizationRange,
 };
 export type { NTCQuantizationOptions, ResolvedNTCQuantizationConfig, GridLevelLayout };
 
 /** N equally spaced levels with step 1/N, including exact zero. */
-export function zeroAlignedRange(mode: string): [number,number] {
-	const bits=Number(mode.replace('uint',''));
-	if (![2,4,8].includes(bits)) throw new Error('Unsupported quantization.mode');
-	return [-0.5, 0.5 - 1/(2 ** bits)];
+export function zeroAlignedRange(mode: string): [number, number] {
+  const bits = Number(mode.replace('uint', ''));
+  if (![2, 4, 8].includes(bits)) throw new Error('Unsupported quantization.mode');
+  return [-0.5, 0.5 - 1 / 2 ** bits];
 }

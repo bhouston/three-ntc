@@ -3,10 +3,7 @@
     "kind": "react-brick-viewer",
     "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
     "pixelRatio": 2,
-    "canvas": [
-      2048,
-      1536
-    ],
+    "canvas": [2048, 1536],
     "steadyFrames": [
       {
         "intervalMs": 16,
@@ -95,10 +92,7 @@
     "kind": "react-brick-viewer",
     "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
     "pixelRatio": 2,
-    "canvas": [
-      2048,
-      1536
-    ],
+    "canvas": [2048, 1536],
     "steadyFrames": [
       {
         "intervalMs": 0.6999999955296516,
@@ -188,10 +182,7 @@
     "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
     "samples": 0,
     "pixelRatio": 2,
-    "canvas": [
-      2048,
-      1536
-    ],
+    "canvas": [2048, 1536],
     "steadyFrames": [
       {
         "intervalMs": 17,
@@ -282,10 +273,7 @@
     "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
     "samples": 0,
     "pixelRatio": 2,
-    "canvas": [
-      2048,
-      1536
-    ],
+    "canvas": [2048, 1536],
     "steadyFrames": [
       {
         "intervalMs": 21,
@@ -376,10 +364,7 @@
     "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
     "samples": 0,
     "pixelRatio": 2,
-    "canvas": [
-      2048,
-      1536
-    ],
+    "canvas": [2048, 1536],
     "steadyFrames": [
       {
         "intervalMs": 17,
@@ -470,10 +455,7 @@
     "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
     "samples": 0,
     "pixelRatio": 2,
-    "canvas": [
-      2048,
-      1536
-    ],
+    "canvas": [2048, 1536],
     "steadyFrames": [
       {
         "intervalMs": 16,
@@ -564,10 +546,7 @@
     "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
     "samples": 0,
     "pixelRatio": 2,
-    "canvas": [
-      2048,
-      1536
-    ],
+    "canvas": [2048, 1536],
     "steadyFrames": [
       {
         "intervalMs": 47.5,
@@ -658,10 +637,7 @@
     "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
     "samples": 0,
     "pixelRatio": 2,
-    "canvas": [
-      2048,
-      1536
-    ],
+    "canvas": [2048, 1536],
     "steadyFrames": [
       {
         "intervalMs": 25.80000000447035,
@@ -752,10 +728,7 @@
     "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
     "samples": 0,
     "pixelRatio": 2,
-    "canvas": [
-      2048,
-      1536
-    ],
+    "canvas": [2048, 1536],
     "steadyFrames": [
       {
         "intervalMs": 24.700000002980232,

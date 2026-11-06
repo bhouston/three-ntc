@@ -2,12 +2,29 @@ packages:
   - packages/*
 
 allowBuilds:
+  core-js: false
   edgedriver: false
   esbuild: true
   geckodriver: false
 
-link-workspace-packages: true
+linkWorkspacePackages: true
+
+overrides:
+  serialize-javascript: ^7.0.3
+  source-map-js: ^1.2.2
+  tinypool: ^2.1.2
 
 minimumReleaseAgeExclude:
-  - three@0.186.0
-  - '@tanstack/charts@0.16.2'
+  - three
+  - '@tanstack/charts'
+  - tanstack-router-ga4
+  - yargs-file-commands
+  - '@vitest/browser-playwright'
+  - '@vitest/browser'
+  - '@vitest/coverage-v8'
+  - '@vitest/mocker'
+  - '@vitest/pretty-format'
+  - '@vitest/spy'
+  - '@vitest/ui'
+  - '@vitest/utils'
+  - vitest
