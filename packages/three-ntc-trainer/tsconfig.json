@@ -2,6 +2,7 @@
   "extends": "../../tsconfig.node.json",
   "compilerOptions": {
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node", "@webgpu/types"],
     "noUncheckedIndexedAccess": false
   }
 }

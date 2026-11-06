@@ -19,6 +19,8 @@ import {
   type ResolvedNTCQuantizationConfig,
   type NTCQuantizationOptions,
 } from './NTCQuantization.js';
+import type { ThreeRenderer } from './ThreeTypes.js';
+import type { NTCGridPyramidModel } from './NTCGridPyramidModel.js';
 
 interface GridLevelLayout {
   channels: number;
@@ -259,7 +261,7 @@ function computeTextureModelLayout(options: NTCGPUModelOptions = {}): NTCTexture
  * maintaining that loop twice.
  */
 function copyModel(
-  cpuModel: any,
+  cpuModel: NTCGridPyramidModel,
   layout: NTCTextureModelLayout,
   weights: Float32Array,
   latents: Float32Array,
@@ -390,7 +392,7 @@ class NTCGPUModel {
     return this.quantizationRangeUniforms.map(({ min, max }) => [min.value, max.value] as [number, number]);
   }
 
-  initFromCPUModel(cpuModel: any): void {
+  initFromCPUModel(cpuModel: NTCGridPyramidModel): void {
     const weights = this.weightsBuffers.attribute.array as Float32Array;
     const latents = this.latentsBuffers.attribute.array as Float32Array;
     weights.fill(0);
@@ -411,7 +413,7 @@ class NTCGPUModel {
     this.lossAttribute.needsUpdate = true;
   }
 
-  async syncToCPU(cpuModel: any, renderer: any): Promise<void> {
+  async syncToCPU(cpuModel: NTCGridPyramidModel, renderer: ThreeRenderer): Promise<void> {
     const [weightsBuffer, latentsBuffer] = await Promise.all([
       renderer.getArrayBufferAsync(this.weightsBuffers.attribute),
       renderer.getArrayBufferAsync(this.latentsBuffers.attribute),
@@ -436,7 +438,7 @@ class NTCGPUModel {
     this.gradNormAttribute.dispose();
   }
 
-  async readLoss(renderer: any): Promise<number> {
+  async readLoss(renderer: ThreeRenderer): Promise<number> {
     const buffer = await renderer.getArrayBufferAsync(this.lossAttribute);
     const array = new Int32Array(buffer);
     // The kernel accumulates the raw (un-batch-averaged) per-sample loss
