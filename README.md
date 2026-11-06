@@ -1,27 +1,44 @@
+<p align="center">
+  <a href="https://three-ntc.ben3d.ca" target="_blank" rel="noopener noreferrer">
+    <img alt="three-ntc logo" src="https://raw.githubusercontent.com/bhouston/three-ntc/main/packages/docs/static/img/icon-512.png" height="96">
+  </a>
+</p>
+<br/>
+<p align="center">
+  <a href="https://npmjs.com/package/three-ntc"><img src="https://img.shields.io/npm/v/three-ntc.svg" alt="npm package"></a>
+  <a href="https://www.npmtrends.com/three-ntc"><img src="https://img.shields.io/npm/dw/three-ntc.svg" alt="npm downloads"></a>
+  <a href="https://codecov.io/gh/bhouston/three-ntc"><img src="https://codecov.io/gh/bhouston/three-ntc/branch/main/graph/badge.svg" alt="coverage"></a>
+  <a href="https://discord.gg/fwupDN493R"><img src="https://img.shields.io/badge/chat-discord-blue?style=flat&logo=discord" alt="discord chat"></a>
+  <a href="https://three-ntc.ben3d.ca/docs/getting-started/"><img src="https://img.shields.io/badge/docs-read-blue?style=flat" alt="documentation"></a>
+</p>
+<br/>
+
 # three-ntc
 
-[![npm version](https://img.shields.io/npm/v/three-ntc.svg)](https://www.npmjs.com/package/three-ntc)
-[![ci](https://github.com/bhouston/three-ntc/actions/workflows/ci.yml/badge.svg)](https://github.com/bhouston/three-ntc/actions/workflows/ci.yml)
-[![Unit coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fbhouston%2Fthree-ntc%2Fcoverage-badge%2Fcoverage.json)](https://github.com/bhouston/three-ntc/actions/workflows/ci.yml)
-[![Live demo](https://img.shields.io/badge/demo-three--ntc.ben3d.ca-blue)](https://three-ntc.ben3d.ca)
+> Neural Texture Compression for three.js and TSL.
 
-Neural Texture Compression for three.js — encode PBR material texture sets into a compact
-grid + MLP model that decodes on the GPU via TSL, and load the result as a standard three.js
-node material.
+- 🗜️ Whole PBR Stack in One Model
+- 🎮 GPU Decoding via TSL
+- 🧱 Standard three.js Node Material
+- 🏋️ In-Browser GPU Trainer
+- 🎚️ Selectable Sampling Modes
+
+three-ntc is an implementation of NVIDIA's 2023 [Neural Texture Compression](https://research.nvidia.com/labs/rtr/neural_texture_compression/) paper. It encodes PBR material texture sets into a compact grid + MLP model that decodes on the GPU via TSL, and loads the result as a standard three.js node material. The materials pictured below, all textures combined, are about 93KB each, often smaller than a single texture from the original material.
+
+[Read the Docs to Learn More](https://three-ntc.ben3d.ca/docs/getting-started/).
+
+## Packages
+
+| Package                                         | Version (click for changelogs)                                                                                                               |
+| ----------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------- |
+| [three-ntc](packages/three-ntc)                 | [![three-ntc version](https://img.shields.io/npm/v/three-ntc.svg?label=%20)](https://github.com/bhouston/three-ntc/releases)                 |
+| [three-ntc-trainer](packages/three-ntc-trainer) | [![three-ntc-trainer version](https://img.shields.io/npm/v/three-ntc-trainer.svg?label=%20)](https://github.com/bhouston/three-ntc/releases) |
+
+`three-ntc` is the runtime to depend on to load `.ntc` files; `three-ntc-trainer` trains a `.ntc` model from a MaterialX material or baked textures on the GPU. The repository also contains the demo site ([`packages/website`](packages/website)), the Docusaurus documentation ([`packages/docs`](packages/docs)), an embedded playground ([`packages/playground`](packages/playground)), and an unpublished command-line trainer stub ([`packages/cli`](packages/cli)).
 
 ![Eight NTC materials rendered live in the three-ntc grid viewer](docs/images/ntc-grid-viewer.png)
 
-An implementation of NVIDIA's 2023 [Neural Texture Compression](https://research.nvidia.com/labs/rtr/neural_texture_compression/)
-paper: instead of shipping a full albedo/normal/roughness/metalness texture stack per material,
-NTC jointly fits all of those channels into one small grid + MLP model. Every material pictured
-above — all its textures combined — is about 93KB, often smaller than a single texture from the
-original material, so scenes can carry far richer materials without blowing up download size.
-
-Try it live at **[three-ntc.ben3d.ca](https://three-ntc.ben3d.ca)**.
-
-The new **[documentation website](https://three-ntc.ben3d.ca/)** includes
-generated runtime and trainer API references, integration guides, an interactive
-demo and trainer, and a theory explainer. The original demo remains available.
+Try it live at **[three-ntc.ben3d.ca](https://three-ntc.ben3d.ca)**. The [documentation website](https://three-ntc.ben3d.ca/) includes generated runtime and trainer API references, integration guides, an interactive demo and trainer, and a theory explainer.
 
 ## Usage
 
@@ -34,20 +51,6 @@ const { cpuModel, channelClassification } = await loader.loadAsync('gold.ntc');
 const material = new NTCNodeMaterial(cpuModel, channelClassification);
 const mesh = new THREE.Mesh(geometry, material);
 ```
-
-## Packages
-
-- [`packages/three-ntc`](packages/three-ntc) — runtime: `NTCLoader` + `NTCNodeMaterial`. This is the
-  package to depend on if you just want to load `.ntc` files in your three.js app. See its
-  [README](packages/three-ntc/README.md) for install/usage.
-- [`packages/three-ntc-trainer`](packages/three-ntc-trainer) — trains a `.ntc` model from a MaterialX
-  material (or baked textures) on the GPU, and exports it via `NTCExporter`. See its
-  [README](packages/three-ntc-trainer/README.md) for install/usage.
-- [`packages/website`](packages/website) — demo site (viewer + trainer UI), TanStack Start + Router +
-  Tailwind + shadcn/ui.
-- [`packages/docs`](packages/docs) — static Docusaurus documentation website.
-- [`packages/playground`](packages/playground) — static browser viewer, gallery, and trainer embedded in the documentation site.
-- [`packages/cli`](packages/cli) — command-line trainer (stub).
 
 ## Development
 
@@ -76,9 +79,18 @@ pnpm dev
   release yet, so it stays advisory (`continue-on-error`) until one ships.
 - `pnpm release:check` tests release-version analysis and packaging without publishing.
 
-## Contributing and releases
+## Releases and security
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the shared issue, branch, PR and commit
-workflow, [release setup](docs/releasing.md) for npm trusted publishing and the
-two-package (runtime + trainer) release config, and [SECURITY.md](SECURITY.md) for
-private vulnerability reports.
+See the [release setup](docs/releasing.md) for npm trusted publishing and the two-package (runtime + trainer) release config, and [SECURITY.md](SECURITY.md) for private vulnerability reports.
+
+## Contribution
+
+See [Contributing Guide](CONTRIBUTING.md).
+
+## License
+
+MIT
+
+## Author
+
+[Ben Houston](https://ben3d.ca), Sponsored by [Land of Assets](https://landofassets.com).
