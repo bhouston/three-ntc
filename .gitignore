@@ -14,3 +14,8 @@ coverage
 .pnpm-store/
 docs/metrics/*.log
 release-artifacts/
+
+# Agent tooling
+.claude/
+.codex/
+.cursor/
